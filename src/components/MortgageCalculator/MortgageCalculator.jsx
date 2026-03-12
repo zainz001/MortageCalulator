@@ -9,7 +9,7 @@ export default function MortgageCalculator() {
     const [income, setIncome] = useState(10000);
     const [expenses, setExpenses] = useState(2000);
 
-    const [savings, setSavings] = useState(0); 
+    const [savings, setSavings] = useState(0);
     const [yearsSaved, setYearsSaved] = useState(6);
     const [chartData, setChartData] = useState();
 
@@ -39,7 +39,7 @@ export default function MortgageCalculator() {
 
                 {/* Reduced gap between left and right panels */}
                 <div className="flex flex-col lg:flex-row gap-4 md:gap-5 items-stretch">
-                    
+
                     {/* Left Panel: Inputs - Reduced padding */}
                     <div className="flex-1 bg-[#F8F8F8] rounded-[16px] p-5 md:p-6 flex flex-col">
                         <h3 className="text-sm md:text-base font-bold text-[#23303B] mb-4 md:mb-5 leading-snug">
@@ -74,16 +74,16 @@ export default function MortgageCalculator() {
                         </div>
 
                         {/* Reduced button top margin and padding */}
-                        <button 
-                            onClick={handleCalculate} 
+                        <button
+                            onClick={handleCalculate}
                             className="mt-4 md:mt-5 bg-[#39a859] hover:bg-[#32994f] text-white font-bold py-3 rounded-[8px] transition-colors"
                         >
                             CALCULATE
                         </button>
 
                         {/* Reduced text top margin */}
-                        <p className="text-[10px] text-[#A1A8B2] mt-3 leading-tight text-center">
-                            We have used a test rate of 6.80% to calculate these results. This calculator is intended to provide you with an indication only...
+                        <p className="text-[12px] text-[#808895] leading-[15px] text-center mt-4">
+                            We have used a test rate of 6.80% has been used to calculate these results. This calculator is intended to provide you with an indication only and is based on the limited information provided by you. It does not constitute an offer of finance from Swish. All loans are subject to lenders normal lending criteria, terms, and conditions, and it is important to note that fees may apply and that interest rates are subject to change.
                         </p>
                     </div>
 
