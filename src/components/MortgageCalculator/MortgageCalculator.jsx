@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import InputField from "./InputField";
 import Chart from "./Chart";
-import { calculateMortgage, generateSchedule } from "../../helpers/mortgageHelpers";
+import { calculateMortgageWithSavings } from "../../helpers/mortgageHelpers";
 
 export default function MortgageCalculator() {
+  // --- Mortgage inputs ---
   const [propertyPrice, setPropertyPrice] = useState(800000);
   const [depositAmount, setDepositAmount] = useState(160000);
   const [depositPercent, setDepositPercent] = useState(20);
@@ -13,67 +14,115 @@ export default function MortgageCalculator() {
   const [frequency, setFrequency] = useState("monthly");
   const [repaymentType, setRepaymentType] = useState("principal_interest");
   const [fees, setFees] = useState(0);
-  const [income, setIncome] = useState(10000);
-  const [expenses, setExpenses] = useState(2000);
 
-  const [chartData, setChartData] = useState([]);
-  const [result, setResult] = useState({});
-  const [savings, setSavings] = useState(0);
-  const [yearsSaved, setYearsSaved] = useState(0);
+  // --- Informational only — isolated, never affect mortgage calc ---
+  const [income, setIncome] = useState("");
+  const [expenses, setExpenses] = useState("");
+
+  // --- Outputs ---
+  const [chartDataBank, setChartDataBank] = useState([]);
+  const [chartDataSwish, setChartDataSwish] = useState([]);
+  const [result, setResult] = useState(null);
   const [payoffDate, setPayoffDate] = useState("");
 
-  // Keep deposit amount and percent in sync dynamically
-  useEffect(() => {
-    setDepositPercent(((depositAmount / propertyPrice) * 100).toFixed(2));
-  }, [depositAmount, propertyPrice]);
+  // Track which deposit field was last edited
+  const lastDepositEdit = useRef("amount");
 
-  useEffect(() => {
-    setDepositAmount(((depositPercent / 100) * propertyPrice).toFixed(2));
-  }, [depositPercent, propertyPrice]);
+  // --- Safe number parse — returns 0 if NaN/empty ---
+  const toNum = (val) => {
+    const n = parseFloat(val);
+    return isNaN(n) ? 0 : n;
+  };
 
+  // --- Mortgage field handlers only ---
+  const handlePropertyPriceChange = (val) => {
+    const price = toNum(val);
+    setPropertyPrice(price);
+    if (price > 0) {
+      if (lastDepositEdit.current === "percent") {
+        const pct = toNum(depositPercent);
+        setDepositAmount(parseFloat(((pct / 100) * price).toFixed(2)));
+      } else {
+        const amt = toNum(depositAmount);
+        setDepositPercent(parseFloat(((amt / price) * 100).toFixed(2)));
+      }
+    }
+  };
+
+  const handleDepositAmountChange = (val) => {
+    lastDepositEdit.current = "amount";
+    const amount = toNum(val);
+    setDepositAmount(amount);
+    const price = toNum(propertyPrice);
+    if (price > 0) {
+      setDepositPercent(parseFloat(((amount / price) * 100).toFixed(2)));
+    }
+  };
+
+  const handleDepositPercentChange = (val) => {
+    lastDepositEdit.current = "percent";
+    const pct = toNum(val);
+    setDepositPercent(pct);
+    const price = toNum(propertyPrice);
+    setDepositAmount(parseFloat(((pct / 100) * price).toFixed(2)));
+  };
+
+  const handleRateChange = (val) => setRate(toNum(val));
+  const handleYearsChange = (val) => setYears(toNum(val));
+  const handleExtraRepaymentChange = (val) => setExtraRepayment(toNum(val));
+  const handleFeesChange = (val) => setFees(toNum(val));
+
+  // --- Calculate ---
   const handleCalculate = () => {
-    const res = calculateMortgage({
-      propertyPrice: Number(propertyPrice),
-      depositAmount: Number(depositAmount),
-      depositPercent: Number(depositPercent),
-      rate: Number(rate),
-      years: Number(years),
+    const price = toNum(propertyPrice);
+    const deposit = toNum(depositAmount);
+    const r = toNum(rate);
+    const y = toNum(years);
+    const extra = toNum(extraRepayment);
+
+    if (!price || price <= 0) return alert("Property Price must be greater than 0.");
+    if (deposit < 0 || deposit >= price) return alert("Deposit Amount must be between $0 and Property Price.");
+    if (r < 0) return alert("Interest Rate must be 0 or greater.");
+    if (!y || y <= 0 || y > 30) return alert("Loan Term must be between 1 and 30 years.");
+    if (extra < 0) return alert("Extra Repayment must be 0 or greater.");
+
+    const res = calculateMortgageWithSavings({
+      propertyPrice: price,
+      depositAmount: deposit,
+      rate: r,
+      years: y,
       frequency,
       repaymentType,
-      extraRepayment: Number(extraRepayment),
+      extraRepayment: extra,
     });
 
     setResult(res);
 
-    // Interest saved (example 35% of total interest)
-    const savedInterest = res.totalInterest * 0.35;
-    setSavings(Math.round(savedInterest));
+    // Payoff date
+    const periodsPerYear = frequency === "weekly" ? 52 : frequency === "fortnightly" ? 26 : 12;
+    const monthsToPayoff = Math.round((res.numberOfRepayments / periodsPerYear) * 12);
+    const payoff = new Date();
+    payoff.setMonth(payoff.getMonth() + monthsToPayoff);
+    setPayoffDate(
+      payoff.toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" })
+    );
 
-    // Time saved in years (example 20% of original loan term)
-    const timeSaved = Math.round(years * 0.2);
-    setYearsSaved(timeSaved);
-
-    // Payoff date calculation
-    const today = new Date();
-    const totalMonths = Math.ceil(res.numberOfRepayments / 12);
-    const payoff = new Date(today.setMonth(today.getMonth() + totalMonths));
-    setPayoffDate(payoff.toLocaleDateString());
-
-    // Amortisation schedule
-    const schedule = generateSchedule({
-      propertyPrice: Number(propertyPrice),
-      depositAmount: Number(depositAmount),
-      rate: Number(rate),
-      years: Number(years),
-      frequency,
-      repaymentType,
-      extraRepayment: Number(extraRepayment),
-    });
-    setChartData(schedule);
+    setChartDataBank(res.scheduleWithoutExtra);
+    setChartDataSwish(res.scheduleWithExtra);
   };
 
-  const loanAmount = propertyPrice - depositAmount;
-  const lvr = ((loanAmount / propertyPrice) * 100).toFixed(2);
+  // Live-derived values
+  const loanAmount = Math.max(0, toNum(propertyPrice) - toNum(depositAmount));
+  const lvr =
+    toNum(propertyPrice) > 0
+      ? ((loanAmount / toNum(propertyPrice)) * 100).toFixed(2)
+      : "0.00";
+
+  const mergedChartData = chartDataBank.map((row, i) => ({
+    year: row.year,
+    bank: row.balance,
+    swish: chartDataSwish[i] ? Math.max(0, chartDataSwish[i].balance) : 0,
+  }));
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-2 md:p-4">
@@ -90,17 +139,62 @@ export default function MortgageCalculator() {
             </h3>
 
             <div className="flex flex-col gap-[16px] flex-1">
-              <InputField label="Property Price" prefix="$" placeholder="800,000" onChange={setPropertyPrice} />
-              <InputField label="Deposit Amount" prefix="$" placeholder="160,000" onChange={setDepositAmount} />
-              <InputField label="Deposit %" placeholder="20" onChange={setDepositPercent} />
-              <InputField label="Interest Rate (Annual %)" placeholder="6.5" onChange={setRate} />
-              <InputField label="Loan Term (Years)" placeholder="30" onChange={setYears} />
-              <InputField label="Extra Repayment (Optional)" prefix="$" placeholder="200" onChange={setExtraRepayment} />
-              <InputField label="Fees Included in Repayment" prefix="$" placeholder="0" onChange={setFees} />
+              <InputField
+                label="Property Price"
+                prefix="$"
+                placeholder="800,000"
+                value={propertyPrice}
+                onChange={handlePropertyPriceChange}
+              />
+              <InputField
+                label="Deposit Amount"
+                prefix="$"
+                placeholder="160,000"
+                value={depositAmount}
+                onChange={handleDepositAmountChange}
+              />
+              <InputField
+                label="Deposit %"
+                placeholder="20"
+                value={depositPercent}
+                onChange={handleDepositPercentChange}
+              />
+              <InputField
+                label="Interest Rate (Annual %)"
+                placeholder="6.5"
+                value={rate}
+                onChange={handleRateChange}
+              />
+              <InputField
+                label="Loan Term (Years)"
+                placeholder="30"
+                value={years}
+                onChange={handleYearsChange}
+              />
+              <InputField
+                label="Extra Repayment (Optional)"
+                prefix="$"
+                placeholder="0"
+                value={extraRepayment}
+                onChange={handleExtraRepaymentChange}
+              />
+              <InputField
+                label="Fees Included in Repayment"
+                prefix="$"
+                placeholder="0"
+                value={fees}
+                onChange={handleFeesChange}
+              />
 
               <div className="flex flex-col gap-[8px]">
-                <label className="text-[13px] md:text-[14px] text-[#64748B] font-medium">Repayment Frequency</label>
-                <select value={frequency} onChange={(e) => setFrequency(e.target.value)} className="h-[48px] px-4 border border-[#E2E8F0] rounded-[8px]">
+                <label className="text-[13px] md:text-[14px] text-[#64748B] font-medium">
+                  Repayment Frequency
+                </label>
+                <select
+                  value={frequency}
+                  onChange={(e) => setFrequency(e.target.value)}
+                  className="h-[48px] px-4 border border-[#E2E8F0] rounded-[8px]"
+                >
                   <option value="monthly">Monthly</option>
                   <option value="fortnightly">Fortnightly</option>
                   <option value="weekly">Weekly</option>
@@ -108,74 +202,60 @@ export default function MortgageCalculator() {
               </div>
 
               <div className="flex flex-col gap-[8px]">
-                <label className="text-[13px] md:text-[14px] text-[#64748B] font-medium">Repayment Type</label>
-                <select value={repaymentType} onChange={(e) => setRepaymentType(e.target.value)} className="h-[48px] px-4 border border-[#E2E8F0] rounded-[8px]">
+                <label className="text-[13px] md:text-[14px] text-[#64748B] font-medium">
+                  Repayment Type
+                </label>
+                <select
+                  value={repaymentType}
+                  onChange={(e) => setRepaymentType(e.target.value)}
+                  className="h-[48px] px-4 border border-[#E2E8F0] rounded-[8px]"
+                >
                   <option value="principal_interest">Principal & Interest</option>
                   <option value="interest_only">Interest Only</option>
                 </select>
               </div>
 
-              <InputField label="Combined monthly income after tax" prefix="$" placeholder="10,000" onChange={setIncome} />
-              <InputField label="Monthly household living expenses (Excl. Mortgage)" prefix="$" placeholder="2,000" onChange={setExpenses} />
+              {/* Informational only — completely isolated from mortgage calculations */}
+              <InputField
+                label="Combined monthly income after tax"
+                prefix="$"
+                placeholder="10,000"
+                value={income}
+                onChange={(val) => setIncome(val)}
+              />
+              <InputField
+                label="Monthly household living expenses (excl. mortgage)"
+                prefix="$"
+                placeholder="2,000"
+                value={expenses}
+                onChange={(val) => setExpenses(val)}
+              />
             </div>
 
-            <button onClick={handleCalculate} className="mt-[32px] w-full bg-[#39a859] hover:bg-[#32994f] text-white font-bold py-3.5 rounded-[8px] transition-colors">
+            <button
+              onClick={handleCalculate}
+              className="mt-[32px] w-full bg-[#39a859] hover:bg-[#32994f] text-white font-bold py-3.5 rounded-[8px] transition-colors"
+            >
               CALCULATE
             </button>
 
-            {/* Outputs */}
-            {/* {result.repayment && (
-              <div className="mt-6 bg-[#F0F4F8] p-4 rounded-lg">
-                <p>Loan Amount: ${loanAmount.toLocaleString()}</p>
-                <p>Deposit Amount: ${depositAmount.toLocaleString()}</p>
-                <p>Deposit %: {depositPercent}%</p>
-                <p>LVR: {lvr}%</p>
-                <p>Repayment Amount: ${result.repayment.toFixed(2)} / {frequency}</p>
-                <p>Total Amount Repaid: ${result.totalRepaid.toFixed(2)}</p>
-                <p>Total Interest Paid: ${result.totalInterest.toFixed(2)}</p>
-                <p>Number of Repayments: {result.numberOfRepayments}</p>
-                <p>Estimated Payoff Date: {payoffDate}</p>
-                <p>Interest Saved from Extra Repayments: ${savings}</p>
-                <p>Time Saved from Extra Repayments: {yearsSaved} years</p>
 
-                <div className="mt-4 overflow-x-auto">
-                  <table className="min-w-full border border-gray-200">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="border px-2 py-1 text-left text-sm">Year</th>
-                        <th className="border px-2 py-1 text-left text-sm">Remaining Balance</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {chartData.map((row, idx) => (
-                        <tr key={idx}>
-                          <td className="border px-2 py-1">{row.year}</td>
-                          <td className="border px-2 py-1">${row.balance.toFixed(2)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )} */}
-
-            <div className="mt-[24px] pt-[20px] border-t border-[#E2E8F0]">
-              <p className="text-[12px] text-[#808895] leading-[15px] text-center">
-                We have used a test rate of 6.80% has been used to calculate these results. This calculator is intended to provide you with an indication only and is based on the limited information provided by you. It does not constitute an offer of finance from Swish. All loans are subject to lenders normal lending criteria, terms, and conditions, and it is important to note that fees may apply and that interest rates are subject to change.
-              </p>
-            </div>
           </div>
 
           {/* Right Panel: Chart */}
-        <Chart
-  chartData={chartData.map((row) => ({
-    year: row.year,
-    bank: row.balance,
-    swish: row.balance - savings, // or any Swish projection
-  }))}
-  savings={savings}
-  yearsSaved={yearsSaved}
-/>
+          <Chart
+            chartData={mergedChartData}
+            savings={result ? result.interestSaved : 0}
+            yearsSaved={result ? result.yearsSaved : 0}
+            monthsSaved={result ? result.monthsSaved : 0}
+            result={result}
+            loanAmount={loanAmount}
+            depositAmount={toNum(depositAmount)}
+            depositPercent={depositPercent}
+            lvr={lvr}
+            frequency={frequency}
+            payoffDate={payoffDate}
+          />
         </div>
       </div>
     </div>
