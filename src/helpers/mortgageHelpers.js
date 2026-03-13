@@ -1,35 +1,98 @@
-export function calculateMortgage(balance, years, rate) {
-  const r = rate / 100 / 12;
-  const n = years * 12;
-
-  return balance * ((r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
+// helpers/mortgageHelpers.js
+export function getPeriodsPerYear(freq) {
+  if (freq === "weekly") return 52;
+  if (freq === "fortnightly") return 26;
+  return 12; // monthly default
 }
 
-export function generateSchedule(balance, years, rate) {
-  const r = rate / 100 / 12;
-  const n = years * 12;
+export function calculateMortgage({
+  propertyPrice,
+  depositAmount,
+  depositPercent,
+  rate,
+  years,
+  frequency = "monthly",
+  repaymentType = "principal_interest",
+  extraRepayment = 0,
+}) {
+  // Determine deposit amount if percent is provided
+  if (depositPercent && !depositAmount) {
+    depositAmount = propertyPrice * (depositPercent / 100);
+  }
+  // Determine deposit percent if amount is provided
+  if (depositAmount && !depositPercent) {
+    depositPercent = (depositAmount / propertyPrice) * 100;
+  }
 
-  let remaining = balance;
-  const data = [];
+  const loanAmount = propertyPrice - depositAmount;
+  const periodsPerYear = getPeriodsPerYear(frequency);
+  const r = rate / 100 / periodsPerYear; // periodic interest rate
+  const n = years * periodsPerYear; // total number of repayments
+
+  let repayment;
+  if (repaymentType === "interest_only") {
+    repayment = loanAmount * r;
+  } else {
+    repayment = loanAmount * ((r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
+  }
+
+  const repaymentWithExtra = repayment + extraRepayment;
+  const totalRepaid = repayment * n;
+  const totalInterest = totalRepaid - loanAmount;
+  const lvr = (loanAmount / propertyPrice) * 100;
+
+  return {
+    loanAmount,
+    depositAmount,
+    depositPercent,
+    lvr,
+    repayment,
+    repaymentWithExtra,
+    totalRepaid,
+    totalInterest,
+    numberOfRepayments: n,
+  };
+}
+
+export function generateSchedule({
+  propertyPrice,
+  depositAmount,
+  rate,
+  years,
+  frequency = "monthly",
+  repaymentType = "principal_interest",
+  extraRepayment = 0,
+}) {
+  const loanAmount = propertyPrice - depositAmount;
+  const periodsPerYear = getPeriodsPerYear(frequency);
+  const r = rate / 100 / periodsPerYear;
+  const n = years * periodsPerYear;
+
+  const repayment =
+    repaymentType === "interest_only"
+      ? loanAmount * r
+      : loanAmount * ((r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
+
+  let remaining = loanAmount;
+  const schedule = [];
 
   for (let i = 1; i <= n; i++) {
-    const repayment = calculateMortgage(balance, years, rate);
-    const interest = remaining * r;
-    const principal = repayment - interest;
+    const interestPortion = remaining * r;
+    const principalPortion = repayment + extraRepayment - interestPortion;
 
-    remaining -= principal;
+    remaining -= principalPortion;
     if (remaining < 0) remaining = 0;
 
-    if (i % 12 === 0 || i === 1) {
-      data.push({
-        year: (2025 + Math.ceil(i / 12)).toString(),
-        bank: remaining,
-        swish: remaining * 0.75,
+    // Push end-of-year balance or first period
+    if (i % periodsPerYear === 0 || i === 1) {
+      schedule.push({
+        year: new Date().getFullYear() + Math.ceil(i / periodsPerYear),
+        balance: remaining,
       });
     }
 
     if (remaining === 0) break;
   }
 
-  return data;
+  return schedule;
 }
