@@ -1,19 +1,19 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef,useEffect } from "react";
 import InputField from "./InputField";
 import Chart from "./Chart";
 import { calculateMortgageWithSavings } from "../../helpers/mortgageHelpers";
 
 export default function MortgageCalculator() {
   // --- Mortgage inputs ---
-  const [propertyPrice, setPropertyPrice] = useState(800000);
-  const [depositAmount, setDepositAmount] = useState(160000);
-  const [depositPercent, setDepositPercent] = useState(20);
-  const [rate, setRate] = useState(6.5);
-  const [years, setYears] = useState(30);
-  const [extraRepayment, setExtraRepayment] = useState(0);
+  const [propertyPrice, setPropertyPrice] = useState("");
+  const [depositAmount, setDepositAmount] = useState("");
+  const [depositPercent, setDepositPercent] = useState("");
+  const [rate, setRate] = useState("");
+  const [years, setYears] = useState("");
+  const [extraRepayment, setExtraRepayment] = useState("");
+  const [fees, setFees] = useState("");
   const [frequency, setFrequency] = useState("monthly");
   const [repaymentType, setRepaymentType] = useState("principal_interest");
-  const [fees, setFees] = useState(0);
 
   // --- Informational only — isolated, never affect mortgage calc ---
   const [income, setIncome] = useState("");
@@ -71,7 +71,32 @@ export default function MortgageCalculator() {
   const handleYearsChange = (val) => setYears(toNum(val));
   const handleExtraRepaymentChange = (val) => setExtraRepayment(toNum(val));
   const handleFeesChange = (val) => setFees(toNum(val));
+  const handleFrequencyChange = (value) => {
+    setFrequency(value);
 
+    const baseMonthlyExtra = 500;
+
+    let newExtra = 0;
+
+    switch (value) {
+      case "monthly":
+        newExtra = baseMonthlyExtra;
+        break;
+
+      case "fortnightly":
+        newExtra = baseMonthlyExtra / 2;
+        break;
+
+      case "weekly":
+        newExtra = baseMonthlyExtra / 4;
+        break;
+
+      default:
+        newExtra = baseMonthlyExtra;
+    }
+
+    setExtraRepayment(Number(newExtra.toFixed(2)));
+  };
   // --- Calculate ---
   const handleCalculate = () => {
     const price = toNum(propertyPrice);
@@ -123,7 +148,41 @@ export default function MortgageCalculator() {
     bank: row.balance,
     swish: chartDataSwish[i] ? Math.max(0, chartDataSwish[i].balance) : 0,
   }));
+// Re-run calculation whenever extraRepayment changes, but only if a result already exists
+useEffect(() => {
+  if (!result) return; // don't auto-calc before first manual Calculate
 
+  const price = toNum(propertyPrice);
+  const deposit = toNum(depositAmount);
+  const r = toNum(rate);
+  const y = toNum(years);
+  const extra = toNum(extraRepayment);
+
+  if (!price || price <= 0 || !y || y <= 0) return;
+
+  const res = calculateMortgageWithSavings({
+    propertyPrice: price,
+    depositAmount: deposit,
+    rate: r,
+    years: y,
+    frequency,
+    repaymentType,
+    extraRepayment: extra,
+  });
+
+  setResult(res);
+
+  const periodsPerYear = frequency === "weekly" ? 52 : frequency === "fortnightly" ? 26 : 12;
+  const monthsToPayoff = Math.round((res.numberOfRepayments / periodsPerYear) * 12);
+  const payoff = new Date();
+  payoff.setMonth(payoff.getMonth() + monthsToPayoff);
+  setPayoffDate(
+    payoff.toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" })
+  );
+
+  setChartDataBank(res.scheduleWithoutExtra);
+  setChartDataSwish(res.scheduleWithExtra);
+}, [extraRepayment]); // only watches extraRepayment
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-2 md:p-4">
       <div className="max-w-[1400px] w-full">
@@ -171,28 +230,13 @@ export default function MortgageCalculator() {
                 value={years}
                 onChange={handleYearsChange}
               />
-              <InputField
-                label="Extra Repayment (Optional)"
-                prefix="$"
-                placeholder="0"
-                value={extraRepayment}
-                onChange={handleExtraRepaymentChange}
-              />
-              <InputField
-                label="Fees Included in Repayment"
-                prefix="$"
-                placeholder="0"
-                value={fees}
-                onChange={handleFeesChange}
-              />
-
               <div className="flex flex-col gap-[8px]">
                 <label className="text-[13px] md:text-[14px] text-[#64748B] font-medium">
                   Repayment Frequency
                 </label>
                 <select
                   value={frequency}
-                  onChange={(e) => setFrequency(e.target.value)}
+                  onChange={(e) => handleFrequencyChange(e.target.value)}
                   className="h-[48px] px-4 border border-[#E2E8F0] rounded-[8px]"
                 >
                   <option value="monthly">Monthly</option>
@@ -214,22 +258,21 @@ export default function MortgageCalculator() {
                   <option value="interest_only">Interest Only</option>
                 </select>
               </div>
+              <InputField
+                label="Extra Repayment (Optional)"
+                prefix="$"
+                placeholder="0"
+                value={extraRepayment}
+                onChange={handleExtraRepaymentChange}
+              />
+              <InputField
+                label="Fees Included in Repayment"
+                prefix="$"
+                placeholder="0"
+                value={fees}
+                onChange={handleFeesChange}
+              />
 
-              {/* Informational only — completely isolated from mortgage calculations */}
-              <InputField
-                label="Combined monthly income after tax"
-                prefix="$"
-                placeholder="10,000"
-                value={income}
-                onChange={(val) => setIncome(val)}
-              />
-              <InputField
-                label="Monthly household living expenses (excl. mortgage)"
-                prefix="$"
-                placeholder="2,000"
-                value={expenses}
-                onChange={(val) => setExpenses(val)}
-              />
             </div>
 
             <button

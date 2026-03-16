@@ -30,16 +30,15 @@ export default function Chart({
   const hasData = !!(result && result.repayment != null && chartData && chartData.length > 0);
   const hasExtra = yearsSaved > 0 || monthsSaved > 0;
 
-  // When no extra repayment, swish = bank (same trajectory)
   const displayData = hasData
     ? chartData.map((row) => ({
-        ...row,
-        swish: hasExtra ? row.swish : row.bank,
-      }))
+      ...row,
+      swish: hasExtra ? row.swish : row.bank,
+    }))
     : [
-        { year: currentYear, bank: 0, swish: 0 },
-        { year: (currentYearNum + 30).toString(), bank: 0, swish: 0 },
-      ];
+      { year: currentYear, bank: 0, swish: 0 },
+      { year: (currentYearNum + 30).toString(), bank: 0, swish: 0 },
+    ];
 
   const todayData = displayData.find((d) => String(d.year) === currentYear) || displayData[0];
   const todayX = String(todayData?.year);
@@ -64,20 +63,19 @@ export default function Chart({
 
   const resultRows = hasData && result
     ? [
-        { label: "Loan amount", value: fmt(loanAmount), highlight: false },
-        { label: "Deposit amount", value: fmt(depositAmount), highlight: false },
-        { label: "Deposit %", value: `${Number(depositPercent).toFixed(2)}%`, highlight: false },
-        { label: "LVR", value: `${Number(lvr).toFixed(2)}%`, highlight: Number(lvr) > 80 ? "red" : false },
-        { label: `Repayment / ${freqLabel}`, value: fmt(result.repayment), highlight: "blue" },
-        { label: "Total amount repaid", value: fmt(result.totalRepaid), highlight: false },
-        { label: "Total interest paid", value: fmt(result.totalInterest), highlight: "red" },
-        { label: "No. of repayments", value: result.numberOfRepayments, highlight: false },
-        { label: "Estimated payoff date", value: payoffDate, highlight: false },
-        { label: "Interest saved (extra)", value: savings > 0 ? fmt(savings) : "—", highlight: savings > 0 ? "green" : false },
-      ]
+      { label: "Loan amount", value: fmt(loanAmount), highlight: false },
+      { label: "Deposit amount", value: fmt(depositAmount), highlight: false },
+      { label: "Deposit %", value: `${Number(depositPercent).toFixed(2)}%`, highlight: false },
+      { label: "LVR", value: `${Number(lvr).toFixed(2)}%`, highlight: Number(lvr) > 80 ? "red" : false },
+      { label: `Repayment / ${freqLabel}`, value: fmt(result.repayment), highlight: "blue" },
+      { label: "Total amount repaid", value: fmt(result.totalRepaid), highlight: false },
+      { label: "Total interest paid", value: fmt(result.totalInterest), highlight: "red" },
+      { label: "No. of repayments", value: result.numberOfRepayments, highlight: false },
+      { label: "Estimated payoff date", value: payoffDate, highlight: false },
+      { label: "Interest saved (extra)", value: savings > 0 ? fmt(savings) : "—", highlight: savings > 0 ? "green" : false },
+    ]
     : [];
 
-  // Skeleton rows shown before calculate
   const skeletonRows = [
     "Loan amount", "Deposit amount", "Deposit %", "LVR",
     "Repayment / mo", "Total amount repaid", "Total interest paid",
@@ -126,8 +124,6 @@ export default function Chart({
 
         {/* ── TOP SUMMARY CARDS ── */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-
-          {/* Card 1 — Repayment amount (always) OR interest saved (when extra) */}
           <div style={{
             background: "linear-gradient(135deg, #EEF2FF, #E0E7FF)",
             border: "1px solid #C7D2FE", borderRadius: 12, padding: "16px",
@@ -147,7 +143,7 @@ export default function Chart({
                 <p style={{ fontSize: 10, color: "#6366F1", fontWeight: 700, margin: "0 0 6px", letterSpacing: "0.07em", textTransform: "uppercase" }}>
                   Interest saved with Swish
                 </p>
-                <p style={{ fontSize: 28, fontWeight: 800, color: "#3730A3", lineHeight: 1, margin: 0 }}>
+                <p style={{ fontSize: "clamp(18px, 4vw, 28px)", fontWeight: 800, color: "#3730A3", lineHeight: 1.1, margin: 0, wordBreak: "break-word" }}>
                   {fmtShort(savings)}
                 </p>
                 <p style={{ fontSize: 11, color: "#818CF8", margin: "4px 0 0" }}>vs standard bank loan</p>
@@ -165,7 +161,6 @@ export default function Chart({
             )}
           </div>
 
-          {/* Card 2 — Payoff date (always) OR time saved (when extra) */}
           <div style={{
             background: "linear-gradient(135deg, #ECFDF5, #D1FAE5)",
             border: "1px solid #6EE7B7", borderRadius: 12, padding: "16px",
@@ -185,7 +180,7 @@ export default function Chart({
                 <p style={{ fontSize: 10, color: "#059669", fontWeight: 700, margin: "0 0 6px", letterSpacing: "0.07em", textTransform: "uppercase" }}>
                   Mortgage free
                 </p>
-                <p style={{ fontSize: 28, fontWeight: 800, color: "#065F46", lineHeight: 1, margin: 0 }}>
+                <p style={{ fontSize: "clamp(18px, 4vw, 28px)", fontWeight: 800, color: "#065F46", lineHeight: 1.1, margin: 0, wordBreak: "break-word" }}>
                   {timeSavedLabel}
                 </p>
                 <p style={{ fontSize: 11, color: "#059669", margin: "4px 0 0" }}>earlier than scheduled</p>
@@ -195,7 +190,7 @@ export default function Chart({
                 <p style={{ fontSize: 10, color: "#059669", fontWeight: 700, margin: "0 0 6px", letterSpacing: "0.07em", textTransform: "uppercase" }}>
                   Estimated payoff
                 </p>
-                <p style={{ fontSize: 24, fontWeight: 800, color: "#065F46", lineHeight: 1, margin: 0 }}>
+                <p style={{ fontSize: "clamp(14px, 3.5vw, 24px)", fontWeight: 800, color: "#065F46", lineHeight: 1.2, margin: 0, wordBreak: "break-word" }}>
                   {payoffDate}
                 </p>
                 <p style={{ fontSize: 11, color: "#34D399", margin: "4px 0 0" }}>
@@ -214,41 +209,43 @@ export default function Chart({
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
             {hasData
               ? resultRows.map((row, idx) => (
-                  <div key={idx} style={{
-                    padding: "10px 14px",
-                    borderBottom: idx < resultRows.length - 2 ? "1px solid #F1F5F9" : "none",
-                    borderRight: idx % 2 === 0 ? "1px solid #F1F5F9" : "none",
-                  }}>
-                    <p style={{ fontSize: 10, color: "#94A3B8", margin: "0 0 2px", fontWeight: 500 }}>{row.label}</p>
-                    <p style={{
-                      fontSize: 13, fontWeight: 700, margin: 0,
-                      color:
-                        row.highlight === "blue" ? "#2563EB" :
+                <div key={idx} style={{
+                  padding: "10px 14px",
+                  borderBottom: idx < resultRows.length - 2 ? "1px solid #F1F5F9" : "none",
+                  borderRight: idx % 2 === 0 ? "1px solid #F1F5F9" : "none",
+                }}>
+                  <p style={{ fontSize: 10, color: "#94A3B8", margin: "0 0 2px", fontWeight: 500 }}>{row.label}</p>
+                  <p style={{
+                    fontSize: 13, fontWeight: 700, margin: 0,
+                    color:
+                      row.highlight === "blue" ? "#2563EB" :
                         row.highlight === "red" ? "#DC2626" :
-                        row.highlight === "green" ? "#16A34A" : "#1E293B",
-                    }}>
-                      {row.value}
-                    </p>
-                  </div>
-                ))
-              : skeletonRows.map((label, idx) => (
-                  <div key={idx} style={{
-                    padding: "10px 14px",
-                    borderBottom: idx < skeletonRows.length - 2 ? "1px solid #F1F5F9" : "none",
-                    borderRight: idx % 2 === 0 ? "1px solid #F1F5F9" : "none",
+                          row.highlight === "green" ? "#16A34A" : "#1E293B",
                   }}>
-                    <p style={{ fontSize: 10, color: "#94A3B8", margin: "0 0 2px", fontWeight: 500 }}>{label}</p>
-                    <p style={{ fontSize: 13, fontWeight: 700, color: "#CBD5E1", margin: 0 }}>—</p>
-                  </div>
-                ))
+                    {row.value}
+                  </p>
+                </div>
+              ))
+              : skeletonRows.map((label, idx) => (
+                <div key={idx} style={{
+                  padding: "10px 14px",
+                  borderBottom: idx < skeletonRows.length - 2 ? "1px solid #F1F5F9" : "none",
+                  borderRight: idx % 2 === 0 ? "1px solid #F1F5F9" : "none",
+                }}>
+                  <p style={{ fontSize: 10, color: "#94A3B8", margin: "0 0 2px", fontWeight: 500 }}>{label}</p>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "#CBD5E1", margin: 0 }}>—</p>
+                </div>
+              ))
             }
           </div>
         </div>
 
         {/* ── CHART ── */}
+        {/* ✅ FIX: added height: "auto" so container doesn't collapse on mobile */}
         <div style={{
           flex: 1, background: "#fff", borderRadius: 12, border: "1px solid #E8EDF2",
-          padding: "16px 14px 12px", display: "flex", flexDirection: "column", minHeight: 280,
+          padding: "16px 14px 12px", display: "flex", flexDirection: "column",
+          minHeight: 280, height: "auto",
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
             <div>
@@ -275,8 +272,9 @@ export default function Chart({
             </div>
           </div>
 
-          <div style={{ flex: 1, minHeight: 200 }}>
-            <ResponsiveContainer width="100%" height="100%">
+          {/* ✅ FIX: explicit height={220} instead of height="100%" to fix mobile rendering */}
+          <div style={{ flex: 1, minHeight: 200, height: 220 }}>
+            <ResponsiveContainer width="100%" height={220}>
               <ComposedChart data={displayData} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="bankGrad" x1="0" y1="0" x2="0" y2="1">
@@ -313,7 +311,6 @@ export default function Chart({
 
                 <Tooltip content={<CustomTooltip />} />
 
-                {/* Bank — gray, renders first (bottom layer) */}
                 <Area
                   type="monotone"
                   dataKey="bank"
@@ -326,7 +323,6 @@ export default function Chart({
                   animationDuration={900}
                 />
 
-                {/* Swish — blue, renders second (top layer) */}
                 <Area
                   type="monotone"
                   dataKey="swish"
