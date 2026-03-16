@@ -1,10 +1,10 @@
-import React, { useState, useRef,useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import InputField from "./InputField";
 import Chart from "./Chart";
 import { calculateMortgageWithSavings } from "../../helpers/mortgageHelpers";
 
 export default function MortgageCalculator() {
-  // --- Mortgage inputs ---
+  // --- Mortgage inputs (stored as raw strings to allow "6." while typing) ---
   const [propertyPrice, setPropertyPrice] = useState("");
   const [depositAmount, setDepositAmount] = useState("");
   const [depositPercent, setDepositPercent] = useState("");
@@ -12,10 +12,10 @@ export default function MortgageCalculator() {
   const [years, setYears] = useState("");
   const [extraRepayment, setExtraRepayment] = useState("");
   const [fees, setFees] = useState("");
-  const [frequency, setFrequency] = useState("monthly");
+  const [frequency, setFrequency] = useState("");
   const [repaymentType, setRepaymentType] = useState("principal_interest");
 
-  // --- Informational only — isolated, never affect mortgage calc ---
+  // --- Informational only ---
   const [income, setIncome] = useState("");
   const [expenses, setExpenses] = useState("");
 
@@ -25,7 +25,6 @@ export default function MortgageCalculator() {
   const [result, setResult] = useState(null);
   const [payoffDate, setPayoffDate] = useState("");
 
-  // Track which deposit field was last edited
   const lastDepositEdit = useRef("amount");
 
   // --- Safe number parse — returns 0 if NaN/empty ---
@@ -34,69 +33,56 @@ export default function MortgageCalculator() {
     return isNaN(n) ? 0 : n;
   };
 
-  // --- Mortgage field handlers only ---
+  // --- Handlers: store raw string, only cross-calculate numeric parts ---
   const handlePropertyPriceChange = (val) => {
+    setPropertyPrice(val);
     const price = toNum(val);
-    setPropertyPrice(price);
     if (price > 0) {
       if (lastDepositEdit.current === "percent") {
         const pct = toNum(depositPercent);
-        setDepositAmount(parseFloat(((pct / 100) * price).toFixed(2)));
+        setDepositAmount(String(parseFloat(((pct / 100) * price).toFixed(2))));
       } else {
         const amt = toNum(depositAmount);
-        setDepositPercent(parseFloat(((amt / price) * 100).toFixed(2)));
+        setDepositPercent(String(parseFloat(((amt / price) * 100).toFixed(2))));
       }
     }
   };
 
   const handleDepositAmountChange = (val) => {
     lastDepositEdit.current = "amount";
-    const amount = toNum(val);
-    setDepositAmount(amount);
+    setDepositAmount(val);
     const price = toNum(propertyPrice);
     if (price > 0) {
-      setDepositPercent(parseFloat(((amount / price) * 100).toFixed(2)));
+      setDepositPercent(String(parseFloat(((toNum(val) / price) * 100).toFixed(2))));
     }
   };
 
   const handleDepositPercentChange = (val) => {
     lastDepositEdit.current = "percent";
-    const pct = toNum(val);
-    setDepositPercent(pct);
+    setDepositPercent(val);
     const price = toNum(propertyPrice);
-    setDepositAmount(parseFloat(((pct / 100) * price).toFixed(2)));
+    setDepositAmount(String(parseFloat(((toNum(val) / 100) * price).toFixed(2))));
   };
 
-  const handleRateChange = (val) => setRate(toNum(val));
-  const handleYearsChange = (val) => setYears(toNum(val));
-  const handleExtraRepaymentChange = (val) => setExtraRepayment(toNum(val));
-  const handleFeesChange = (val) => setFees(toNum(val));
+  // ✅ These now store raw strings instead of converting to number
+  const handleRateChange = (val) => setRate(val);
+  const handleYearsChange = (val) => setYears(val);
+  const handleExtraRepaymentChange = (val) => setExtraRepayment(val);
+  const handleFeesChange = (val) => setFees(val);
+
   const handleFrequencyChange = (value) => {
     setFrequency(value);
-
     const baseMonthlyExtra = 500;
-
     let newExtra = 0;
-
     switch (value) {
-      case "monthly":
-        newExtra = baseMonthlyExtra;
-        break;
-
-      case "fortnightly":
-        newExtra = baseMonthlyExtra / 2;
-        break;
-
-      case "weekly":
-        newExtra = baseMonthlyExtra / 4;
-        break;
-
-      default:
-        newExtra = baseMonthlyExtra;
+      case "monthly":     newExtra = baseMonthlyExtra;     break;
+      case "fortnightly": newExtra = baseMonthlyExtra / 2; break;
+      case "weekly":      newExtra = baseMonthlyExtra / 4; break;
+      default:            newExtra = baseMonthlyExtra;
     }
-
-    setExtraRepayment(Number(newExtra.toFixed(2)));
+    setExtraRepayment(String(Number(newExtra.toFixed(2))));
   };
+
   // --- Calculate ---
   const handleCalculate = () => {
     const price = toNum(propertyPrice);
@@ -123,7 +109,6 @@ export default function MortgageCalculator() {
 
     setResult(res);
 
-    // Payoff date
     const periodsPerYear = frequency === "weekly" ? 52 : frequency === "fortnightly" ? 26 : 12;
     const monthsToPayoff = Math.round((res.numberOfRepayments / periodsPerYear) * 12);
     const payoff = new Date();
@@ -148,41 +133,43 @@ export default function MortgageCalculator() {
     bank: row.balance,
     swish: chartDataSwish[i] ? Math.max(0, chartDataSwish[i].balance) : 0,
   }));
-// Re-run calculation whenever extraRepayment changes, but only if a result already exists
-useEffect(() => {
-  if (!result) return; // don't auto-calc before first manual Calculate
 
-  const price = toNum(propertyPrice);
-  const deposit = toNum(depositAmount);
-  const r = toNum(rate);
-  const y = toNum(years);
-  const extra = toNum(extraRepayment);
+  // Re-run calculation whenever extraRepayment changes, but only if a result already exists
+  useEffect(() => {
+    if (!result) return;
 
-  if (!price || price <= 0 || !y || y <= 0) return;
+    const price = toNum(propertyPrice);
+    const deposit = toNum(depositAmount);
+    const r = toNum(rate);
+    const y = toNum(years);
+    const extra = toNum(extraRepayment);
 
-  const res = calculateMortgageWithSavings({
-    propertyPrice: price,
-    depositAmount: deposit,
-    rate: r,
-    years: y,
-    frequency,
-    repaymentType,
-    extraRepayment: extra,
-  });
+    if (!price || price <= 0 || !y || y <= 0) return;
 
-  setResult(res);
+    const res = calculateMortgageWithSavings({
+      propertyPrice: price,
+      depositAmount: deposit,
+      rate: r,
+      years: y,
+      frequency,
+      repaymentType,
+      extraRepayment: extra,
+    });
 
-  const periodsPerYear = frequency === "weekly" ? 52 : frequency === "fortnightly" ? 26 : 12;
-  const monthsToPayoff = Math.round((res.numberOfRepayments / periodsPerYear) * 12);
-  const payoff = new Date();
-  payoff.setMonth(payoff.getMonth() + monthsToPayoff);
-  setPayoffDate(
-    payoff.toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" })
-  );
+    setResult(res);
 
-  setChartDataBank(res.scheduleWithoutExtra);
-  setChartDataSwish(res.scheduleWithExtra);
-}, [extraRepayment]); // only watches extraRepayment
+    const periodsPerYear = frequency === "weekly" ? 52 : frequency === "fortnightly" ? 26 : 12;
+    const monthsToPayoff = Math.round((res.numberOfRepayments / periodsPerYear) * 12);
+    const payoff = new Date();
+    payoff.setMonth(payoff.getMonth() + monthsToPayoff);
+    setPayoffDate(
+      payoff.toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" })
+    );
+
+    setChartDataBank(res.scheduleWithoutExtra);
+    setChartDataSwish(res.scheduleWithExtra);
+  }, [extraRepayment]);
+
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-2 md:p-4">
       <div className="max-w-[1400px] w-full">
@@ -239,6 +226,7 @@ useEffect(() => {
                   onChange={(e) => handleFrequencyChange(e.target.value)}
                   className="h-[48px] px-4 border border-[#E2E8F0] rounded-[8px]"
                 >
+                   <option value="">Select</option>
                   <option value="monthly">Monthly</option>
                   <option value="fortnightly">Fortnightly</option>
                   <option value="weekly">Weekly</option>
@@ -272,7 +260,6 @@ useEffect(() => {
                 value={fees}
                 onChange={handleFeesChange}
               />
-
             </div>
 
             <button
@@ -281,8 +268,6 @@ useEffect(() => {
             >
               CALCULATE
             </button>
-
-
           </div>
 
           {/* Right Panel: Chart */}

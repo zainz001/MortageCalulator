@@ -19,11 +19,15 @@ const InputField = ({ label, prefix, placeholder, value, onChange }) => {
 
         <input
           type="text"
-          value={value}   // ✅ IMPORTANT
+          value={value}
           placeholder={placeholder}
-          onChange={(e) =>
-            onChange && onChange(Number(e.target.value.replace(/,/g, "")))
-          }
+          onChange={(e) => {
+            const raw = e.target.value.replace(/,/g, "");
+            // Allow: empty, digits only, or digits with a single decimal point
+            if (raw === "" || /^\d*\.?\d*$/.test(raw)) {
+              onChange && onChange(raw);
+            }
+          }}
           className="flex-1 w-full h-full px-4 text-[#23303B] text-[15px] outline-none bg-transparent placeholder-[#A1A8B2]"
         />
       </div>
