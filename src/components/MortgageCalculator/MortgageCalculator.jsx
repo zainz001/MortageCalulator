@@ -64,23 +64,14 @@ export default function MortgageCalculator() {
     setDepositAmount(String(parseFloat(((toNum(val) / 100) * price).toFixed(2))));
   };
 
-  // ✅ These now store raw strings instead of converting to number
   const handleRateChange = (val) => setRate(val);
   const handleYearsChange = (val) => setYears(val);
   const handleExtraRepaymentChange = (val) => setExtraRepayment(val);
   const handleFeesChange = (val) => setFees(val);
 
+  // ✅ Removed auto-set of extraRepayment
   const handleFrequencyChange = (value) => {
     setFrequency(value);
-    const baseMonthlyExtra = 500;
-    let newExtra = 0;
-    switch (value) {
-      case "monthly":     newExtra = baseMonthlyExtra;     break;
-      case "fortnightly": newExtra = baseMonthlyExtra / 2; break;
-      case "weekly":      newExtra = baseMonthlyExtra / 4; break;
-      default:            newExtra = baseMonthlyExtra;
-    }
-    setExtraRepayment(String(Number(newExtra.toFixed(2))));
   };
 
   // --- Calculate ---
@@ -226,7 +217,7 @@ export default function MortgageCalculator() {
                   onChange={(e) => handleFrequencyChange(e.target.value)}
                   className="h-[48px] px-4 border border-[#E2E8F0] rounded-[8px]"
                 >
-                   <option value="">Select</option>
+                  <option value="">Select</option>
                   <option value="monthly">Monthly</option>
                   <option value="fortnightly">Fortnightly</option>
                   <option value="weekly">Weekly</option>
@@ -246,8 +237,10 @@ export default function MortgageCalculator() {
                   <option value="interest_only">Interest Only</option>
                 </select>
               </div>
+
+              {/* ✅ Label updates dynamically based on selected frequency */}
               <InputField
-                label="Extra Repayment (Optional)"
+                label={`Extra ${frequency ? frequency.charAt(0).toUpperCase() + frequency.slice(1) + " " : ""}Repayment (Optional)`}
                 prefix="$"
                 placeholder="0"
                 value={extraRepayment}
