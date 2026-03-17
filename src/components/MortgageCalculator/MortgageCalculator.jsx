@@ -14,21 +14,25 @@ export default function MortgageCalculator() {
   const [fees, setFees] = useState("");
   const [frequency, setFrequency] = useState("");
   const [repaymentType, setRepaymentType] = useState("principal_interest");
-
+  const [baseRepayment, setBaseRepayment] = useState(0);
   // --- Informational only ---
-  const [income, setIncome] = useState("");
-  const [expenses, setExpenses] = useState("");
 
   // --- Outputs ---
   const [chartDataBank, setChartDataBank] = useState([]);
   const [chartDataSwish, setChartDataSwish] = useState([]);
   const [result, setResult] = useState(null);
   const [payoffDate, setPayoffDate] = useState("");
+  const [extraEdited, setExtraEdited] = useState(false);
 
   const lastDepositEdit = useRef("amount");
-
+  useEffect(() => {
+    if (!extraEdited) {
+      setExtraRepayment(baseRepayment.toFixed(2));
+    }
+  }, [baseRepayment, extraEdited]);
   // --- Safe number parse — returns 0 if NaN/empty ---
   const toNum = (val) => {
+    if (val === "" || val === null || val === undefined) return 0;
     const n = parseFloat(val);
     return isNaN(n) ? 0 : n;
   };
@@ -66,14 +70,23 @@ export default function MortgageCalculator() {
 
   const handleRateChange = (val) => setRate(val);
   const handleYearsChange = (val) => setYears(val);
-  const handleExtraRepaymentChange = (val) => setExtraRepayment(val);
-  const handleFeesChange = (val) => setFees(val);
+  const handleExtraRepaymentChange = (val) => {
+    const num = toNum(val);
 
-  // ✅ Removed auto-set of extraRepayment
-  const handleFrequencyChange = (value) => {
-    setFrequency(value);
+    if (num < baseRepayment) {
+      setExtraRepayment(baseRepayment.toFixed(2));
+      return;
+    }
+
+    setExtraRepayment(val);
   };
 
+  // ✅ Removed auto-set of extraRepayment
+// When frequency changes, reset extraEdited so extraRepayment can update automatically
+const handleFrequencyChange = (value) => {
+  setFrequency(value);
+  setExtraEdited(false); // allow auto-sync with new baseRepayment
+};
   // --- Calculate ---
   const handleCalculate = () => {
     const price = toNum(propertyPrice);
@@ -99,6 +112,14 @@ export default function MortgageCalculator() {
     });
 
     setResult(res);
+
+    const base = res.repayment;
+    setBaseRepayment(base);
+
+    // ✅ Only set extraRepayment if user hasn't typed anything yet
+    if (!extraRepayment || toNum(extraRepayment) < base) {
+      setExtraRepayment(base.toFixed(2));
+    }
 
     const periodsPerYear = frequency === "weekly" ? 52 : frequency === "fortnightly" ? 26 : 12;
     const monthsToPayoff = Math.round((res.numberOfRepayments / periodsPerYear) * 12);
@@ -131,15 +152,11 @@ export default function MortgageCalculator() {
 
   // Re-run calculation whenever extraRepayment changes, but only if a result already exists
   useEffect(() => {
-    if (!result) return;
-
     const price = toNum(propertyPrice);
     const deposit = toNum(depositAmount);
     const r = toNum(rate);
     const y = toNum(years);
-    const extra = toNum(extraRepayment);
-
-    if (!price || price <= 0 || !y || y <= 0) return;
+    if (!price || !y || !frequency) return;
 
     const res = calculateMortgageWithSavings({
       propertyPrice: price,
@@ -148,23 +165,21 @@ export default function MortgageCalculator() {
       years: y,
       frequency,
       repaymentType,
-      extraRepayment: extra,
+      extraRepayment: toNum(extraRepayment),
     });
 
     setResult(res);
+
+    setBaseRepayment(res.repayment); // update baseRepayment dynamically
+    setChartDataBank(res.scheduleWithoutExtra);
+    setChartDataSwish(res.scheduleWithExtra);
 
     const periodsPerYear = frequency === "weekly" ? 52 : frequency === "fortnightly" ? 26 : 12;
     const monthsToPayoff = Math.round((res.numberOfRepayments / periodsPerYear) * 12);
     const payoff = new Date();
     payoff.setMonth(payoff.getMonth() + monthsToPayoff);
-    setPayoffDate(
-      payoff.toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" })
-    );
-
-    setChartDataBank(res.scheduleWithoutExtra);
-    setChartDataSwish(res.scheduleWithExtra);
-  }, [propertyPrice, depositAmount, rate, years, extraRepayment, frequency, repaymentType]);
-
+    setPayoffDate(payoff.toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" }));
+  }, [propertyPrice, depositAmount, depositPercent, rate, years, frequency, repaymentType, extraRepayment]);
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-2 md:p-4">
       <div className="max-w-[1400px] w-full">
@@ -244,13 +259,21 @@ export default function MortgageCalculator() {
 
               {/* ✅ Label updates dynamically based on selected frequency */}
               <InputField
-                label={`Extra (${frequency ? frequency.charAt(0).toUpperCase() + frequency.slice(1) + ") " : ""}Repayment`}
+                label={`Extra (${frequency ? frequency.charAt(0).toUpperCase() + frequency.slice(1) : ""}) Repayment`}
                 prefix="$"
-                placeholder="0"
+                type="number"
                 value={extraRepayment}
-                onChange={handleExtraRepaymentChange}
+                onChange={(num) => {
+                  setExtraRepayment(num === "" ? "" : String(num));
+                  setExtraEdited(true); // user is typing
+                }}
+                onBlur={() => {
+                  const clamped = Math.max(toNum(extraRepayment), baseRepayment);
+                  setExtraRepayment(clamped.toFixed(2));
+                }}
+                min={0}
+                step={1}
               />
-
             </div>
 
             <button
