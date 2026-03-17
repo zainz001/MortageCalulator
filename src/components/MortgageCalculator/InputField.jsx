@@ -1,6 +1,15 @@
 import React from "react";
 
-const InputField = ({ label, prefix, placeholder, value, onChange, type = "text", min, step }) => {
+const InputField = ({
+  label,
+  prefix,
+  placeholder,
+  value,
+  onChange,
+  type = "text",
+  min,
+  step
+}) => {
   return (
     <div className="flex flex-col gap-[8px]">
       <label className="text-[13px] md:text-[14px] text-[#64748B] font-medium">
@@ -24,15 +33,20 @@ const InputField = ({ label, prefix, placeholder, value, onChange, type = "text"
           step={step}
           onChange={(e) => {
             let raw = e.target.value;
+
             if (type === "text") {
               raw = raw.replace(/,/g, "");
               if (raw === "" || /^\d*\.?\d*$/.test(raw)) {
                 onChange && onChange(raw);
               }
             } else {
-              // type="number" → parse to float
-              const num = parseFloat(raw);
-              onChange && onChange(isNaN(num) ? "" : num);
+              // For number inputs, round to nearest integer before passing up
+              if (raw === "") {
+                onChange && onChange("");
+              } else {
+                const rounded = String(Math.round(parseFloat(raw)));
+                onChange && onChange(rounded);
+              }
             }
           }}
           className="flex-1 w-full h-full px-4 text-[#23303B] text-[15px] outline-none bg-transparent placeholder-[#A1A8B2]"

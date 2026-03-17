@@ -82,14 +82,31 @@ export default function Chart({
     "No. of repayments", "Estimated payoff date", "Interest saved (extra)",
   ];
 
+  const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+  // Format an X-axis tick: decimal year → "MMM 'YY", whole year → "2026"
+  const formatXTick = (val) => {
+    const num = parseFloat(val);
+    if (isNaN(num)) return String(val);
+    const yr = Math.floor(num);
+    const fraction = num - yr;
+    // Treat as whole year if fraction is negligible
+    if (fraction < 0.001) return String(yr);
+    // Use Math.floor (not round) so e.g. 0.0833 → month 0 = Jan, not Feb
+    const mIdx = Math.min(Math.max(Math.floor(fraction * 12), 0), 11);
+    return `${MONTH_NAMES[mIdx]} '${String(yr).slice(-2)}`;
+  };
+
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload || !payload.length) return null;
+    // Format the tooltip label the same way as the axis tick
+    const displayLabel = formatXTick(label);
     return (
       <div style={{
         background: "#fff", border: "1px solid #E2E8F0", borderRadius: 10,
         padding: "10px 14px", boxShadow: "0 4px 16px rgba(0,0,0,0.08)", fontSize: 13,
       }}>
-        <p style={{ fontWeight: 700, color: "#1E293B", marginBottom: 6, marginTop: 0 }}>{label}</p>
+        <p style={{ fontWeight: 700, color: "#1E293B", marginBottom: 6, marginTop: 0 }}>{displayLabel}</p>
         {payload.map((p, i) => (
           <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
             <span style={{
@@ -241,7 +258,6 @@ export default function Chart({
         </div>
 
         {/* ── CHART ── */}
-        {/* ✅ FIX: added height: "auto" so container doesn't collapse on mobile */}
         <div style={{
           flex: 1, background: "#fff", borderRadius: 12, border: "1px solid #E8EDF2",
           padding: "16px 14px 12px", display: "flex", flexDirection: "column",
@@ -272,7 +288,6 @@ export default function Chart({
             </div>
           </div>
 
-          {/* ✅ FIX: explicit height={220} instead of height="100%" to fix mobile rendering */}
           <div style={{ flex: 1, minHeight: 200, height: 220 }}>
             <ResponsiveContainer width="100%" height={220}>
               <ComposedChart data={displayData} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
@@ -296,6 +311,7 @@ export default function Chart({
                   tick={{ fill: "#94A3B8", fontSize: 10, fontWeight: 500 }}
                   dy={6}
                   interval="preserveStartEnd"
+                  tickFormatter={formatXTick}
                 />
                 <YAxis
                   width={62}

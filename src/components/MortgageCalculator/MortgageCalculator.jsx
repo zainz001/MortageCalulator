@@ -16,7 +16,7 @@ export default function MortgageCalculator() {
   const [repaymentType, setRepaymentType] = useState("principal_interest");
   const [baseRepayment, setBaseRepayment] = useState(0);
   // --- Informational only ---
-
+  const [hasCalculated, setHasCalculated] = useState(false);
   // --- Outputs ---
   const [chartDataBank, setChartDataBank] = useState([]);
   const [chartDataSwish, setChartDataSwish] = useState([]);
@@ -27,7 +27,7 @@ export default function MortgageCalculator() {
   const lastDepositEdit = useRef("amount");
   useEffect(() => {
     if (!extraEdited) {
-      setExtraRepayment(baseRepayment.toFixed(2));
+      setExtraRepayment(String(Math.round(baseRepayment))); // ← not .toFixed(2)
     }
   }, [baseRepayment, extraEdited]);
   // --- Safe number parse — returns 0 if NaN/empty ---
@@ -71,22 +71,22 @@ export default function MortgageCalculator() {
   const handleRateChange = (val) => setRate(val);
   const handleYearsChange = (val) => setYears(val);
   const handleExtraRepaymentChange = (val) => {
-    const num = toNum(val);
+    let num = toNum(val);
+    const minVal = Math.round(baseRepayment); // integer floor
 
-    if (num < baseRepayment) {
-      setExtraRepayment(baseRepayment.toFixed(2));
-      return;
+    if (num < minVal) {
+      num = minVal; // clamp to rounded base, not ceil of float
     }
 
-    setExtraRepayment(val);
+    setExtraRepayment(String(Math.round(num)));
   };
 
   // ✅ Removed auto-set of extraRepayment
-// When frequency changes, reset extraEdited so extraRepayment can update automatically
-const handleFrequencyChange = (value) => {
-  setFrequency(value);
-  setExtraEdited(false); // allow auto-sync with new baseRepayment
-};
+  // When frequency changes, reset extraEdited so extraRepayment can update automatically
+  const handleFrequencyChange = (value) => {
+    setFrequency(value);
+    setExtraEdited(false); // allow auto-sync with new baseRepayment
+  };
   // --- Calculate ---
   const handleCalculate = () => {
     const price = toNum(propertyPrice);
@@ -113,14 +113,12 @@ const handleFrequencyChange = (value) => {
 
     setResult(res);
 
-    const base = res.repayment;
+    const base = Math.round(res.repayment);
     setBaseRepayment(base);
-
     // ✅ Only set extraRepayment if user hasn't typed anything yet
     if (!extraRepayment || toNum(extraRepayment) < base) {
-      setExtraRepayment(base.toFixed(2));
+      setExtraRepayment(String(Math.round(base))); // only integer
     }
-
     const periodsPerYear = frequency === "weekly" ? 52 : frequency === "fortnightly" ? 26 : 12;
     const monthsToPayoff = Math.round((res.numberOfRepayments / periodsPerYear) * 12);
     const payoff = new Date();
@@ -131,6 +129,7 @@ const handleFrequencyChange = (value) => {
 
     setChartDataBank(res.scheduleWithoutExtra);
     setChartDataSwish(res.scheduleWithExtra);
+    setHasCalculated(true);
   };
 
   // Live-derived values
@@ -152,6 +151,8 @@ const handleFrequencyChange = (value) => {
 
   // Re-run calculation whenever extraRepayment changes, but only if a result already exists
   useEffect(() => {
+    if (!hasCalculated) return; // skip updates until first calculate
+
     const price = toNum(propertyPrice);
     const deposit = toNum(depositAmount);
     const r = toNum(rate);
@@ -169,8 +170,7 @@ const handleFrequencyChange = (value) => {
     });
 
     setResult(res);
-
-    setBaseRepayment(res.repayment); // update baseRepayment dynamically
+    setBaseRepayment(Math.round(res.repayment)); // not res.repayment raw
     setChartDataBank(res.scheduleWithoutExtra);
     setChartDataSwish(res.scheduleWithExtra);
 
@@ -179,7 +179,7 @@ const handleFrequencyChange = (value) => {
     const payoff = new Date();
     payoff.setMonth(payoff.getMonth() + monthsToPayoff);
     setPayoffDate(payoff.toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" }));
-  }, [propertyPrice, depositAmount, depositPercent, rate, years, frequency, repaymentType, extraRepayment]);
+  }, [propertyPrice, depositAmount, depositPercent, rate, years, frequency, repaymentType, extraRepayment, hasCalculated]);
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-2 md:p-4">
       <div className="max-w-[1400px] w-full">
@@ -264,14 +264,15 @@ const handleFrequencyChange = (value) => {
                 type="number"
                 value={extraRepayment}
                 onChange={(num) => {
-                  setExtraRepayment(num === "" ? "" : String(num));
-                  setExtraEdited(true); // user is typing
+                  handleExtraRepaymentChange(num); // ← use the handler that clamps + rounds
+                  setExtraEdited(true);
                 }}
                 onBlur={() => {
-                  const clamped = Math.max(toNum(extraRepayment), baseRepayment);
-                  setExtraRepayment(clamped.toFixed(2));
+                  const minVal = Math.round(baseRepayment);
+                  const clamped = Math.max(toNum(extraRepayment), minVal);
+                  setExtraRepayment(String(Math.round(clamped)));
                 }}
-                min={0}
+                min={baseRepayment}
                 step={1}
               />
             </div>
