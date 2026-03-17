@@ -7,16 +7,16 @@ export function getPeriodsPerYear(freq) {
 
 
 function runAmortisation({ loanAmount, r, n, periodsPerYear, repaymentType, extraRepayment }) {
- 
+
   let scheduledRepayment;
   if (repaymentType === "interest_only") {
     scheduledRepayment = loanAmount * r;
-  } else {
-    if (r === 0) {
-      scheduledRepayment = loanAmount / n;
-    } else {
-      scheduledRepayment = loanAmount * ((r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
-    }
+  }
+  else if (r === 0) {
+    scheduledRepayment = loanAmount / n;
+  }
+  else {
+    scheduledRepayment = loanAmount * ((r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
   }
 
   let balance = loanAmount;
@@ -33,9 +33,7 @@ function runAmortisation({ loanAmount, r, n, periodsPerYear, repaymentType, extr
     let principalPortion = scheduledRepayment + extraRepayment - interestPortion;
 
     // Cap final repayment so balance doesn't go below 0
-    if (principalPortion > balance) {
-      principalPortion = balance;
-    }
+    principalPortion = Math.min(principalPortion, balance);
 
     const actualRepayment = interestPortion + principalPortion;
     balance -= principalPortion;
@@ -46,9 +44,12 @@ function runAmortisation({ loanAmount, r, n, periodsPerYear, repaymentType, extr
     periodsActual = i;
 
     // Record end-of-year balance (and first period for chart start)
-    if (i === 1 || i % periodsPerYear === 0) {
+    const pointsPerYear = 4; // quarterly
+    const step = Math.floor(periodsPerYear / pointsPerYear);
+
+    if (i === 1 || i % step === 0) {
       yearlyBalances.push({
-        year: startYear + Math.ceil(i / periodsPerYear),
+        year: startYear + i / periodsPerYear, // fractional year
         balance: Math.max(0, balance),
       });
     }

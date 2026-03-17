@@ -119,11 +119,15 @@ export default function MortgageCalculator() {
       ? ((loanAmount / toNum(propertyPrice)) * 100).toFixed(2)
       : "0.00";
 
-  const mergedChartData = chartDataBank.map((row, i) => ({
-    year: row.year,
-    bank: row.balance,
-    swish: chartDataSwish[i] ? Math.max(0, chartDataSwish[i].balance) : 0,
-  }));
+  const mergedChartData = React.useMemo(() => {
+    return chartDataBank.map((row, i) => ({
+      year: row.year,
+      bank: row.balance,
+      swish: chartDataSwish[i]
+        ? Math.max(0, chartDataSwish[i].balance)
+        : 0,
+    }));
+  }, [chartDataBank, chartDataSwish, frequency]);
 
   // Re-run calculation whenever extraRepayment changes, but only if a result already exists
   useEffect(() => {
@@ -159,7 +163,7 @@ export default function MortgageCalculator() {
 
     setChartDataBank(res.scheduleWithoutExtra);
     setChartDataSwish(res.scheduleWithExtra);
-  }, [extraRepayment]);
+  }, [propertyPrice, depositAmount, rate, years, extraRepayment, frequency, repaymentType]);
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-2 md:p-4">
@@ -240,19 +244,13 @@ export default function MortgageCalculator() {
 
               {/* ✅ Label updates dynamically based on selected frequency */}
               <InputField
-                label={`Extra ${frequency ? frequency.charAt(0).toUpperCase() + frequency.slice(1) + " " : ""}Repayment (Optional)`}
+                label={`Extra (${frequency ? frequency.charAt(0).toUpperCase() + frequency.slice(1) + ") " : ""}Repayment`}
                 prefix="$"
                 placeholder="0"
                 value={extraRepayment}
                 onChange={handleExtraRepaymentChange}
               />
-              <InputField
-                label="Fees Included in Repayment"
-                prefix="$"
-                placeholder="0"
-                value={fees}
-                onChange={handleFeesChange}
-              />
+
             </div>
 
             <button
@@ -265,6 +263,7 @@ export default function MortgageCalculator() {
 
           {/* Right Panel: Chart */}
           <Chart
+            key={frequency}
             chartData={mergedChartData}
             savings={result ? result.interestSaved : 0}
             yearsSaved={result ? result.yearsSaved : 0}
