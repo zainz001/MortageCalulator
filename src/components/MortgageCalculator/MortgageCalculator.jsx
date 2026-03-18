@@ -298,14 +298,18 @@ export default function MortgageCalculator() {
                 prefix="$"
                 type="number"
                 value={extraRepayment}
+                disabled={!hasCalculated}
+                tooltip={!hasCalculated ? "Your Repayment will be determined once the mortgage is calculated." : ""}
+                error={repaymentError}
                 onChange={(num) => {
-                  handleExtraRepaymentChange(num); // ← use the handler that clamps + rounds
+                  handleExtraRepaymentChange(num);
                   setExtraEdited(true);
                 }}
                 onBlur={() => {
-                  const minVal = Math.round(baseRepayment);
-                  const clamped = Math.max(toNum(extraRepayment), minVal);
-                  setExtraRepayment(String(Math.round(clamped)));
+                  if (extraRepayment === "") {
+                    setExtraRepayment(String(Math.round(baseRepayment)));
+                    setRepaymentError("");
+                  }
                 }}
                 min={baseRepayment}
                 step={1}
