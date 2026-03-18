@@ -271,7 +271,7 @@ export default function MortgageCalculator() {
                   onChange={(e) => handleFrequencyChange(e.target.value)}
                   className="h-[48px] px-4 border border-[#E2E8F0] rounded-[8px]"
                 >
-                  <option value="">Select</option>
+                  <option value="" disabled hidden>Select</option>
                   <option value="monthly">Monthly</option>
                   <option value="fortnightly">Fortnightly</option>
                   <option value="weekly">Weekly</option>
