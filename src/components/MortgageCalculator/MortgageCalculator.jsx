@@ -11,7 +11,7 @@ export default function MortgageCalculator() {
   const [rate, setRate] = useState("");
   const [years, setYears] = useState("");
   const [extraRepayment, setExtraRepayment] = useState("");
-  const [fees, setFees] = useState("");
+  const [repaymentError, setRepaymentError] = useState("");
   const [frequency, setFrequency] = useState("");
   const [repaymentType, setRepaymentType] = useState("principal_interest");
   const [baseRepayment, setBaseRepayment] = useState(0);
@@ -71,16 +71,15 @@ export default function MortgageCalculator() {
   const handleRateChange = (val) => setRate(val);
   const handleYearsChange = (val) => setYears(val);
   const handleExtraRepaymentChange = (val) => {
-    let num = toNum(val);
-    const minVal = Math.round(baseRepayment); // integer floor
-
-    if (num < minVal) {
-      num = minVal; // clamp to rounded base, not ceil of float
+    setExtraRepayment(val);
+    setExtraEdited(true);
+    const minVal = Math.round(baseRepayment); // this IS the Repayment/fn value
+    if (val !== "" && toNum(val) < minVal) {
+      setRepaymentError(`Cannot be less than minimum repayment $${minVal}`);
+    } else {
+      setRepaymentError("");
     }
-
-    setExtraRepayment(String(Math.round(num)));
   };
-
   // ✅ Removed auto-set of extraRepayment
   // When frequency changes, reset extraEdited so extraRepayment can update automatically
   const handleFrequencyChange = (value) => {
@@ -89,6 +88,7 @@ export default function MortgageCalculator() {
   };
   // --- Calculate ---
   const handleCalculate = () => {
+    if (repaymentError) return alert(repaymentError);
     const price = toNum(propertyPrice);
     const deposit = toNum(depositAmount);
     const r = toNum(rate);
