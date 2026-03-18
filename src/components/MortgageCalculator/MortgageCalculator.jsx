@@ -259,7 +259,7 @@ export default function MortgageCalculator() {
 
               {/* ✅ Label updates dynamically based on selected frequency */}
               <InputField
-                label={`Extra (${frequency ? frequency.charAt(0).toUpperCase() + frequency.slice(1) : ""}) Repayment`}
+                label={`(${frequency ? frequency.charAt(0).toUpperCase() + frequency.slice(1) : ""}) Repayment Amount`}
                 prefix="$"
                 type="number"
                 value={extraRepayment}
