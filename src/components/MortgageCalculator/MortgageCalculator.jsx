@@ -108,7 +108,7 @@ export default function MortgageCalculator() {
       years: y,
       frequency,
       repaymentType,
-      extraRepayment: extra,
+      extraRepayment: Math.max(0, extra - Math.round(res_base))
     });
 
     setResult(res);
@@ -166,7 +166,7 @@ export default function MortgageCalculator() {
       years: y,
       frequency,
       repaymentType,
-      extraRepayment: toNum(extraRepayment),
+      extraRepayment: Math.max(0, toNum(extraRepayment) - baseRepayment),
     });
 
     setResult(res);
