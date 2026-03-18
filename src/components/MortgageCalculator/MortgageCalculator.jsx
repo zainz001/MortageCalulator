@@ -93,13 +93,29 @@ export default function MortgageCalculator() {
     const deposit = toNum(depositAmount);
     const r = toNum(rate);
     const y = toNum(years);
-    const extra = toNum(extraRepayment);
+    const repaymentAmount = toNum(extraRepayment);
 
     if (!price || price <= 0) return alert("Property Price must be greater than 0.");
     if (deposit < 0 || deposit >= price) return alert("Deposit Amount must be between $0 and Property Price.");
     if (r < 0) return alert("Interest Rate must be 0 or greater.");
     if (!y || y <= 0 || y > 30) return alert("Loan Term must be between 1 and 30 years.");
-    if (extra < 0) return alert("Extra Repayment must be 0 or greater.");
+
+    // First, get the base repayment with no extra
+    const baseRes = calculateMortgageWithSavings({
+      propertyPrice: price,
+      depositAmount: deposit,
+      rate: r,
+      years: y,
+      frequency,
+      repaymentType,
+      extraRepayment: 0,
+    });
+
+    const base = Math.round(baseRes.repayment);
+    setBaseRepayment(base);
+
+    // Extra = whatever user typed MINUS the base repayment
+    const extraAboveBase = Math.max(0, repaymentAmount - base);
 
     const res = calculateMortgageWithSavings({
       propertyPrice: price,
@@ -108,17 +124,15 @@ export default function MortgageCalculator() {
       years: y,
       frequency,
       repaymentType,
-      extraRepayment: Math.max(0, extra - Math.round(res_base))
+      extraRepayment: extraAboveBase,
     });
 
     setResult(res);
 
-    const base = Math.round(res.repayment);
-    setBaseRepayment(base);
-    // ✅ Only set extraRepayment if user hasn't typed anything yet
     if (!extraRepayment || toNum(extraRepayment) < base) {
-      setExtraRepayment(String(Math.round(base))); // only integer
+      setExtraRepayment(String(base));
     }
+
     const periodsPerYear = frequency === "weekly" ? 52 : frequency === "fortnightly" ? 26 : 12;
     const monthsToPayoff = Math.round((res.numberOfRepayments / periodsPerYear) * 12);
     const payoff = new Date();
@@ -131,7 +145,6 @@ export default function MortgageCalculator() {
     setChartDataSwish(res.scheduleWithExtra);
     setHasCalculated(true);
   };
-
   // Live-derived values
   const loanAmount = Math.max(0, toNum(propertyPrice) - toNum(depositAmount));
   const lvr =
@@ -150,14 +163,37 @@ export default function MortgageCalculator() {
   }, [chartDataBank, chartDataSwish, frequency]);
 
   // Re-run calculation whenever extraRepayment changes, but only if a result already exists
+  const prevFrequency = useRef(frequency);
+
   useEffect(() => {
-    if (!hasCalculated) return; // skip updates until first calculate
+    if (!hasCalculated) return;
 
     const price = toNum(propertyPrice);
     const deposit = toNum(depositAmount);
     const r = toNum(rate);
     const y = toNum(years);
     if (!price || !y || !frequency) return;
+
+    const baseRes = calculateMortgageWithSavings({
+      propertyPrice: price,
+      depositAmount: deposit,
+      rate: r,
+      years: y,
+      frequency,
+      repaymentType,
+      extraRepayment: 0,
+    });
+
+    const newBase = Math.round(baseRes.repayment);
+    setBaseRepayment(newBase);
+
+    // ← Only reset the field when frequency actually changed
+    if (prevFrequency.current !== frequency) {
+      setExtraRepayment(String(newBase));
+      prevFrequency.current = frequency;
+    }
+
+    const extraAboveBase = Math.max(0, toNum(extraRepayment) - newBase);
 
     const res = calculateMortgageWithSavings({
       propertyPrice: price,
@@ -166,11 +202,10 @@ export default function MortgageCalculator() {
       years: y,
       frequency,
       repaymentType,
-      extraRepayment: Math.max(0, toNum(extraRepayment) - baseRepayment),
+      extraRepayment: extraAboveBase,
     });
 
     setResult(res);
-    setBaseRepayment(Math.round(res.repayment)); // not res.repayment raw
     setChartDataBank(res.scheduleWithoutExtra);
     setChartDataSwish(res.scheduleWithExtra);
 
@@ -259,7 +294,7 @@ export default function MortgageCalculator() {
 
               {/* ✅ Label updates dynamically based on selected frequency */}
               <InputField
-                label={`(${frequency ? frequency.charAt(0).toUpperCase() + frequency.slice(1) : ""}) Repayment Amount`}
+                label={`Repayment Amount ${frequency ? `(per ${frequency.charAt(0).toUpperCase() + frequency.slice(1)})` : ""}`}
                 prefix="$"
                 type="number"
                 value={extraRepayment}
