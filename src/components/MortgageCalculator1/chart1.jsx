@@ -41,7 +41,16 @@ export default function Chart({
   const todayX = String(todayData?.year);
   const todayY = todayData?.standard ?? 0;
 
+  // Calculation helpers for Loan Terms
+  const periodsPerYear = frequency === "weekly" ? 52 : frequency === "fortnightly" ? 26 : 12;
   const freqLabel = frequency === "monthly" ? "mo" : frequency === "fortnightly" ? "fn" : "wk";
+
+  const getTermString = (totalRepayments) => {
+    if (!totalRepayments) return "—";
+    const y = Math.floor(totalRepayments / periodsPerYear);
+    const m = Math.round((totalRepayments % periodsPerYear) / (periodsPerYear / 12));
+    return `${y}y ${m}m`;
+  };
 
   const fmt = (n) =>
     n != null
@@ -57,7 +66,6 @@ export default function Chart({
 
   const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-  // Format an X-axis tick: decimal year → "MMM 'YY", whole year → "2026"
   const formatXTick = (val) => {
     const num = parseFloat(val);
     if (isNaN(num)) return String(val);
@@ -92,7 +100,6 @@ export default function Chart({
     );
   };
 
-  // Reusable row component for the blue box
   const SummaryRow = ({ label, value }) => (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
       <span style={{ fontSize: "14px", color: "#FFFFFF", fontWeight: 400 }}>{label}</span>
@@ -118,7 +125,7 @@ export default function Chart({
         background: "#F8F8F8", borderRadius: 16, padding: "24px", gap: 24,
       }}>
 
-        {/* ── TOP SUMMARY BLUE BOX (Matched to Image & Spec) ── */}
+        {/* ── TOP SUMMARY BLUE BOX ── */}
         <div style={{
           background: "#0B2146",
           borderRadius: "12px",
@@ -126,23 +133,47 @@ export default function Chart({
           display: "flex",
           flexDirection: "column",
         }}>
-          <SummaryRow 
-            label={`Regular Repayment (per ${freqLabel})`} 
-            value={hasData ? fmt(result.repayment) : "—"} 
+
+          {/* 1. Regular Repayment */}
+          <SummaryRow
+            label={`Regular Repayment (per ${freqLabel})`}
+            value={hasData ? fmt(result.repayment) : "—"}
           />
-          <SummaryRow 
-            label="Total Amount Repaid (Offset)" 
-            value={hasData ? fmt(result.totalRepaidOffset) : "—"} 
+
+          {/* 2, 3, 4. Standard Loan Outputs */}
+          <SummaryRow
+            label="Total Repaid (Standard)"
+            value={hasData ? fmt(result.totalRepaidStandard) : "—"}
           />
-          <SummaryRow 
-            label="Total Interest Paid (Offset)" 
-            value={hasData ? fmt(result.totalInterestOffset) : "—"} 
+          <SummaryRow
+            label="Total Interest (Standard)"
+            value={hasData ? fmt(result.totalInterestStandard) : "—"}
           />
-          <SummaryRow 
-            label="Interest Saved" 
-            value={hasData && savings > 0 ? fmt(savings) : "—"} 
+          <SummaryRow
+            label="Loan Term (Standard)"
+            value={hasData ? getTermString(result.numberOfRepaymentsStandard) : "—"}
           />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+
+          {/* 2, 3, 4. Offset Loan Outputs */}
+          <SummaryRow
+            label="Total Repaid (Offset)"
+            value={hasData ? fmt(result.totalRepaidOffset) : "—"}
+          />
+          <SummaryRow
+            label="Total Interest (Offset)"
+            value={hasData ? fmt(result.totalInterestOffset) : "—"}
+          />
+          <SummaryRow
+            label="Loan Term (Offset)"
+            value={hasData ? getTermString(result.numberOfRepaymentsOffset) : "—"}
+          />
+
+          {/* 5, 6. Difference Outputs */}
+          <SummaryRow
+            label="Interest Saved"
+            value={hasData ? fmt(result.interestSaved || savings) : "—"}
+          />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <span style={{ fontSize: "14px", color: "#FFFFFF", fontWeight: 400 }}>Time Saved</span>
             <div style={{
               background: "#FFFFFF",
@@ -157,6 +188,17 @@ export default function Chart({
               {hasData ? timeSavedText : "—"}
             </div>
           </div>
+
+          {/* 7, 8. Current Offset Status Outputs */}
+          <SummaryRow
+            label="Effective Balance for Interest"
+            value={hasData ? fmt(result.currentEffectiveBalance) : "—"}
+          />
+          <SummaryRow
+            label="Current Interest Saving (per period)"
+            value={hasData ? fmt(result.currentInterestSaving) : "—"}
+          />
+
         </div>
 
         {/* ── CHART AREA ── */}
@@ -165,7 +207,7 @@ export default function Chart({
           padding: "24px 16px 16px", display: "flex", flexDirection: "column",
           minHeight: 340, height: "auto",
         }}>
-          
+
           <div style={{ flex: 1, minHeight: 260 }}>
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={displayData} margin={{ top: 20, right: 8, left: 0, bottom: 20 }}>
@@ -205,7 +247,6 @@ export default function Chart({
 
                 <Tooltip content={<CustomTooltip />} />
 
-                {/* Standard Loan Area (Grey) */}
                 <Area
                   type="monotone"
                   dataKey="standard"
@@ -218,7 +259,6 @@ export default function Chart({
                   animationDuration={900}
                 />
 
-                {/* Offset Loan Area (Blue) */}
                 <Area
                   type="monotone"
                   dataKey="offset"
@@ -250,7 +290,6 @@ export default function Chart({
             </ResponsiveContainer>
           </div>
 
-          {/* ── CUSTOM LEGEND ── */}
           <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 24, marginTop: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div style={{ width: 12, height: 12, background: "#4A72FF", borderRadius: "50%" }} />
