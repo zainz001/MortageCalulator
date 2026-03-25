@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import InputField from "./InputField";
+import InputField from "../inputField";
 import Chart from "./Chart";
 import { calculateMortgageWithSavings } from "../../helpers/mortgageHelpers";
 
