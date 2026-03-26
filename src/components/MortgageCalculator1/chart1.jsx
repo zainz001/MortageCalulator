@@ -23,7 +23,7 @@ export default function Chart({
   const currentYear = currentYearNum.toString();
 
   const hasData = !!(result && result.repayment != null && chartData && chartData.length > 0);
-  const hasExtra = yearsSaved > 0 || monthsSaved > 0;
+  const hasExtra = hasData;
 
   // Map incoming data to ensure we always have 'standard' and 'offset' keys
   const displayData = hasData
@@ -36,7 +36,10 @@ export default function Chart({
       { year: currentYear, standard: 0, offset: 0 },
       { year: (currentYearNum + 30).toString(), standard: 0, offset: 0 },
     ];
-
+  // Add this after mergedChartData / displayData setup inside the Chart component
+  const offsetPayoffPoint = hasData
+    ? displayData.find((d) => d.offset === 0 && d.year > parseFloat(currentYear))
+    : null;
   const todayData = displayData.find((d) => String(d.year) === currentYear) || displayData[0];
   const todayX = String(todayData?.year);
   const todayY = todayData?.standard ?? 0;
@@ -263,10 +266,10 @@ export default function Chart({
                   type="monotone"
                   dataKey="offset"
                   stroke="#4A72FF"
-                  strokeWidth={hasExtra ? 2 : 0}
-                  fill={hasExtra ? "url(#offsetGrad)" : "none"}
+                  strokeWidth={hasData ? 2 : 0}
+                  fill={hasData ? "url(#offsetGrad)" : "none"}
                   dot={false}
-                  activeDot={hasExtra ? { r: 4, fill: "#4A72FF" } : false}
+                  activeDot={hasData ? { r: 4, fill: "#4A72FF" } : false}
                   isAnimationActive
                   animationDuration={900}
                   animationBegin={150}

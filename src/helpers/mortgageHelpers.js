@@ -161,20 +161,15 @@ export function generateSchedule({
 }
 
 
-function runAmortisationOffset({ loanAmount, r, n, periodsPerYear, offsetMode, offsetBalance, offsetScheduleArray, manualRepayment }) {
+
+function runAmortisationOffset({ loanAmount, r, n, periodsPerYear, currentSavings, monthlyContribution }) {
   let scheduledRepayment;
-  
-  // Calculate standard scheduled repayment based on full opening loan amount
+
   if (r === 0) {
     scheduledRepayment = loanAmount / n;
   } else {
     scheduledRepayment = loanAmount * ((r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
   }
-
-  // USE CUSTOM REPAYMENT: If the user typed a number higher than the minimum, use it!
-  const activeRepayment = (manualRepayment && manualRepayment > scheduledRepayment) 
-    ? manualRepayment 
-    : scheduledRepayment;
 
   let balance = loanAmount;
   let totalPaid = 0;
@@ -186,27 +181,26 @@ function runAmortisationOffset({ loanAmount, r, n, periodsPerYear, offsetMode, o
   for (let i = 1; i <= n; i++) {
     if (balance <= 0) break;
 
-    // Determine the current offset balance based on the mode
-    let currentOffset = 0;
-    if (offsetMode === 'constant') {
-      currentOffset = offsetBalance;
-    } else if (offsetMode === 'schedule' && offsetScheduleArray) {
-      // Map current period `i` to the correct 0-indexed month
-      const monthIndex = Math.floor((i - 1) * 12 / periodsPerYear);
-      currentOffset = offsetScheduleArray[monthIndex] || 0;
-    }
+    const monthsPassed = Math.floor(i * 12 / periodsPerYear);
+    const currentOffset = Math.min(
+      currentSavings + (monthlyContribution * monthsPassed),
+      balance // ← cap offset at current balance so it never goes negative
+    );
 
-    // Interest is only charged on the effective balance
     const effectiveBalance = Math.max(0, balance - currentOffset);
     const interestPortion = effectiveBalance * r;
-    
-    // The principal portion absorbs whatever is left of the ACTIVE repayment
+
+    // ── KEY CHANGE: when offset covers the full balance, the entire
+    //    scheduled repayment goes to principal, paying it off faster ──
+    const activeRepayment = scheduledRepayment;
     let principalPortion = activeRepayment - interestPortion;
 
-    // Cap final repayment
+    // When interest is near zero, principalPortion ≈ full repayment
+    // This naturally accelerates payoff without distorting the schedule
     if (principalPortion > balance) {
       principalPortion = balance;
     }
+    if (principalPortion < 0) principalPortion = 0;
 
     const actualRepayment = interestPortion + principalPortion;
     balance -= principalPortion;
@@ -216,8 +210,7 @@ function runAmortisationOffset({ loanAmount, r, n, periodsPerYear, offsetMode, o
     totalInterestPaid += interestPortion;
     periodsActual = i;
 
-    // Record quarterly balances for the chart
-    const pointsPerYear = 4; 
+    const pointsPerYear = 4;
     const step = Math.floor(periodsPerYear / pointsPerYear);
 
     if (i === 1 || i % step === 0 || balance === 0) {
@@ -232,24 +225,22 @@ function runAmortisationOffset({ loanAmount, r, n, periodsPerYear, offsetMode, o
 
   return {
     scheduledRepayment,
-    activeRepayment,
+    activeRepayment: scheduledRepayment,
     totalRepaid: totalPaid,
     totalInterest: totalInterestPaid,
     numberOfRepayments: periodsActual,
     yearlyBalances,
+    finalOffsetBalance: currentSavings + (monthlyContribution * Math.floor(periodsActual * 12 / periodsPerYear))
   };
 }
-
 export function calculateOffsetMortgageSavings({
   propertyPrice,
-  depositAmount,
+  depositAmount = 0,
   rate,
   years,
   frequency = "monthly",
-  offsetMode = "constant",
-  offsetBalance = 0,
-  offsetScheduleArray = [],
-  manualRepayment = 0, // NEW ARGUMENT HERE
+  currentSavings = 0,
+  monthlyContribution = 0,
 }) {
   const loanAmount = Math.max(0, propertyPrice - depositAmount);
   const periodsPerYear = getPeriodsPerYear(frequency);
@@ -258,17 +249,37 @@ export function calculateOffsetMortgageSavings({
 
   if (loanAmount <= 0 || n <= 0) return null;
 
-  // Scenario A: Standard Loan (0 offset). Uses the manual override so we have a fair comparison.
-  const standardSim = runAmortisationOffset({ loanAmount, r, n, periodsPerYear, offsetMode: 'constant', offsetBalance: 0, manualRepayment });
-  
-  // Scenario B: Offset Loan
-  const offsetSim = runAmortisationOffset({ loanAmount, r, n, periodsPerYear, offsetMode, offsetBalance, offsetScheduleArray, manualRepayment });
+  const standardSim = runAmortisationOffset({
+    loanAmount, r, n, periodsPerYear,
+    currentSavings: 0,
+    monthlyContribution: 0,
+  });
+
+  const offsetSim = runAmortisationOffset({
+    loanAmount, r, n, periodsPerYear,
+    currentSavings,
+    monthlyContribution,
+  });
 
   const interestSaved = Math.max(0, standardSim.totalInterest - offsetSim.totalInterest);
   const periodsSaved = Math.max(0, standardSim.numberOfRepayments - offsetSim.numberOfRepayments);
-
   const yearsSaved = Math.floor(periodsSaved / periodsPerYear);
   const monthsSaved = Math.round((periodsSaved % periodsPerYear) / (periodsPerYear / 12));
+
+  // ── BUILD UNIFIED CHART SCHEDULE ──
+  // Use standard as backbone, interpolate offset balance at each standard year point
+  const offsetByPeriod = new Map(
+    offsetSim.yearlyBalances.map((row) => [Math.round(row.year * 10000), row.balance])
+  );
+
+  const unifiedSchedule = standardSim.yearlyBalances.map((row) => {
+    const key = Math.round(row.year * 10000);
+    return {
+      year: row.year,
+      standard: row.balance,
+      offset: offsetByPeriod.has(key) ? Math.max(0, offsetByPeriod.get(key)) : 0,
+    };
+  });
 
   return {
     loanAmount,
@@ -276,15 +287,15 @@ export function calculateOffsetMortgageSavings({
     depositPercent: propertyPrice > 0 ? (depositAmount / propertyPrice) * 100 : 0,
     lvr: propertyPrice > 0 ? (loanAmount / propertyPrice) * 100 : 0,
     repayment: standardSim.scheduledRepayment,
-    activeRepayment: standardSim.activeRepayment, // Expose the active repayment
+    activeRepayment: offsetSim.activeRepayment,
     totalRepaidStandard: standardSim.totalRepaid,
     totalInterestStandard: standardSim.totalInterest,
     numberOfRepaymentsStandard: standardSim.numberOfRepayments,
     totalRepaidOffset: offsetSim.totalRepaid,
     totalInterestOffset: offsetSim.totalInterest,
     numberOfRepaymentsOffset: offsetSim.numberOfRepayments,
-    currentEffectiveBalance: Math.max(0, loanAmount - (offsetMode === 'constant' ? offsetBalance : (offsetScheduleArray[0] || 0))),
-    currentInterestSaving: Math.max(0, (loanAmount * r) - (Math.max(0, loanAmount - (offsetMode === 'constant' ? offsetBalance : (offsetScheduleArray[0] || 0))) * r)),
+    currentEffectiveBalance: Math.max(0, loanAmount - currentSavings),
+    currentInterestSaving: Math.max(0, (loanAmount * r) - (Math.max(0, loanAmount - currentSavings) * r)),
     interestSaved,
     yearsSaved,
     monthsSaved,
@@ -294,5 +305,6 @@ export function calculateOffsetMortgageSavings({
     payoffMonthsOffset: Math.round((offsetSim.numberOfRepayments % periodsPerYear) / (periodsPerYear / 12)),
     scheduleStandard: standardSim.yearlyBalances,
     scheduleOffset: offsetSim.yearlyBalances,
+    unifiedSchedule, // ← NEW: pre-merged, ready for chart
   };
 }
