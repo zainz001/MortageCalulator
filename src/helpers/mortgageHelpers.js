@@ -161,6 +161,14 @@ export function generateSchedule({
 }
 
 
+// function getPeriodsPerYear(frequency) {
+//   const map = {
+//     'weekly': 52,
+//     'fortnightly': 26,
+//     'monthly': 12
+//   };
+//   return map[frequency.toLowerCase()] || 12;
+// }
 
 function runAmortisationOffset({ loanAmount, r, n, periodsPerYear, currentSavings, monthlyContribution }) {
   let scheduledRepayment;
@@ -181,28 +189,39 @@ function runAmortisationOffset({ loanAmount, r, n, periodsPerYear, currentSaving
   for (let i = 1; i <= n; i++) {
     if (balance <= 0) break;
 
-    const monthsPassed = Math.floor(i * 12 / periodsPerYear);
-    const currentOffset = Math.min(
-      currentSavings + (monthlyContribution * monthsPassed),
-      balance // ← cap offset at current balance so it never goes negative
-    );
+    // Calculate months passed from period number
+    // Period 1 is at start (0 months passed), period 2 has some months passed, etc.
+    const monthsPassed = Math.floor((i - 1) * 12 / periodsPerYear);
+    
+    // Calculate current offset balance (NOT capped at loan balance)
+    // Per spec: offset_t = constant_offset_balance OR scheduled_offset_balance[t]
+    const currentOffset = currentSavings + (monthlyContribution * monthsPassed);
 
+    // Effective balance is used ONLY for interest calculation
+    // Per spec: effective_balance_t = max(balance_t − offset_t, 0)
     const effectiveBalance = Math.max(0, balance - currentOffset);
+    
+    // Interest is charged on effective balance only
+    // Per spec: interest_t = effective_balance_t × r
     const interestPortion = effectiveBalance * r;
 
-    // ── KEY CHANGE: when offset covers the full balance, the entire
-    //    scheduled repayment goes to principal, paying it off faster ──
-    const activeRepayment = scheduledRepayment;
-    let principalPortion = activeRepayment - interestPortion;
+    // Principal = scheduled repayment - interest
+    // Per spec: principal_t = repayment − interest_t
+    let principalPortion = scheduledRepayment - interestPortion;
 
-    // When interest is near zero, principalPortion ≈ full repayment
-    // This naturally accelerates payoff without distorting the schedule
+    // Cap principal at remaining balance for final payment
     if (principalPortion > balance) {
       principalPortion = balance;
     }
+    
+    // Principal cannot be negative
     if (principalPortion < 0) principalPortion = 0;
 
+    // Actual repayment for this period
     const actualRepayment = interestPortion + principalPortion;
+    
+    // Reduce loan balance by principal paid
+    // Per spec: new_balance_t = max(balance_t − principal_t, 0)
     balance -= principalPortion;
     if (balance < 0.005) balance = 0;
 
@@ -233,6 +252,7 @@ function runAmortisationOffset({ loanAmount, r, n, periodsPerYear, currentSaving
     finalOffsetBalance: currentSavings + (monthlyContribution * Math.floor(periodsActual * 12 / periodsPerYear))
   };
 }
+
 export function calculateOffsetMortgageSavings({
   propertyPrice,
   depositAmount = 0,
