@@ -189,39 +189,21 @@ function runAmortisationOffset({ loanAmount, r, n, periodsPerYear, currentSaving
   for (let i = 1; i <= n; i++) {
     if (balance <= 0) break;
 
-    // Calculate months passed from period number
-    // Period 1 is at start (0 months passed), period 2 has some months passed, etc.
-    const monthsPassed = Math.floor((i - 1) * 12 / periodsPerYear);
-    
-    // Calculate current offset balance (NOT capped at loan balance)
-    // Per spec: offset_t = constant_offset_balance OR scheduled_offset_balance[t]
+   const monthsPassed = Math.floor((i - 1) * 12 / periodsPerYear);
     const currentOffset = currentSavings + (monthlyContribution * monthsPassed);
-
-    // Effective balance is used ONLY for interest calculation
-    // Per spec: effective_balance_t = max(balance_t − offset_t, 0)
-    const effectiveBalance = Math.max(0, balance - currentOffset);
+ const effectiveBalance = Math.max(0, balance - currentOffset);
     
-    // Interest is charged on effective balance only
-    // Per spec: interest_t = effective_balance_t × r
-    const interestPortion = effectiveBalance * r;
+   const interestPortion = effectiveBalance * r;
 
-    // Principal = scheduled repayment - interest
-    // Per spec: principal_t = repayment − interest_t
-    let principalPortion = scheduledRepayment - interestPortion;
-
-    // Cap principal at remaining balance for final payment
-    if (principalPortion > balance) {
+   let principalPortion = scheduledRepayment - interestPortion;
+ if (principalPortion > balance) {
       principalPortion = balance;
     }
     
-    // Principal cannot be negative
-    if (principalPortion < 0) principalPortion = 0;
+  if (principalPortion < 0) principalPortion = 0;
 
-    // Actual repayment for this period
     const actualRepayment = interestPortion + principalPortion;
     
-    // Reduce loan balance by principal paid
-    // Per spec: new_balance_t = max(balance_t − principal_t, 0)
     balance -= principalPortion;
     if (balance < 0.005) balance = 0;
 
@@ -286,8 +268,6 @@ export function calculateOffsetMortgageSavings({
   const yearsSaved = Math.floor(periodsSaved / periodsPerYear);
   const monthsSaved = Math.round((periodsSaved % periodsPerYear) / (periodsPerYear / 12));
 
-  // ── BUILD UNIFIED CHART SCHEDULE ──
-  // Use standard as backbone, interpolate offset balance at each standard year point
   const offsetByPeriod = new Map(
     offsetSim.yearlyBalances.map((row) => [Math.round(row.year * 10000), row.balance])
   );

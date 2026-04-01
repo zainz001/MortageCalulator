@@ -218,9 +218,9 @@ export default function MortgageCalculator() {
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-2 md:p-4">
       <div className="max-w-[1400px] w-full">
-        <h2 className="text-[20px] md:text-[24px] font-bold text-[#0052CC] mb-4 md:mb-6">
+        {/* <h2 className="text-[20px] md:text-[24px] font-bold text-[#0052CC] mb-4 md:mb-6">
           Mortgage Calculator
-        </h2>
+        </h2> */}
 
         <div className="flex flex-col lg:flex-row gap-4 md:gap-5 items-stretch">
           {/* Left Panel: Inputs */}
