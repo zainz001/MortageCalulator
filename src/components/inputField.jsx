@@ -23,7 +23,7 @@ const InputField = ({
 
       <div
         className="relative"
-        onMouseEnter={() => disabled && tooltip && setShowTooltip(true)}
+        onMouseEnter={() => tooltip && setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
         <div

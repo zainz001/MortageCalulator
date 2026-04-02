@@ -12,7 +12,7 @@ export default function OffsetMortgageCalculator() {
 
   // --- Offset inputs ---
   const [initialSavings, setInitialSavings] = useState("");
-  const [contributionMode, setContributionMode] = useState("direct");
+  const [contributionMode, setContributionMode] = useState("income"); // Default to 'income' for NZ model
   const [monthlyContribution, setMonthlyContribution] = useState("");
   const [monthlyIncome, setMonthlyIncome] = useState("");
   const [monthlyExpenses, setMonthlyExpenses] = useState("");
@@ -27,7 +27,7 @@ export default function OffsetMortgageCalculator() {
     return isNaN(n) ? 0 : n;
   };
 
-  // ── NEW: Calculate the standard monthly mortgage payment for the budget breakdown ──
+  // ── Calculate the standard monthly mortgage payment for the budget breakdown ──
   const monthlyMortgageEstimate = useMemo(() => {
     const principal = toNum(loanAmount);
     const annualRate = toNum(rate);
@@ -42,7 +42,7 @@ export default function OffsetMortgageCalculator() {
     return principal * ((rBase * Math.pow(1 + rBase, nBase)) / (Math.pow(1 + rBase, nBase) - 1));
   }, [loanAmount, rate, years]);
 
-  // ── NEW: Adjusted surplus logic (Income - Expenses - Mortgage) ──
+  // ── Derive Leftover Savings (Income - Expenses - Mortgage) ──
   const effectiveMonthlyContribution = useMemo(() => {
     if (contributionMode === "income") {
       const surplus = toNum(monthlyIncome) - toNum(monthlyExpenses) - monthlyMortgageEstimate;
@@ -53,29 +53,18 @@ export default function OffsetMortgageCalculator() {
 
   const contributionWarning = useMemo(() => {
     if (!result) return "";
-    if (toNum(initialSavings) >= result.loanAmount) {
+    if (toNum(initialSavings) >= toNum(loanAmount)) {
       return "ℹ️ Your initial savings already cover the full loan — you'd owe no interest from day one.";
     }
     return "";
-  }, [initialSavings, result]);
+  }, [initialSavings, loanAmount, result]);
 
   const performCalculation = (isAuto = false) => {
     const principal = toNum(loanAmount);
     const r = toNum(rate);
     const y = toNum(years);
 
-    if (principal <= 0) {
-      if (!isAuto) alert("Loan Amount must be greater than 0.");
-      return;
-    }
-    if (r < 0) {
-      if (!isAuto) alert("Interest Rate must be 0 or greater.");
-      return;
-    }
-    if (!y || y <= 0 || y > 30) {
-      if (!isAuto) alert("Loan Term must be between 1 and 30 years.");
-      return;
-    }
+    if (principal <= 0) return; // Silent return for auto-calc if principal is empty
 
     const res = calculateOffsetMortgageSavings({
       propertyPrice: principal,
@@ -97,8 +86,7 @@ export default function OffsetMortgageCalculator() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     loanAmount, rate, years, frequency,
-    initialSavings, monthlyContribution,
-    monthlyIncome, monthlyExpenses, contributionMode,
+    initialSavings, effectiveMonthlyContribution, contributionMode
   ]);
 
   const mergedChartData = useMemo(() => {
@@ -121,34 +109,16 @@ export default function OffsetMortgageCalculator() {
             </h3>
 
             <div className="flex flex-col gap-[16px] flex-1">
-              <InputField
-                label="Loan Amount"
-                prefix="$"
-                placeholder=""
-                value={loanAmount}
-                onChange={setLoanAmount}
-              />
-              <InputField
-                label="Annual Interest Rate (%)"
-                placeholder=""
-                value={rate}
-                onChange={setRate}
-              />
-              <InputField
-                label="Loan Term (Years)"
-                placeholder=""
-                value={years}
-                onChange={setYears}
-              />
+              <InputField label="Loan Amount" prefix="$" placeholder="" value={loanAmount} onChange={setLoanAmount} />
+              <InputField label="Annual Interest Rate (%)" placeholder="" value={rate} onChange={setRate} />
+              <InputField label="Loan Term (Years)" placeholder="" value={years} onChange={setYears} />
 
               <div className="flex flex-col gap-[8px]">
-                <label className="text-[13px] md:text-[14px] text-[#64748B] font-medium">
-                  Repayment Frequency
-                </label>
+                <label className="text-[13px] md:text-[14px] text-[#64748B] font-medium">Repayment Frequency</label>
                 <select
                   value={frequency}
                   onChange={(e) => setFrequency(e.target.value)}
-                  className="h-[48px] px-4 border border-[#E2E8F0] rounded-[8px]"
+                  className="h-[48px] px-4 border border-[#E2E8F0] rounded-[8px] bg-white"
                 >
                   <option value="monthly">Monthly</option>
                   <option value="fortnightly">Fortnightly</option>
@@ -167,20 +137,18 @@ export default function OffsetMortgageCalculator() {
                 />
 
                 <div className="flex flex-col gap-[8px]">
-                  <label className="text-[13px] md:text-[14px] text-[#64748B] font-medium">
-                    Monthly Savings Mode
-                  </label>
+                  <label className="text-[13px] md:text-[14px] text-[#64748B] font-medium">Monthly Savings Mode</label>
                   <select
                     value={contributionMode}
                     onChange={(e) => setContributionMode(e.target.value)}
-                    className="h-[48px] px-4 border border-[#E2E8F0] rounded-[8px]"
+                    className="h-[48px] px-4 border border-[#E2E8F0] rounded-[8px] bg-white"
                   >
-                    <option value="income">Calculate from income &amp; expenses</option>
+                    <option value="income">Calculate from income & expenses</option>
                     <option value="direct">Enter monthly contribution directly</option>
                   </select>
                 </div>
 
-                {contributionMode === "direct" && (
+                {contributionMode === "direct" ? (
                   <>
                     <InputField
                       label="Target Monthly Increase"
@@ -191,61 +159,41 @@ export default function OffsetMortgageCalculator() {
                       onChange={setMonthlyContribution}
                     />
                     {contributionWarning && (
-                      <div className="bg-amber-50 border border-amber-200 rounded-[8px] px-4 py-3 text-[13px] text-amber-700 leading-snug">
+                      <div className="bg-amber-50 border border-amber-200 rounded-[8px] px-4 py-3 text-[13px] text-amber-700">
                         {contributionWarning}
                       </div>
                     )}
                   </>
-                )}
-
-                {contributionMode === "income" && (
+                ) : (
                   <>
-                    <InputField
-                      label="Monthly Income"
-                      prefix="$"
-                      placeholder=""
-                      value={monthlyIncome}
-                      tooltip="Your total take-home income each month."
-                      onChange={setMonthlyIncome}
-                    />
-                    <InputField
-                      label="Monthly Expenses (Excluding Mortgage)"
-                      prefix="$"
-                      placeholder=""
-                      value={monthlyExpenses}
-                      tooltip="Your total monthly spending. Do not include your mortgage repayment here."
-                      onChange={setMonthlyExpenses}
-                    />
+                    <InputField label="Monthly Income" prefix="$" placeholder="" value={monthlyIncome} onChange={setMonthlyIncome} />
+                    <InputField label="Monthly Expenses (Excluding Mortgage)" prefix="$" placeholder="" value={monthlyExpenses} onChange={setMonthlyExpenses} />
                     
-                    {/* ── NEW: Clean breakdown card for the surplus calculation ── */}
                     {(toNum(monthlyIncome) > 0 || toNum(monthlyExpenses) > 0 || monthlyMortgageEstimate > 0) && (
-                      <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-4 flex flex-col gap-2 mt-1">
+                      <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-4 flex flex-col gap-2 mt-1 shadow-sm">
                         <div className="flex justify-between text-[13px] text-[#64748B]">
                           <span>Income</span>
-                          <span>${toNum(monthlyIncome).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span>${toNum(monthlyIncome).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
                         <div className="flex justify-between text-[13px] text-[#64748B]">
                           <span>Expenses</span>
-                          <span>- ${toNum(monthlyExpenses).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span>- ${toNum(monthlyExpenses).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
                         <div className="flex justify-between text-[13px] text-[#64748B]">
                           <span>Est. Mortgage</span>
-                          <span>- ${monthlyMortgageEstimate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span>- ${monthlyMortgageEstimate.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
                         <div className="border-t border-[#E2E8F0] my-1"></div>
                         <div className="flex justify-between items-center">
-                          <span className="text-[13px] font-medium text-[#23303B]">
-                            Leftover for Offset
-                          </span>
+                          <span className="text-[13px] font-bold text-[#23303B]">Leftover for Offset</span>
                           <span className="text-[15px] font-bold text-[#0052CC]">
-                            ${effectiveMonthlyContribution.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ${effectiveMonthlyContribution.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                           </span>
                         </div>
                       </div>
                     )}
-
                     {contributionWarning && (
-                      <div className="bg-amber-50 border border-amber-200 rounded-[8px] px-4 py-3 text-[13px] text-amber-700 leading-snug mt-2">
+                      <div className="bg-amber-50 border border-amber-200 rounded-[8px] px-4 py-3 text-[13px] text-amber-700 mt-2">
                         {contributionWarning}
                       </div>
                     )}
@@ -256,7 +204,7 @@ export default function OffsetMortgageCalculator() {
 
             <button
               onClick={() => performCalculation(false)}
-              className="mt-[32px] w-full bg-[#39a859] hover:bg-[#32994f] text-white font-bold py-3.5 rounded-[8px] transition-colors shadow-sm"
+              className="mt-[32px] w-full bg-[#39a859] hover:bg-[#32994f] text-white font-bold py-4 rounded-[8px] transition-colors shadow-sm"
             >
               CALCULATE
             </button>
