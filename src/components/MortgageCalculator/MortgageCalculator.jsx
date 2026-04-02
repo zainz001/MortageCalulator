@@ -233,32 +233,27 @@ export default function MortgageCalculator() {
               <InputField
                 label="Property Price"
                 prefix="$"
-                placeholder="800,000"
                 value={propertyPrice}
                 onChange={handlePropertyPriceChange}
               />
               <InputField
                 label="Deposit Amount"
                 prefix="$"
-                placeholder="160,000"
                 value={depositAmount}
                 onChange={handleDepositAmountChange}
               />
               <InputField
                 label="Deposit %"
-                placeholder="20"
                 value={depositPercent}
                 onChange={handleDepositPercentChange}
               />
               <InputField
                 label="Interest Rate (Annual %)"
-                placeholder="6.5"
                 value={rate}
                 onChange={handleRateChange}
               />
               <InputField
                 label="Loan Term (Years)"
-                placeholder="30"
                 value={years}
                 onChange={handleYearsChange}
               />
