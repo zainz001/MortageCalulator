@@ -98,24 +98,17 @@ export default function Chart({
     );
   };
 
+  // FIX 1: Allow Flex Wrapping so values drop down on tiny screens instead of bleeding off the page
   const SummaryRow = ({ label, value }) => (
     <div style={{ 
       display: "flex", 
-      flexWrap: "wrap", 
+      flexWrap: "wrap", // Added to allow wrapping on mobile
       justifyContent: "space-between", 
       alignItems: "center", 
-      gap: "8px",
+      gap: "12px", // Ensures spacing if they wrap
       marginBottom: "16px" 
     }}>
-      <span style={{ 
-        fontSize: "14px", 
-        color: "#FFFFFF", 
-        fontWeight: 400, 
-        flex: "1 1 auto", 
-        minWidth: "160px"
-      }}>
-        {label}
-      </span>
+      <span style={{ fontSize: "14px", color: "#FFFFFF", fontWeight: 400, flex: "1 1 auto", minWidth: "120px" }}>{label}</span>
       <div style={{
         background: "#FFFFFF",
         color: "#0B2146",
@@ -124,8 +117,7 @@ export default function Chart({
         fontSize: "14px",
         fontWeight: "600",
         textAlign: "right",
-        minWidth: "140px",
-        flexShrink: 0
+        whiteSpace: "nowrap" // Prevents the numbers from splitting onto two lines
       }}>
         {value}
       </div>
@@ -146,6 +138,7 @@ export default function Chart({
           padding: "24px",
           display: "flex",
           flexDirection: "column",
+          // Added overflow hidden just to safeguard parent boundaries
           overflow: "hidden"
         }}>
           <SummaryRow label={`Regular Repayment (per ${freqLabel})`} value={hasData ? fmt(result.repayment) : "—"} />
@@ -157,6 +150,7 @@ export default function Chart({
           <SummaryRow label="Loan Term (Offset)" value={hasData ? getTermString(result.numberOfRepaymentsOffset) : "—"} />
           <SummaryRow label="Interest Saved" value={hasData ? fmt(result.interestSaved || savings) : "—"} />
           
+          {/* Replaced manual "Time Saved" div with the SummaryRow component for consistency */}
           <SummaryRow label="Time Saved" value={hasData ? timeSavedText : "—"} />
 
           <SummaryRow label="Effective Balance for Interest" value={hasData ? fmt(result.currentEffectiveBalance) : "—"} />
@@ -165,104 +159,96 @@ export default function Chart({
 
         {/* ── CHART AREA ── */}
         <div style={{
-          flex: 1, 
-          background: "#fff", 
-          borderRadius: 12, 
-          border: "1px solid #E8EDF2",
-          padding: "24px 16px 16px", 
-          display: "flex", 
-          flexDirection: "column",
-          minHeight: 400, // Provides a good default height on all screens
-          width: "100%" 
+          flex: 1, background: "#fff", borderRadius: 12, border: "1px solid #E8EDF2",
+          padding: "24px 16px 16px", display: "flex", flexDirection: "column",
+          minHeight: 340, height: "auto", width: "100%", overflow: "hidden" // Added strict width and overflow to protect Recharts
         }}>
 
-          {/* THE FIX: Relative flex parent with an Absolute child */}
-          <div style={{ flex: 1, position: "relative", minHeight: 300, width: "100%" }}>
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={displayData} margin={{ top: 20, right: 8, left: 0, bottom: 20 }}>
-                  <defs>
-                    <linearGradient id="standardGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#C4C4C4" stopOpacity={0.9} />
-                      <stop offset="100%" stopColor="#C4C4C4" stopOpacity={0.5} />
-                    </linearGradient>
-                    <linearGradient id="offsetGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#4A72FF" stopOpacity={0.9} />
-                      <stop offset="100%" stopColor="#4A72FF" stopOpacity={0.7} />
-                    </linearGradient>
-                  </defs>
+          {/* FIX 2: Replaced 'flex: 1' with strict width & fixed height to stop Recharts from collapsing to 0 on mobile */}
+          <div style={{ width: "100%", height: 300, minHeight: 300 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={displayData} margin={{ top: 20, right: 8, left: 0, bottom: 20 }}>
+                <defs>
+                  <linearGradient id="standardGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#C4C4C4" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#C4C4C4" stopOpacity={0.5} />
+                  </linearGradient>
+                  <linearGradient id="offsetGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#4A72FF" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#4A72FF" stopOpacity={0.7} />
+                  </linearGradient>
+                </defs>
 
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
 
-                  <XAxis
-                    dataKey="year"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: "#94A3B8", fontSize: 12, fontWeight: 500 }}
-                    dy={16}
-                    minTickGap={20}
-                    interval="preserveStartEnd"
-                    tickFormatter={formatXTick}
-                  />
-                  <YAxis
-                    width={55} 
-                    axisLine={false}
-                    tickLine={false}
-                    tickFormatter={(v) =>
-                      v === 0 ? "$0" : v >= 1000000
-                        ? `$${(v / 1000000).toFixed(1)}M`
-                        : `$${(v / 1000).toFixed(0)}K`
-                    }
-                    tick={{ fill: "#94A3B8", fontSize: 12 }}
-                  />
+                <XAxis
+                  dataKey="year"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#94A3B8", fontSize: 12, fontWeight: 500 }}
+                  dy={16}
+                  minTickGap={20} // Added to prevent text overlap on tiny screens
+                  interval="preserveStartEnd"
+                  tickFormatter={formatXTick}
+                />
+                <YAxis
+                  width={55} // Slightly reduced to save space on mobile
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) =>
+                    v === 0 ? "$0" : v >= 1000000
+                      ? `$${(v / 1000000).toFixed(1)}M`
+                      : `$${(v / 1000).toFixed(0)}K`
+                  }
+                  tick={{ fill: "#94A3B8", fontSize: 12 }}
+                />
 
-                  <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<CustomTooltip />} />
 
-                  <Area
-                    type="monotone"
-                    dataKey="standard"
-                    stroke="#AFAFAF"
-                    strokeWidth={2}
-                    fill="url(#standardGrad)"
-                    dot={false}
-                    activeDot={{ r: 4, fill: "#AFAFAF" }}
-                    isAnimationActive
-                    animationDuration={900}
-                  />
+                <Area
+                  type="monotone"
+                  dataKey="standard"
+                  stroke="#AFAFAF"
+                  strokeWidth={2}
+                  fill="url(#standardGrad)"
+                  dot={false}
+                  activeDot={{ r: 4, fill: "#AFAFAF" }}
+                  isAnimationActive
+                  animationDuration={900}
+                />
 
-                  <Area
-                    type="monotone"
-                    dataKey="offset"
-                    stroke="#4A72FF"
-                    strokeWidth={hasData ? 2 : 0}
-                    fill={hasData ? "url(#offsetGrad)" : "none"}
-                    dot={false}
-                    activeDot={hasData ? { r: 4, fill: "#4A72FF" } : false}
-                    isAnimationActive
-                    animationDuration={900}
-                    animationBegin={150}
-                  />
+                <Area
+                  type="monotone"
+                  dataKey="offset"
+                  stroke="#4A72FF"
+                  strokeWidth={hasData ? 2 : 0}
+                  fill={hasData ? "url(#offsetGrad)" : "none"}
+                  dot={false}
+                  activeDot={hasData ? { r: 4, fill: "#4A72FF" } : false}
+                  isAnimationActive
+                  animationDuration={900}
+                  animationBegin={150}
+                />
 
-                  {hasData && (
-                    <>
-                      <ReferenceLine x={todayX} stroke="#EF4444" strokeWidth={1.5} />
-                      <ReferenceDot
-                        x={todayX}
-                        y={todayY}
-                        r={5}
-                        fill="#fff"
-                        stroke="#EF4444"
-                        strokeWidth={2}
-                        label={{ position: "top", value: "Today", fill: "#EF4444", fontSize: 12, fontWeight: 600, offset: 10 }}
-                      />
-                    </>
-                  )}
-                </ComposedChart>
-              </ResponsiveContainer>
-            </div>
+                {hasData && (
+                  <>
+                    <ReferenceLine x={todayX} stroke="#EF4444" strokeWidth={1.5} />
+                    <ReferenceDot
+                      x={todayX}
+                      y={todayY}
+                      r={5}
+                      fill="#fff"
+                      stroke="#EF4444"
+                      strokeWidth={2}
+                      label={{ position: "top", value: "Today", fill: "#EF4444", fontSize: 12, fontWeight: 600, offset: 10 }}
+                    />
+                  </>
+                )}
+              </ComposedChart>
+            </ResponsiveContainer>
           </div>
 
-          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: "16px", marginTop: "16px", flexShrink: 0 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: "16px", marginTop: "16px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div style={{ width: 12, height: 12, background: "#4A72FF", borderRadius: "50%" }} />
               <span style={{ fontSize: 12, color: "#64748B", fontWeight: 600 }}>Projected with Offset</span>

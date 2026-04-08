@@ -1,4 +1,3 @@
-
 export function getPeriodsPerYear(freq) {
   if (freq === "weekly") return 52;
   if (freq === "fortnightly") return 26;
@@ -32,7 +31,6 @@ function runAmortisation({ loanAmount, r, n, periodsPerYear, repaymentType, extr
     const interestPortion = balance * r;
     let principalPortion = scheduledRepayment + extraRepayment - interestPortion;
 
-    // Cap final repayment so balance doesn't go below 0
     principalPortion = Math.min(principalPortion, balance);
 
     const actualRepayment = interestPortion + principalPortion;
@@ -43,13 +41,12 @@ function runAmortisation({ loanAmount, r, n, periodsPerYear, repaymentType, extr
     totalInterestPaid += interestPortion;
     periodsActual = i;
 
-    // Record end-of-year balance (and first period for chart start)
-    const pointsPerYear = 4; // quarterly
+    const pointsPerYear = 4;
     const step = Math.floor(periodsPerYear / pointsPerYear);
 
     if (i === 1 || i % step === 0) {
       yearlyBalances.push({
-        year: startYear + i / periodsPerYear, // fractional year
+        year: startYear + i / periodsPerYear,
         balance: Math.max(0, balance),
       });
     }
@@ -141,7 +138,6 @@ export function calculateMortgageWithSavings({
   };
 }
 
-// Keep generateSchedule for backward compat — now returns the accurate sim data
 export function generateSchedule({
   propertyPrice,
   depositAmount,
@@ -161,25 +157,28 @@ export function generateSchedule({
 }
 
 
-// function getPeriodsPerYear(frequency) {
-//   const map = {
-//     'weekly': 52,
-//     'fortnightly': 26,
-//     'monthly': 12
-//   };
-//   return map[frequency.toLowerCase()] || 12;
-// }
-
-function runAmortisationOffset({ loanAmount, r, n, periodsPerYear, currentSavings, monthlyContribution }) {
+export function runAmortisationOffset({
+  loanAmount, r, n, periodsPerYear,
+  currentSavings, monthlyContribution,
+  monthlyIncome = 0,
+  monthlyExpenses = 0
+}) {
   let scheduledRepayment;
-
   if (r === 0) {
     scheduledRepayment = loanAmount / n;
   } else {
     scheduledRepayment = loanAmount * ((r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
   }
 
+  // ── FIX: when using income/expense mode, offset grows by monthly surplus each period.
+  // When using direct contribution mode, it grows by contributionPerPeriod.
+  const monthlySurplus = monthlyIncome > 0
+    ? monthlyIncome - monthlyExpenses - scheduledRepayment
+    : null;
+  const contributionPerPeriod = (monthlyContribution * 12) / periodsPerYear;
+
   let balance = loanAmount;
+  let offsetBalance = currentSavings;
   let totalPaid = 0;
   let totalInterestPaid = 0;
   let periodsActual = 0;
@@ -187,42 +186,42 @@ function runAmortisationOffset({ loanAmount, r, n, periodsPerYear, currentSaving
   const startYear = new Date().getFullYear();
 
   for (let i = 1; i <= n; i++) {
-    if (balance <= 0) break;
+    if (balance <= 0 || offsetBalance >= balance) break;
 
-   const monthsPassed = Math.floor((i - 1) * 12 / periodsPerYear);
-    const currentOffset = currentSavings + (monthlyContribution * monthsPassed);
- const effectiveBalance = Math.max(0, balance - currentOffset);
-    
-   const interestPortion = effectiveBalance * r;
-
-   let principalPortion = scheduledRepayment - interestPortion;
- if (principalPortion > balance) {
-      principalPortion = balance;
+    // Intra-period float: income lands day 1, outgoings leave mid-period on average.
+    // Formula matches NZHL's detailed calculator exactly.
+    let dailyBalanceAdjustment = 0;
+    if (monthlyIncome > 0 && periodsPerYear === 12) {
+      dailyBalanceAdjustment = monthlyIncome - monthlyExpenses;
     }
-    
-  if (principalPortion < 0) principalPortion = 0;
+    const effectiveBalanceForInterest = Math.max(0, balance - offsetBalance - dailyBalanceAdjustment);
+    const interestPortion = effectiveBalanceForInterest * r;
 
-    const actualRepayment = interestPortion + principalPortion;
-    
+    let principalPortion = scheduledRepayment - interestPortion;
+    if (principalPortion < 0) principalPortion = 0;
+
     balance -= principalPortion;
     if (balance < 0.005) balance = 0;
 
-    totalPaid += actualRepayment;
+    // ── FIX: surplus accumulates month-over-month (was: static contributionPerPeriod only)
+    const periodGrowth = monthlySurplus !== null ? monthlySurplus : contributionPerPeriod;
+    offsetBalance += periodGrowth;
+    if (offsetBalance < 0) offsetBalance = 0;
+
+    totalPaid += scheduledRepayment;
     totalInterestPaid += interestPortion;
     periodsActual = i;
 
-    const pointsPerYear = 4;
-    const step = Math.floor(periodsPerYear / pointsPerYear);
-
-    if (i === 1 || i % step === 0 || balance === 0) {
+    const step = Math.max(1, Math.floor(periodsPerYear / 4));
+    if (i === 1 || i % step === 0 || offsetBalance >= balance) {
       yearlyBalances.push({
         year: startYear + i / periodsPerYear,
-        balance: Math.max(0, balance),
+        balance: Math.max(0, balance - offsetBalance),
       });
     }
-
-    if (balance === 0) break;
   }
+
+  totalPaid += balance; // Final lump sum payoff
 
   return {
     scheduledRepayment,
@@ -231,9 +230,10 @@ function runAmortisationOffset({ loanAmount, r, n, periodsPerYear, currentSaving
     totalInterest: totalInterestPaid,
     numberOfRepayments: periodsActual,
     yearlyBalances,
-    finalOffsetBalance: currentSavings + (monthlyContribution * Math.floor(periodsActual * 12 / periodsPerYear))
+    finalOffsetBalance: offsetBalance,
   };
 }
+
 
 export function calculateOffsetMortgageSavings({
   propertyPrice,
@@ -243,6 +243,8 @@ export function calculateOffsetMortgageSavings({
   frequency = "monthly",
   currentSavings = 0,
   monthlyContribution = 0,
+  monthlyIncome = 0,
+  monthlyExpenses = 0,
 }) {
   const loanAmount = Math.max(0, propertyPrice - depositAmount);
   const periodsPerYear = getPeriodsPerYear(frequency);
@@ -255,12 +257,16 @@ export function calculateOffsetMortgageSavings({
     loanAmount, r, n, periodsPerYear,
     currentSavings: 0,
     monthlyContribution: 0,
+    monthlyIncome: 0,
+    monthlyExpenses: 0,
   });
 
   const offsetSim = runAmortisationOffset({
     loanAmount, r, n, periodsPerYear,
     currentSavings,
     monthlyContribution,
+    monthlyIncome,
+    monthlyExpenses,
   });
 
   const interestSaved = Math.max(0, standardSim.totalInterest - offsetSim.totalInterest);
@@ -305,6 +311,6 @@ export function calculateOffsetMortgageSavings({
     payoffMonthsOffset: Math.round((offsetSim.numberOfRepayments % periodsPerYear) / (periodsPerYear / 12)),
     scheduleStandard: standardSim.yearlyBalances,
     scheduleOffset: offsetSim.yearlyBalances,
-    unifiedSchedule, // ← NEW: pre-merged, ready for chart
+    unifiedSchedule,
   };
 }
