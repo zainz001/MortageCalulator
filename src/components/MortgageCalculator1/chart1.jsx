@@ -44,24 +44,25 @@ export default function Chart({
   const periodsPerYear = frequency === "weekly" ? 52 : frequency === "fortnightly" ? 26 : 12;
   const freqLabel = frequency === "monthly" ? "mo" : frequency === "fortnightly" ? "fn" : "wk";
 
-  const getTermString = (totalRepayments) => {
-    if (!totalRepayments) return "—";
-    const y = Math.floor(totalRepayments / periodsPerYear);
-    const m = Math.round((totalRepayments % periodsPerYear) / (periodsPerYear / 12));
-    return `${y}y ${m}m`;
-  };
+ const getTermString = (totalRepayments) => {
+  if (!totalRepayments) return "—";
+  const y = Math.floor(totalRepayments / periodsPerYear);
+  return `${y} Years`;
+};
 
   const fmt = (n) =>
     n != null
       ? "$" + Number(n).toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
       : "—";
 
-  const timeSavedLabel = [
-    yearsSaved > 0 ? `${yearsSaved} Year${yearsSaved !== 1 ? "s" : ""}` : "",
-    monthsSaved > 0 ? `${monthsSaved} Month${monthsSaved !== 1 ? "s" : ""}` : "",
-  ].filter(Boolean).join(", ");
+const payoffYearsDisplay = result
+  ? Math.ceil(result.numberOfRepaymentsOffset / periodsPerYear)
+  : null;
 
-  const timeSavedText = timeSavedLabel.length > 0 ? timeSavedLabel : "—";
+const timeSavedText = payoffYearsDisplay
+  ? `${payoffYearsDisplay} Year${payoffYearsDisplay !== 1 ? "s" : ""}`
+  : "—";
+  // const timeSavedText = timeSavedLabel.length > 0 ? timeSavedLabel : "—";
   const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   const formatXTick = (val) => {
@@ -98,17 +99,26 @@ export default function Chart({
     );
   };
 
-  // FIX 1: Allow Flex Wrapping so values drop down on tiny screens instead of bleeding off the page
   const SummaryRow = ({ label, value }) => (
-    <div style={{ 
-      display: "flex", 
-      flexWrap: "wrap", // Added to allow wrapping on mobile
-      justifyContent: "space-between", 
-      alignItems: "center", 
-      gap: "12px", // Ensures spacing if they wrap
-      marginBottom: "16px" 
+    <div style={{
+      display: "flex",
+      flexWrap: "wrap",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: "8px",
+      marginBottom: "16px",
+      width: "100%",
+      boxSizing: "border-box"
     }}>
-      <span style={{ fontSize: "14px", color: "#FFFFFF", fontWeight: 400, flex: "1 1 auto", minWidth: "120px" }}>{label}</span>
+      <span style={{
+        fontSize: "14px",
+        color: "#FFFFFF",
+        fontWeight: 400,
+        flex: "1 1 120px", // Allows the label to shrink or grow
+        boxSizing: "border-box"
+      }}>
+        {label}
+      </span>
       <div style={{
         background: "#FFFFFF",
         color: "#0B2146",
@@ -117,7 +127,12 @@ export default function Chart({
         fontSize: "14px",
         fontWeight: "600",
         textAlign: "right",
-        whiteSpace: "nowrap" // Prevents the numbers from splitting onto two lines
+        flex: "1 1 140px", // Allows it to be 140px, but shrink if the screen is tiny
+        maxWidth: "100%",  // Ensures it NEVER pushes off the screen
+        boxSizing: "border-box",
+        whiteSpace: "nowrap", // Keeps the number on one line
+        overflow: "hidden",
+        textOverflow: "ellipsis" // Adds "..." if the number is somehow insanely long
       }}>
         {value}
       </div>
@@ -131,14 +146,14 @@ export default function Chart({
         background: "#F8F8F8", borderRadius: 16, padding: "24px", gap: 24,
       }}>
 
-        {/* ── TOP SUMMARY BLUE BOX ── */}
         <div style={{
           background: "#0B2146",
           borderRadius: "12px",
-          padding: "24px",
+          padding: "20px",         // Slightly reduced from 24px to give mobile more breathing room
           display: "flex",
           flexDirection: "column",
-          // Added overflow hidden just to safeguard parent boundaries
+          width: "100%",           // Forces it to stay inside the parent
+          boxSizing: "border-box", // CRITICAL: Ensures padding doesn't make it wider than 100%
           overflow: "hidden"
         }}>
           <SummaryRow label={`Regular Repayment (per ${freqLabel})`} value={hasData ? fmt(result.repayment) : "—"} />
@@ -149,8 +164,7 @@ export default function Chart({
           <SummaryRow label="Total Interest (Offset)" value={hasData ? fmt(result.totalInterestOffset) : "—"} />
           <SummaryRow label="Loan Term (Offset)" value={hasData ? getTermString(result.numberOfRepaymentsOffset) : "—"} />
           <SummaryRow label="Interest Saved" value={hasData ? fmt(result.interestSaved || savings) : "—"} />
-          
-          {/* Replaced manual "Time Saved" div with the SummaryRow component for consistency */}
+
           <SummaryRow label="Time Saved" value={hasData ? timeSavedText : "—"} />
 
           <SummaryRow label="Effective Balance for Interest" value={hasData ? fmt(result.currentEffectiveBalance) : "—"} />
@@ -159,96 +173,104 @@ export default function Chart({
 
         {/* ── CHART AREA ── */}
         <div style={{
-          flex: 1, background: "#fff", borderRadius: 12, border: "1px solid #E8EDF2",
-          padding: "24px 16px 16px", display: "flex", flexDirection: "column",
-          minHeight: 340, height: "auto", width: "100%", overflow: "hidden" // Added strict width and overflow to protect Recharts
+          flex: 1,
+          background: "#fff",
+          borderRadius: 12,
+          border: "1px solid #E8EDF2",
+          padding: "24px 16px 16px",
+          display: "flex",
+          flexDirection: "column",
+          minHeight: 180, // Provides a safe minimum total height for the white box on mobile
+          width: "100%"
         }}>
 
-          {/* FIX 2: Replaced 'flex: 1' with strict width & fixed height to stop Recharts from collapsing to 0 on mobile */}
-          <div style={{ width: "100%", height: 300, minHeight: 300 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={displayData} margin={{ top: 20, right: 8, left: 0, bottom: 20 }}>
-                <defs>
-                  <linearGradient id="standardGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#C4C4C4" stopOpacity={0.9} />
-                    <stop offset="100%" stopColor="#C4C4C4" stopOpacity={0.5} />
-                  </linearGradient>
-                  <linearGradient id="offsetGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#4A72FF" stopOpacity={0.9} />
-                    <stop offset="100%" stopColor="#4A72FF" stopOpacity={0.7} />
-                  </linearGradient>
-                </defs>
+          {/* THE FIX: flex: 1 allows growth, minHeight: 250 prevents squishing on mobile, absolute positioning forces Recharts to obey */}
+        <div style={{ flex: 1, position: "relative", minHeight: 180, width: "100%" }}> {/* <-- REDUCED from 250 to flatten the graph */}     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={displayData} margin={{ top: 10, right: 0, left: -10, bottom: 10 }}>
+                  <defs>
+                    <linearGradient id="standardGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#C4C4C4" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#C4C4C4" stopOpacity={0.5} />
+                    </linearGradient>
+                    <linearGradient id="offsetGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#4A72FF" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#4A72FF" stopOpacity={0.7} />
+                    </linearGradient>
+                  </defs>
 
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
 
-                <XAxis
-                  dataKey="year"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#94A3B8", fontSize: 12, fontWeight: 500 }}
-                  dy={16}
-                  minTickGap={20} // Added to prevent text overlap on tiny screens
-                  interval="preserveStartEnd"
-                  tickFormatter={formatXTick}
-                />
-                <YAxis
-                  width={55} // Slightly reduced to save space on mobile
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v) =>
-                    v === 0 ? "$0" : v >= 1000000
-                      ? `$${(v / 1000000).toFixed(1)}M`
-                      : `$${(v / 1000).toFixed(0)}K`
-                  }
-                  tick={{ fill: "#94A3B8", fontSize: 12 }}
-                />
+                  <XAxis
+                    dataKey="year"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "#94A3B8", fontSize: 12, fontWeight: 500 }}
+                    dy={16}
+                    minTickGap={20}
+                    interval="preserveStartEnd"
+                    tickFormatter={formatXTick}
+                  />
+                  <YAxis
+                    width={47}                // <-- Reduced from 55 to make X-axis wider
+                    domain={[0, 'dataMax']}   // <-- Forces the chart to be tight to the top value
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(v) =>
+                      v === 0 ? "$0" : v >= 1000000
+                        ? `$${(v / 1000000).toFixed(1)}M`
+                        : `$${(v / 1000).toFixed(0)}K`
+                    }
+                    tick={{ fill: "#94A3B8", fontSize: 12 }}
+                  />
 
-                <Tooltip content={<CustomTooltip />} />
+                  <Tooltip content={<CustomTooltip />} />
 
-                <Area
-                  type="monotone"
-                  dataKey="standard"
-                  stroke="#AFAFAF"
-                  strokeWidth={2}
-                  fill="url(#standardGrad)"
-                  dot={false}
-                  activeDot={{ r: 4, fill: "#AFAFAF" }}
-                  isAnimationActive
-                  animationDuration={900}
-                />
+                  <Area
+                    type="monotone"
+                    dataKey="standard"
+                    stroke="#AFAFAF"
+                    strokeWidth={2}
+                    fill="url(#standardGrad)"
+                    dot={false}
+                    activeDot={{ r: 4, fill: "#AFAFAF" }}
+                    isAnimationActive
+                    animationDuration={900}
+                  />
 
-                <Area
-                  type="monotone"
-                  dataKey="offset"
-                  stroke="#4A72FF"
-                  strokeWidth={hasData ? 2 : 0}
-                  fill={hasData ? "url(#offsetGrad)" : "none"}
-                  dot={false}
-                  activeDot={hasData ? { r: 4, fill: "#4A72FF" } : false}
-                  isAnimationActive
-                  animationDuration={900}
-                  animationBegin={150}
-                />
+                  <Area
+                    type="monotone"
+                    dataKey="offset"
+                    stroke="#4A72FF"
+                    strokeWidth={hasData ? 2 : 0}
+                    fill={hasData ? "url(#offsetGrad)" : "none"}
+                    dot={false}
+                    activeDot={hasData ? { r: 4, fill: "#4A72FF" } : false}
+                    isAnimationActive
+                    animationDuration={900}
+                    animationBegin={150}
+                  />
 
-                {hasData && (
-                  <>
-                    <ReferenceLine x={todayX} stroke="#EF4444" strokeWidth={1.5} />
-                    <ReferenceDot
-                      x={todayX}
-                      y={todayY}
-                      r={5}
-                      fill="#fff"
-                      stroke="#EF4444"
-                      strokeWidth={2}
-                      label={{ position: "top", value: "Today", fill: "#EF4444", fontSize: 12, fontWeight: 600, offset: 10 }}
-                    />
-                  </>
-                )}
-              </ComposedChart>
-            </ResponsiveContainer>
+                  {hasData && (
+                    <>
+                      <ReferenceLine x={todayX} stroke="#EF4444" strokeWidth={1.5} />
+                      <ReferenceDot
+                        x={todayX}
+                        y={todayY}
+                        r={5}
+                        fill="#fff"
+                        stroke="#EF4444"
+                        strokeWidth={2}
+                        label={{ position: "top", value: "Today", fill: "#EF4444", fontSize: 12, fontWeight: 600, offset: 10 }}
+                      />
+                    </>
+                  )}
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
-          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: "16px", marginTop: "16px" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: "16px", marginTop: "16px", flexShrink: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div style={{ width: 12, height: 12, background: "#4A72FF", borderRadius: "50%" }} />
               <span style={{ fontSize: 12, color: "#64748B", fontWeight: 600 }}>Projected with Offset</span>
