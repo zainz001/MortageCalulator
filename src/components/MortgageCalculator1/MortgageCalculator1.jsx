@@ -40,15 +40,15 @@ export default function OffsetMortgageCalculator() {
     return principal * ((rBase * Math.pow(1 + rBase, nBase)) / (Math.pow(1 + rBase, nBase) - 1));
   }, [loanAmount, rate, years]);
 
-const effectiveMonthlyContribution =
-  contributionMode === "income"
-    ? Math.max(
+  const effectiveMonthlyContribution =
+    contributionMode === "income"
+      ? Math.max(
         0,
         toNum(monthlyIncome) -
         toNum(monthlyExpenses) -
         monthlyMortgageEstimate
       )
-    : toNum(monthlyContribution);
+      : toNum(monthlyContribution);
 
   // ── NEW: warn when savings will exceed the loan balance ──
   const contributionWarning = useMemo(() => {
@@ -58,7 +58,7 @@ const effectiveMonthlyContribution =
     }
     return "";
   }, [initialSavings, result]);
-const performCalculation = (isAuto = false) => {
+  const performCalculation = (isAuto = false) => {
     const principal = toNum(loanAmount);
     const r = toNum(rate);
     const y = toNum(years);
@@ -102,11 +102,49 @@ const performCalculation = (isAuto = false) => {
     initialSavings, monthlyContribution,
     monthlyIncome, monthlyExpenses, contributionMode,
   ]);
-  const mergedChartData = useMemo(() => {
-    if (!result) return [];
-    return result.unifiedSchedule;
-  }, [result]);
+// 1. Fix the mergedChartData to include years BEYOND when offset hits 0
+// so both lines share the same x-axis domain
 
+// In OffsetMortgageCalculator.jsx - fix mergedChartData
+const mergedChartData = useMemo(() => {
+  if (!result) return [];
+
+  const schedule = result.unifiedSchedule;
+  if (!schedule.length) return [];
+
+  const startYear = Math.ceil(schedule[0].year);
+  const endYear = Math.floor(schedule[schedule.length - 1].year);
+
+  let offsetPaidOff = false;  // track when offset hits zero
+
+  const yearly = [];
+  for (let yr = startYear; yr <= endYear; yr++) {
+    const closest = schedule.reduce((a, b) =>
+      Math.abs(b.year - yr) < Math.abs(a.year - yr) ? b : a
+    );
+
+    const rawOffset = closest.offset;
+
+    // Once offset hits 0, mark it paid off and use null from here on
+    if (!offsetPaidOff && rawOffset <= 0) {
+      offsetPaidOff = true;
+      yearly.push({
+        year: yr,
+        standard: closest.standard > 0 ? closest.standard : 0,
+        offset: 0,  // include the zero point so the line touches the axis
+      });
+      continue;
+    }
+
+    yearly.push({
+      year: yr,
+      standard: closest.standard > 0 ? closest.standard : 0,
+      offset: offsetPaidOff ? null : (rawOffset > 0 ? rawOffset : 0),
+    });
+  }
+
+  return yearly;
+}, [result]);
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-2 md:p-4">
       <div className="max-w-[1400px] w-full">

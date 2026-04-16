@@ -170,8 +170,6 @@ export function runAmortisationOffset({
     scheduledRepayment = loanAmount * ((r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
   }
 
-  // ── FIX: when using income/expense mode, offset grows by monthly surplus each period.
-  // When using direct contribution mode, it grows by contributionPerPeriod.
   const monthlySurplus = monthlyIncome > 0
     ? monthlyIncome - monthlyExpenses - scheduledRepayment
     : null;
@@ -182,14 +180,13 @@ export function runAmortisationOffset({
   let totalPaid = 0;
   let totalInterestPaid = 0;
   let periodsActual = 0;
+  let periodsActualTerm = 0;
   const yearlyBalances = [];
   const startYear = new Date().getFullYear();
 
   for (let i = 1; i <= n; i++) {
-    if (balance <= 0 || offsetBalance >= balance) break;
+    if (balance <= 0) break;
 
-    // Intra-period float: income lands day 1, outgoings leave mid-period on average.
-    // Formula matches NZHL's detailed calculator exactly.
     let dailyBalanceAdjustment = 0;
     if (monthlyIncome > 0 && periodsPerYear === 12) {
       dailyBalanceAdjustment = monthlyIncome - monthlyExpenses;
@@ -203,7 +200,6 @@ export function runAmortisationOffset({
     balance -= principalPortion;
     if (balance < 0.005) balance = 0;
 
-    // ── FIX: surplus accumulates month-over-month (was: static contributionPerPeriod only)
     const periodGrowth = monthlySurplus !== null ? monthlySurplus : contributionPerPeriod;
     offsetBalance += periodGrowth;
     if (offsetBalance < 0) offsetBalance = 0;
@@ -211,6 +207,10 @@ export function runAmortisationOffset({
     totalPaid += scheduledRepayment;
     totalInterestPaid += interestPortion;
     periodsActual = i;
+
+    if (periodsActualTerm === 0 && offsetBalance >= balance) {
+      periodsActualTerm = i;
+    }
 
     const step = Math.max(1, Math.floor(periodsPerYear / 4));
     if (i === 1 || i % step === 0 || offsetBalance >= balance) {
@@ -221,7 +221,7 @@ export function runAmortisationOffset({
     }
   }
 
-  totalPaid += balance; // Final lump sum payoff
+  totalPaid += balance;
 
   return {
     scheduledRepayment,
@@ -229,6 +229,7 @@ export function runAmortisationOffset({
     totalRepaid: totalPaid,
     totalInterest: totalInterestPaid,
     numberOfRepayments: periodsActual,
+    numberOfRepaymentsTerm: periodsActualTerm || periodsActual,
     yearlyBalances,
     finalOffsetBalance: offsetBalance,
   };
@@ -271,8 +272,9 @@ export function calculateOffsetMortgageSavings({
 
   const interestSaved = Math.max(0, standardSim.totalInterest - offsetSim.totalInterest);
   const periodsSaved = Math.max(0, standardSim.numberOfRepayments - offsetSim.numberOfRepayments);
-  const yearsSaved = Math.floor(periodsSaved / periodsPerYear);
-  const monthsSaved = Math.round((periodsSaved % periodsPerYear) / (periodsPerYear / 12));
+  const totalMonthsSaved = Math.round((periodsSaved / periodsPerYear) * 12);
+  const yearsSaved = Math.floor(totalMonthsSaved / 12);
+  const monthsSaved = totalMonthsSaved % 12;
 
   const offsetByPeriod = new Map(
     offsetSim.yearlyBalances.map((row) => [Math.round(row.year * 10000), row.balance])
@@ -307,8 +309,8 @@ export function calculateOffsetMortgageSavings({
     monthsSaved,
     payoffYearsStandard: Math.floor(standardSim.numberOfRepayments / periodsPerYear),
     payoffMonthsStandard: Math.round((standardSim.numberOfRepayments % periodsPerYear) / (periodsPerYear / 12)),
-    payoffYearsOffset: Math.floor(offsetSim.numberOfRepayments / periodsPerYear),
-    payoffMonthsOffset: Math.round((offsetSim.numberOfRepayments % periodsPerYear) / (periodsPerYear / 12)),
+    payoffYearsOffset: Math.floor(offsetSim.numberOfRepaymentsTerm / periodsPerYear),
+    payoffMonthsOffset: Math.round((offsetSim.numberOfRepaymentsTerm % periodsPerYear) / (periodsPerYear / 12)),
     scheduleStandard: standardSim.yearlyBalances,
     scheduleOffset: offsetSim.yearlyBalances,
     unifiedSchedule,
