@@ -3,7 +3,8 @@ import './App.css'
 
 import MortgageCalculatorPage from './pages/MortgageCalculator/page'
 import MortgageCalculatorPage1 from './pages/MortgageCalculator1/page'
-
+import PropertyCalculator from "./pages/Propertycalculator/page";
+ 
 function App() {
   const [selectedCalculator, setSelectedCalculator] = useState("mortgage");
 
@@ -28,6 +29,7 @@ function App() {
         >
           <option value="mortgage">Mortgage</option>
           <option value="offset">Offset Mortgage</option>
+          <option value="property">Offset Mortgage</option>
         </select>
 
       </div>
@@ -36,6 +38,7 @@ function App() {
       <div>
         {selectedCalculator === "mortgage" && <MortgageCalculatorPage />}
         {selectedCalculator === "offset" && <MortgageCalculatorPage1 />}
+        {selectedCalculator === "property" && <PropertyCalculator />}
       </div>
 
     </div>
