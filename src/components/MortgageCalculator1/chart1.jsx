@@ -21,11 +21,7 @@
   }) {
     const currentYearNum = new Date().getFullYear();
 
-    // ==========================================
-    // 1. THE TIME WARP LOGIC (Client Requirement)
-    // ==========================================
-    
-    // Find the exact year the offset loan is paid off
+
     const offsetEndYear = useMemo(() => {
       if (!result || !result.unifiedSchedule) return currentYearNum + 5;
       let lastBlue = Number(result.unifiedSchedule[0].year);
@@ -37,8 +33,7 @@
       return lastBlue;
     }, [result, currentYearNum]);
 
-    // Adjust this to be closer to 1.0 to soften the sharp "bend" in the gray line
-    const COMPRESS_RATIO =0.55;
+    const COMPRESS_RATIO =0.75;
 
     const warpYear = (realYear) => {
       if (realYear <= offsetEndYear) return realYear;
@@ -52,9 +47,6 @@
       return offsetEndYear + (warpedYear - offsetEndYear) / COMPRESS_RATIO;
     };
 
-    // ==========================================
-
-    // 2. Map data and apply the warp to the X coordinates
     const displayData = useMemo(() => {
       if (!result || !result.unifiedSchedule || !result.unifiedSchedule.length) {
         return [
@@ -95,7 +87,6 @@
     const periodsPerYear = frequency === "weekly" ? 52 : frequency === "fortnightly" ? 26 : 12;
     const freqLabel = frequency === "monthly" ? "mo" : frequency === "fortnightly" ? "fn" : "wk";
 
-    // 3. Generate clean milestones, then warp them so they align with the warped graph
     const xTicks = useMemo(() => {
       if (!displayData.length) return [];
       
@@ -196,12 +187,12 @@
           fontSize: "14px",
           fontWeight: "600",
           textAlign: "right",
-          flex: "1 1 140px", // Allows it to be 140px, but shrink if the screen is tiny
-          maxWidth: "100%",  // Ensures it NEVER pushes off the screen
+          flex: "1 1 140px",
+          maxWidth: "100%",  
           boxSizing: "border-box",
-          whiteSpace: "nowrap", // Keeps the number on one line
+          whiteSpace: "nowrap",
           overflow: "hidden",
-          textOverflow: "ellipsis" // Adds "..." if the number is somehow insanely long
+          textOverflow: "ellipsis" 
         }}>
           {value}
         </div>
@@ -217,11 +208,11 @@
           <div style={{
             background: "#0B2146",
             borderRadius: "12px",
-            padding: "20px",         // Slightly reduced from 24px to give mobile more breathing room
+            padding: "20px",        
             display: "flex",
             flexDirection: "column",
-            width: "100%",           // Forces it to stay inside the parent
-            boxSizing: "border-box", // CRITICAL: Ensures padding doesn't make it wider than 100%
+            width: "100%",           
+            boxSizing: "border-box", 
             overflow: "hidden"
           }}>
             <SummaryRow label={`Regular Repayment (per ${freqLabel})`} value={hasData ? fmt(result.repayment) : "—"} />

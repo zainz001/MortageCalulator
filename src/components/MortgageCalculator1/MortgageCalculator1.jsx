@@ -102,10 +102,7 @@ export default function OffsetMortgageCalculator() {
     initialSavings, monthlyContribution,
     monthlyIncome, monthlyExpenses, contributionMode,
   ]);
-// 1. Fix the mergedChartData to include years BEYOND when offset hits 0
-// so both lines share the same x-axis domain
 
-// In OffsetMortgageCalculator.jsx - fix mergedChartData
 const mergedChartData = useMemo(() => {
   if (!result) return [];
 
@@ -125,7 +122,6 @@ const mergedChartData = useMemo(() => {
 
     const rawOffset = closest.offset;
 
-    // Once offset hits 0, mark it paid off and use null from here on
     if (!offsetPaidOff && rawOffset <= 0) {
       offsetPaidOff = true;
       yearly.push({
