@@ -4,7 +4,12 @@ import './App.css'
 import MortgageCalculatorPage from './pages/MortgageCalculator/page'
 import MortgageCalculatorPage1 from './pages/MortgageCalculator1/page'
 import PropertyCalculator from "./pages/Propertycalculator/page";
- 
+const titles = {
+  mortgage: "Mortgage Calculator",
+  offset: "Offset Calculator",
+  property: "PIA Calculator"
+};
+
 function App() {
   const [selectedCalculator, setSelectedCalculator] = useState("mortgage");
 
@@ -13,12 +18,11 @@ function App() {
 
       {/* Header Section */}
       <div className="mb-4 md:mb-6 flex items-center justify-between">
-        
+
         {/* Dynamic Title */}
+
         <h2 className="text-[20px] md:text-[24px] font-bold text-[#0052CC]">
-          {selectedCalculator === "mortgage"
-            ? "Mortgage Calculator"
-            : "Offset Calculator"}
+          {titles[selectedCalculator] || "Calculator"}
         </h2>
 
         {/* Dropdown */}
@@ -29,7 +33,7 @@ function App() {
         >
           <option value="mortgage">Mortgage</option>
           <option value="offset">Offset Mortgage</option>
-          <option value="property">Offset Mortgage</option>
+          <option value="property">PIA</option>
         </select>
 
       </div>
