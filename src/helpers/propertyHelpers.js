@@ -169,7 +169,7 @@ export function calculatePIA({
     if (rentTimeline && rentTimeline[yr - 1]) {
       annualGrossRentC = toCents(rentTimeline[yr - 1]);
     } else {
-      // Fallback: Use standard inflation math if no custom timeline is provided
+     
       annualGrossRentC = toCents(
         fromCents(grossRentWkC * 52) * Math.pow(1 + inflationRate / 100, yr)
       );

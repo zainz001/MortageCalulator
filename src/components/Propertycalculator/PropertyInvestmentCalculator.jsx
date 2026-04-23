@@ -8,16 +8,17 @@ import PurchaseCostsModal from "./componenets/propertyprice/PurchaseCostsModal";
 import PropertyDetailsSection from "./sections/property/PropertyDetailsSection";
 import FinancingInputsSection from "./sections/finance/FinancingInputsSection";
 import GrowthAndInflationSection from "./sections/growthandinflation/GrowthAndInflationSection";
-import DepreciationSection from "./sections/depreciation/DepreciationSection";
 import TaxSettingsSection from "./sections/tax/TaxSettingsSection";
 import RentalIncomeModal from "./componenets/propertyprice/RentalIncomeModal";
-
+import RentalExpensesModal from "./componenets/propertyprice/RentalExpensesModal";
+import BuildingDepreciationModal from "./componenets/propertyprice/BuildingDepreciationModal";
+import ChattelsDepreciationModal from "./componenets/propertyprice/ChattelsDepreciationModal";
 const DEFAULTS = {
   propertyAddress: "",
   propertyDescription: "",
-  propertyValue: "",
-  purchaseCosts: "",
-  grossRentWeekly: "",
+  propertyValue: "750000",
+  purchaseCosts: "3840",
+  grossRentWeekly: "700",
   rentalExpensesPercent: "30",
   cashInvested: "",
   equityInvested: "0",
@@ -91,7 +92,8 @@ export default function PropertyInvestmentCalculator() {
   const [interestDeductibility, setInterestDeductibility] = useState(DEFAULTS.interestDeductibility);
   const [isNewBuild, setIsNewBuild] = useState(DEFAULTS.isNewBuild);
   const [ringFencing, setRingFencing] = useState(DEFAULTS.ringFencing);
-
+  const [buildingDepreciation, setBuildingDepreciation] = useState("0");
+  const [chattelsDepreciation, setChattelsDepreciation] = useState("11250"); // Using your screenshot value
   const [result, setResult] = useState(null);
   const [loanError, setLoanError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -255,6 +257,10 @@ export default function PropertyInvestmentCalculator() {
                 setActiveModal={setActiveModal}
                 renovationCosts={renovationCosts}
                 renovationTimeline={renovationTimeline}
+                buildingDepreciation={buildingDepreciation}
+                setBuildingDepreciation={setBuildingDepreciation}
+                chattelsDepreciation={chattelsDepreciation}
+                setChattelsDepreciation={setChattelsDepreciation}
               />
 
               <FinancingInputsSection
@@ -273,12 +279,6 @@ export default function PropertyInvestmentCalculator() {
                 inflationRate={inflationRate} setInflationRate={setInflationRate}
               />
 
-              <DepreciationSection
-                chattelsValue={chattelsValue} setChattelsValue={setChattelsValue}
-                depreciationMethod={depreciationMethod} setDepreciationMethod={setDepreciationMethod}
-                chattelsDepreciationRate={chattelsDepreciationRate} setChattelsDepreciationRate={setChattelsDepreciationRate}
-                buildingDepreciationRate={buildingDepreciationRate} setBuildingDepreciationRate={setBuildingDepreciationRate}
-              />
 
               <TaxSettingsSection
                 investorTaxRate={investorTaxRate} setInvestorTaxRate={setInvestorTaxRate}
@@ -416,6 +416,7 @@ export default function PropertyInvestmentCalculator() {
         projections={result?.projections || []}
         renovationCosts={renovationCosts} setRenovationCosts={setRenovationCosts}
       />
+
       <PurchaseCostsModal
         isOpen={activeModal === "purchaseCosts"}
         onClose={() => setActiveModal(null)}
@@ -423,21 +424,41 @@ export default function PropertyInvestmentCalculator() {
         setPurchaseCosts={setPurchaseCosts}
         propertyValue={propertyValue}
       />
+
       <RentalIncomeModal
         isOpen={activeModal === "rentalIncome"}
         onClose={() => setActiveModal(null)}
         grossRentWeekly={grossRentWeekly}
         setGrossRentWeekly={setGrossRentWeekly}
-      />
-      <RentalIncomeModal
-        isOpen={activeModal === "rentalIncome"}
-        onClose={() => setActiveModal(null)}
-        grossRentWeekly={grossRentWeekly}
-        setGrossRentWeekly={setGrossRentWeekly}
-        
+
         inflationRate={inflationRate}
         rentTimeline={rentTimeline}
         setRentTimeline={setRentTimeline}
+      />
+      {/* Add this small calculation block right above the modal if you want, or just put it inline */}
+      <RentalExpensesModal
+        isOpen={activeModal === "rentalExpenses"}
+        onClose={() => setActiveModal(null)}
+
+        grossRentWeekly={grossRentWeekly} // <-- Simply pass this!
+
+        propertyValue={propertyValue}
+        rentalExpensesPercent={rentalExpensesPercent}
+        setRentalExpensesPercent={setRentalExpensesPercent}
+      />
+      <BuildingDepreciationModal
+        isOpen={activeModal === "buildingDepreciation"}
+        onClose={() => setActiveModal(null)}
+        propertyValue={propertyValue}
+        renovationCosts={renovationCosts}
+        buildingDepreciation={buildingDepreciation}
+        setBuildingDepreciation={setBuildingDepreciation}
+      />
+      <ChattelsDepreciationModal
+        isOpen={activeModal === "chattelsDepreciation"}
+        onClose={() => setActiveModal(null)}
+        propertyValue={propertyValue}
+        setChattelsDepreciation={setChattelsDepreciation}
       />
     </div>
   );

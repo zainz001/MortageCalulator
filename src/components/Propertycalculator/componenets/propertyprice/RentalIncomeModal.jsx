@@ -9,36 +9,91 @@ export default function RentalIncomeModal({
     setGrossRentWeekly,
     inflationRate,
     rentTimeline,
-    setRentTimeline
+    setRentTimeline,
+    propertyValue = 750000, // <--- Added for yield calc
+    purchaseCosts = 0       // <--- Added for yield calc
 }) {
-    const [rentPerWeek, setRentPerWeek] = useState(grossRentWeekly || "");
+    // 1. Core State
+    const [frequency, setFrequency] = useState("weekly");
+    const [rentValue, setRentValue] = useState(grossRentWeekly || ""); // Represents rent per week/month/year
     const [vacancyRate, setVacancyRate] = useState("2.00");
-    const [preferences, setPreferences] = useState("weekly");
     const [isAnnualModalOpen, setIsAnnualModalOpen] = useState(false);
 
-    const [peakWeeks, setPeakWeeks] = useState("");
-    const [peakRent, setPeakRent] = useState("");
-    const [shoulderWeeks, setShoulderWeeks] = useState("");
-    const [shoulderRent, setShoulderRent] = useState("");
-    const [offSeasonWeeks, setOffSeasonWeeks] = useState("");
-    const [offSeasonRent, setOffSeasonRent] = useState("");
-
+    // Sync when modal opens
     useEffect(() => {
-        if (isOpen) setRentPerWeek(grossRentWeekly || "");
+        if (isOpen) {
+            setRentValue(grossRentWeekly || "");
+            setFrequency("weekly");
+        }
     }, [isOpen, grossRentWeekly]);
+
+    // 2. The Core Math Logic (Forward Calculation)
+    const getMultiplier = (freq) => {
+        if (freq === "weekly") return 52;
+        if (freq === "monthly") return 12;
+        return 1; // yearly
+    };
+
+    const rv = parseFloat(rentValue) || 0;
+    const vac = parseFloat(vacancyRate) || 0;
+    const totalCost = (parseFloat(propertyValue) || 0) + (parseFloat(purchaseCosts) || 0);
+
+    const potentialAnnualRent = rv * getMultiplier(frequency);
+    const actualAnnualRent = potentialAnnualRent * (1 - (vac / 100));
+    
+    // Yield is calculated on actual rent vs total cost
+    const grossYield = totalCost > 0 ? (actualAnnualRent / totalCost) * 100 : 0;
+
+    // 3. Reverse Math Handlers (When a user types into a derived field)
+    const handlePotentialRentChange = (newVal) => {
+        const potential = parseFloat(newVal) || 0;
+        const newRentValue = potential / getMultiplier(frequency);
+        setRentValue(newRentValue.toString());
+    };
+
+    const handleActualRentChange = (newVal) => {
+        const actual = parseFloat(newVal) || 0;
+        // Avoid divide by zero if vacancy is 100%
+        const potential = vac === 100 ? 0 : actual / (1 - (vac / 100));
+        const newRentValue = potential / getMultiplier(frequency);
+        setRentValue(newRentValue.toString());
+    };
+
+    const handleYieldChange = (newVal) => {
+        const targetYield = parseFloat(newVal) || 0;
+        const targetActualRent = (targetYield / 100) * totalCost;
+        const targetPotential = vac === 100 ? 0 : targetActualRent / (1 - (vac / 100));
+        const newRentValue = targetPotential / getMultiplier(frequency);
+        setRentValue(newRentValue.toString());
+    };
+
+    // 4. Handle Frequency Toggle
+    const handleFrequencyChange = (newFreq) => {
+        // When changing frequency, we want the *Annual Rent* to stay exactly the same.
+        // So we take current potential rent, and divide by the NEW multiplier.
+        const currentPotential = rv * getMultiplier(frequency);
+        const newRentValue = currentPotential / getMultiplier(newFreq);
+        
+        setRentValue(newRentValue.toString());
+        setFrequency(newFreq);
+    };
+
+    const handleOk = () => {
+        // Ensure we always save the WEEKLY equivalent back to the parent state
+        // regardless of what frequency radio button they are currently viewing.
+        const potential = rv * getMultiplier(frequency);
+        const weeklyEquivalent = potential / 52;
+        setGrossRentWeekly(weeklyEquivalent.toString());
+        onClose();
+    };
 
     if (!isOpen) return null;
 
-    const rpw = parseFloat(rentPerWeek) || 0;
-    const vacRate = parseFloat(vacancyRate) || 0;
-
-    const potentialAnnualRent = rpw * 52;
-    const actualAnnualRent = potentialAnnualRent * (1 - (vacRate / 100)); // Exactly 35,672
-    const displayGrossYield = "4.76";
-
-    const handleOk = () => {
-        setGrossRentWeekly(rentPerWeek.toString());
-        onClose();
+    // Formatting helpers for display
+    const labelMapping = {
+        weekly: "Rent per week:",
+        monthly: "Rent per month:",
+        yearly: "Rent per year:"
     };
 
     return (
@@ -57,15 +112,16 @@ export default function RentalIncomeModal({
                                 <span className="absolute -top-2.5 left-3 bg-white px-1 text-[12px] font-bold text-[#64748B]">Rental Income (1st Year)</span>
                                 <div className="flex flex-col gap-3">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[13px] text-[#64748B] w-[130px] text-right pr-3">Rent per week:</span>
+                                        <span className="text-[13px] text-[#64748B] w-[130px] text-right pr-3">{labelMapping[frequency]}</span>
                                         <div className="w-[110px]">
-                                            <InputField value={rentPerWeek} onChange={setRentPerWeek} />
+                                            <InputField value={rentValue} onChange={setRentValue} />
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <span className="text-[13px] text-[#64748B] w-[130px] text-right pr-3">Potential annual rent:</span>
-                                        <div className="w-[110px] h-[36px] flex items-center justify-end px-3 border border-[#E2E8F0] bg-[#F8FAFC] rounded-[6px] text-[13px] font-medium text-[#1E293B]">
-                                            {potentialAnnualRent.toLocaleString("en-NZ")}
+                                        <div className="w-[110px]">
+                                            {/* Changed to Editable Input */}
+                                            <InputField value={Math.round(potentialAnnualRent).toString()} onChange={handlePotentialRentChange} />
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between">
@@ -76,14 +132,16 @@ export default function RentalIncomeModal({
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <span className="text-[13px] text-[#64748B] w-[130px] text-right pr-3">Actual annual rent:</span>
-                                        <div className="w-[110px] h-[36px] flex items-center justify-end px-3 border border-[#E2E8F0] bg-[#F8FAFC] rounded-[6px] text-[13px] font-medium text-[#1E293B]">
-                                            {Math.round(actualAnnualRent).toLocaleString("en-NZ")}
+                                        <div className="w-[110px]">
+                                            {/* Changed to Editable Input */}
+                                            <InputField value={Math.round(actualAnnualRent).toString()} onChange={handleActualRentChange} />
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <span className="text-[13px] text-[#64748B] w-[130px] text-right pr-3">Gross yield:</span>
-                                        <div className="w-[110px] h-[36px] flex items-center justify-end px-3 border border-[#E2E8F0] bg-[#F8FAFC] rounded-[6px] text-[13px] font-medium text-[#1E293B]">
-                                            {displayGrossYield}%
+                                        <div className="w-[110px]">
+                                            {/* Changed to Editable Input */}
+                                            <InputField value={grossYield.toFixed(2)} onChange={handleYieldChange} suffix="%" />
                                         </div>
                                     </div>
                                 </div>
@@ -93,13 +151,13 @@ export default function RentalIncomeModal({
                                 <span className="absolute -top-2.5 left-3 bg-white px-1 text-[12px] font-bold text-[#64748B]">Preferences</span>
                                 <div className="flex flex-col gap-2.5 mt-1">
                                     <label className="flex items-center gap-2 text-[13px] text-[#1E293B] cursor-pointer">
-                                        <input type="radio" checked={preferences === "weekly"} onChange={() => setPreferences("weekly")} className="text-[#0052CC]" /> Per week
+                                        <input type="radio" checked={frequency === "weekly"} onChange={() => handleFrequencyChange("weekly")} className="text-[#0052CC]" /> Per week
                                     </label>
-                                    <label className="flex items-center gap-2 text-[13px] text-[#1E293B] cursor-pointer opacity-50">
-                                        <input type="radio" disabled className="text-[#0052CC]" /> Per month
+                                    <label className="flex items-center gap-2 text-[13px] text-[#1E293B] cursor-pointer">
+                                        <input type="radio" checked={frequency === "monthly"} onChange={() => handleFrequencyChange("monthly")} className="text-[#0052CC]" /> Per month
                                     </label>
-                                    <label className="flex items-center gap-2 text-[13px] text-[#1E293B] cursor-pointer opacity-50">
-                                        <input type="radio" disabled className="text-[#0052CC]" /> Per year
+                                    <label className="flex items-center gap-2 text-[13px] text-[#1E293B] cursor-pointer">
+                                        <input type="radio" checked={frequency === "yearly"} onChange={() => handleFrequencyChange("yearly")} className="text-[#0052CC]" /> Per year
                                     </label>
                                     <label className="flex items-center gap-2 text-[13px] text-[#1E293B] cursor-pointer opacity-50">
                                         <input type="radio" disabled className="text-[#0052CC]" /> Holiday letting
@@ -108,44 +166,6 @@ export default function RentalIncomeModal({
                                         <input type="radio" disabled className="text-[#0052CC]" /> Gross yield
                                     </label>
                                 </div>
-                            </div>
-                        </div>
-
-                        <div className="border border-[#CBD5E1] rounded-[6px] p-4 pt-5 bg-white relative">
-                            <span className="absolute -top-2.5 left-3 bg-white px-1 text-[12px] font-bold text-[#64748B]">Holiday Letting (1st Year)</span>
-
-                            <div className="grid grid-cols-5 gap-3 items-end mb-3">
-                                <div className="text-[12px] text-[#64748B] font-bold text-center">Season</div>
-                                <div className="text-[12px] text-[#64748B] font-bold text-center">Weeks</div>
-                                <div className="text-[12px] text-[#64748B] font-bold text-center">Rent/wk</div>
-                                <div className="text-[12px] text-[#64748B] font-bold text-center">Occupancy rate</div>
-                                <div className="text-[12px] text-[#64748B] font-bold text-center">Total rent</div>
-                            </div>
-                            <div className="grid grid-cols-5 gap-3 items-center mb-2">
-                                <div className="text-[13px] text-[#64748B] text-right pr-2">Peak</div>
-                                <InputField value={peakWeeks} onChange={setPeakWeeks} />
-                                <InputField value={peakRent} onChange={setPeakRent} />
-                                <InputField value={""} disabled />
-                                <div className="text-center text-[13px] text-[#1E293B]"></div>
-                            </div>
-                            <div className="grid grid-cols-5 gap-3 items-center mb-2">
-                                <div className="text-[13px] text-[#64748B] text-right pr-2">Shoulder</div>
-                                <InputField value={shoulderWeeks} onChange={setShoulderWeeks} />
-                                <InputField value={shoulderRent} onChange={setShoulderRent} />
-                                <InputField value={""} disabled />
-                                <div className="text-center text-[13px] text-[#1E293B]"></div>
-                            </div>
-                            <div className="grid grid-cols-5 gap-3 items-center mb-4">
-                                <div className="text-[13px] text-[#64748B] text-right pr-2">Off-season</div>
-                                <InputField value={offSeasonWeeks} onChange={setOffSeasonWeeks} />
-                                <InputField value={offSeasonRent} onChange={setOffSeasonRent} />
-                                <InputField value={""} disabled />
-                                <div className="text-center text-[13px] text-[#1E293B]"></div>
-                            </div>
-                            <div className="grid grid-cols-5 gap-3 items-center">
-                                <div className="text-[13px] text-[#64748B] font-bold text-right pr-2">Totals</div>
-                                <div className="text-center text-[13px] text-[#1E293B] font-medium">52</div>
-                                <div></div><div></div><div></div>
                             </div>
                         </div>
                     </div>
@@ -170,16 +190,14 @@ export default function RentalIncomeModal({
                 </div>
             </div>
 
-            {/* THE FIX: actualAnnualRent IS PASSED DIRECTLY HERE */}
-         <AnnualRentalIncomeModal 
-        isOpen={isAnnualModalOpen} 
-        onClose={() => setIsAnnualModalOpen(false)}
-        // THIS LINE IS MANDATORY. If this is missing or misspelled, the grid will be blank.
-        actualAnnualRent={actualAnnualRent.toString()} 
-        inflationRate={inflationRate}
-        rentTimeline={rentTimeline}
-        setRentTimeline={setRentTimeline}
-      />
+            <AnnualRentalIncomeModal 
+                isOpen={isAnnualModalOpen} 
+                onClose={() => setIsAnnualModalOpen(false)}
+                actualAnnualRent={actualAnnualRent.toString()} 
+                inflationRate={inflationRate}
+                rentTimeline={rentTimeline}
+                setRentTimeline={setRentTimeline}
+            />
         </>
     );
 }
