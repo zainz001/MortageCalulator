@@ -3,6 +3,11 @@ import InputField from "../../../inputField";
 import SelectField from "../../../SelectField";
 import CollapsibleSection from "../../../CollapsibleSection";
 
+const parseNum = (val) => {
+  if (val === undefined || val === null || val === "") return 0;
+  return parseFloat(String(val).replace(/,/g, "")) || 0;
+};
+
 export default function FinancingInputsSection({
   cashInvested, setCashInvested,
   equityInvested, setEquityInvested,
@@ -10,20 +15,88 @@ export default function FinancingInputsSection({
   interestRate, setInterestRate,
   loanType, setLoanType,
   additionalLoan, setAdditionalLoan,
+  taxWriteOffPeriod, setTaxWriteOffPeriod,
   loanError,
-  setIsModalOpen
+  setIsModalOpen, // We will use this for the new Edit buttons
+  
+  propertyValue = 0,
+  purchaseCosts = 0,
+  renovationCosts = 0
 }) {
+
+  // 1. Base Variables
+  const pv = parseNum(propertyValue);
+  const rc = parseNum(renovationCosts);
+  const pc = purchaseCosts && String(purchaseCosts).trim() !== "" ? parseNum(purchaseCosts) : (pv * 0.005); 
+  const ci = parseNum(cashInvested);
+  const ei = parseNum(equityInvested);
+  const addLoan = parseNum(additionalLoan);
+  const ir = parseNum(interestRate);
+
+  let loanAmount = 0;
+  let lc = 0;
+  let amountRequired = 0;
+
+  // 2. Auto-Calculate formula for Loan Costs
+  const isLcAuto = !loanCosts || String(loanCosts).trim() === "";
+
+  if (isLcAuto) {
+    const baseRequired = pv + pc + rc + 363 + addLoan - ci - ei;
+    loanAmount = baseRequired / 0.99;
+    lc = (loanAmount * 0.01) + 363;
+    amountRequired = pv + pc + lc + rc;
+  } else {
+    lc = parseNum(loanCosts);
+    amountRequired = pv + pc + lc + rc;
+    loanAmount = amountRequired + addLoan - ci - ei;
+  }
+
+  const loanRepayments = loanAmount * (ir / 100);
+
+  const formatVal = (val) => Math.round(val).toLocaleString("en-NZ");
+
+  // 3. Reverse Math Handlers 
+  const handleAmountRequiredChange = (val) => {
+    const newAmount = parseNum(val);
+    const newLc = newAmount - pv - pc - rc;
+    setLoanCosts(Math.round(newLc).toString());
+  };
+
+  const handleLoanAmountChange = (val) => {
+    const newLoan = parseNum(val);
+    const newCi = amountRequired + addLoan - ei - newLoan;
+    setCashInvested(Math.round(newCi).toString());
+  };
+
+  const handleLoanRepaymentsChange = (val) => {
+    const newRepay = parseNum(val);
+    const newLoan = ir > 0 ? newRepay / (ir / 100) : 0;
+    const newCi = amountRequired + addLoan - ei - newLoan;
+    setCashInvested(Math.round(newCi).toString());
+  };
+
   return (
     <CollapsibleSection title="2. Financing Inputs">
-      <div className="flex justify-end">
+      
+      {/* 1. Loan Amount with Edit Button */}
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <InputField
+            label="Loan Amount"
+            prefix="$"
+            value={formatVal(loanAmount)}
+            onChange={handleLoanAmountChange} 
+          />
+        </div>
         <button
           type="button"
-          onClick={() => setIsModalOpen(true)}
-          className="text-[12px] text-[#0052CC] font-bold hover:underline"
+          onClick={() => setIsModalOpen("loanAmount")}
+          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
-          View loan breakdown →
+          Edit ↗
         </button>
       </div>
+
       <InputField
         label="Cash invested (deposit)"
         prefix="$"
@@ -31,28 +104,26 @@ export default function FinancingInputsSection({
         onChange={setCashInvested}
         error={loanError}
       />
-      <InputField
-        label="Equity invested"
-        prefix="$"
-        value={equityInvested}
-        onChange={setEquityInvested}
-        tooltip="Existing equity leveraged from another property."
-      />
-      <InputField
-        label="Loan costs"
-        prefix="$"
-        value={loanCosts}
-        onChange={setLoanCosts}
-        placeholder="Auto-calculated"
-        tooltip="Establishment fees, broker, valuation. Auto-calculated if blank."
-      />
-      <InputField
-        label="Interest rate (p.a.)"
-        suffix="%"
-        value={interestRate}
-        onChange={setInterestRate}
-        tooltip="Blended rate across fixed/floating tranches. Interest-only basis."
-      />
+
+      {/* 2. Amount Required with Edit Button */}
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <InputField
+            label="Amount Required"
+            prefix="$"
+            value={formatVal(amountRequired)}
+            onChange={handleAmountRequiredChange} 
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsModalOpen("amountRequired")}
+          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+        >
+          Edit ↗
+        </button>
+      </div>
+
       <SelectField
         label="Loan type"
         value={loanType}
@@ -62,13 +133,72 @@ export default function FinancingInputsSection({
           { label: "Principal & Interest", value: "P+I" },
         ]}
       />
+
+      {/* 3. Interest Rate with Edit Button */}
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <InputField
+            label="Interest rate (p.a.)"
+            suffix="%"
+            value={interestRate}
+            onChange={setInterestRate}
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsModalOpen("interestRate")}
+          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+        >
+          Edit ↗
+        </button>
+      </div>
+
+      {/* 4. Loan Repayments with Edit Button */}
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <InputField
+            label="Loan Repayments"
+            prefix="$"
+            value={formatVal(loanRepayments)}
+            onChange={handleLoanRepaymentsChange} 
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsModalOpen("loanRepayments")}
+          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+        >
+          Edit ↗
+        </button>
+      </div>
+
+      {/* 5. Loan Costs with Edit Button */}
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <InputField
+            label="Loan costs"
+            prefix="$"
+            value={isLcAuto ? Math.round(lc) : loanCosts}
+            onChange={setLoanCosts}
+            placeholder={`Auto: $${Math.round(lc).toLocaleString("en-NZ")}`}
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsModalOpen("loanCosts")}
+          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+        >
+          Edit ↗
+        </button>
+      </div>
+
       <InputField
-        label="Additional loan"
-        prefix="$"
-        value={additionalLoan}
-        onChange={setAdditionalLoan}
-        tooltip="Renovation drawdown or top-up facility."
+        label="Tax Write-Off Period"
+        suffix="yr"
+        value={taxWriteOffPeriod}
+        onChange={setTaxWriteOffPeriod}
       />
+
     </CollapsibleSection>
   );
 }

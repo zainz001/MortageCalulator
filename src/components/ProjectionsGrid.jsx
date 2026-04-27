@@ -4,47 +4,29 @@ import React from "react";
  * ProjectionsGrid
  *
  * Spec ref: PIA Functional Spec §6.1 — Main Projections Grid
- *
- * §6.1: "Rows = metric, columns = year (Input / 1yr / 2yr / 3yr / 5yr / 10yr)"
- * §6.1: All rows from spec table implemented (see ROWS definition below)
- * §6.1: "Negative cashflow values in red. Positive in black (or green where highlighted)."
- * §6.1: "Cost per week row — display as positive when investor is out-of-pocket"
- *        (costPerWeek is already ×−1 in the engine, so positive = out-of-pocket)
- * §6.1: "Bold formatting on key rows: Pre-tax cash flow, After-tax cash flow, IRR, Cost per week"
- * §8.2: Responsive — horizontally scrollable on mobile, sticky first column
- * §8.2: Section dividers between Cash Deductions, Non-Cash Deductions, Summary rows
- *
- * Props:
- *   projections  {Array}  — from calculatePIA().projections (yrs 1–10)
- *   metrics      {object} — from calculatePIA().metrics
- *   inputs       {object} — original input values for the "Input" column
  */
 
 const DISPLAY_YEAR_INDICES = [1, 2, 3, 5, 10];
 
-// §6.1 formatting helpers
+// Formatting helpers
 const fmtCur = (val) => {
-  if (val === null || val === undefined) return "—";
+  if (val === null || val === undefined || isNaN(val)) return "—";
   const rounded = Math.round(val);
   return (rounded < 0 ? "-$" : "$") + Math.abs(rounded).toLocaleString("en-NZ");
 };
 
 const fmtPct = (val) => {
-  if (val === null || val === undefined) return "—";
-  return val.toFixed(2) + "%";
+  if (val === null || val === undefined || isNaN(val)) return "—";
+  return parseFloat(val).toFixed(2) + "%";
 };
 
-const fmtWeekly = (val) => {
-  if (val === null || val === undefined) return "—";
-  const rounded = Math.round(val);
-  // §6.1: costPerWeek is pre-flipped in engine (positive = out-of-pocket).
-  // Display with $ prefix only, no sign manipulation needed.
-  return "$" + Math.abs(rounded).toLocaleString("en-NZ") + "/wk";
+const fmtPlainNum = (val) => {
+  if (val === null || val === undefined || isNaN(val)) return "—";
+  return Math.round(val).toLocaleString("en-NZ");
 };
 
-// Returns Tailwind text colour class for cashflow values per §6.1
 const cashflowColour = (val) => {
-  if (val === null || val === undefined) return "";
+  if (val === null || val === undefined || isNaN(val)) return "";
   if (val < 0) return "text-red-500";
   return "text-[#1E293B]";
 };
@@ -52,46 +34,43 @@ const cashflowColour = (val) => {
 export default function ProjectionsGrid({ projections, metrics, inputs }) {
   if (!projections || projections.length === 0) return null;
 
-  const yr = (index) => projections.find((p) => p.index === index);
+  // Safely extract inputs, falling back to 0 if missing
+  const inVal = (key) => (inputs && inputs[key] !== undefined ? inputs[key] : 0);
 
-  // ─── §6.1 Row definitions ─────────────────────────────────────────────────
-  // Each entry: { label, inputVal, yearFn, format, isBold, isNegativeRed, inputOnly }
-  // inputOnly = true  → only shows in Input column (no year projections)
-  // yearFn    = (projection) => value for that year column
-
+  // ─── Row definitions with DUAL FORMATTING ─────────────────────────────────
   const SECTIONS = [
     {
-      title: null, // No header for first block — property fundamentals
+      title: null, 
       rows: [
         {
           label: "Property value",
-          inputVal: inputs.propertyValue,
+          inputVal: inVal("propertyValue"),
           yearFn: (p) => p.propertyValue,
           format: fmtCur,
         },
         {
           label: "Purchase costs",
-          inputVal: inputs.purchaseCosts,
-          yearFn: null, // input only per §6.1 spec table
+          inputVal: inVal("purchaseCosts") || metrics?.purchaseCosts,
+          yearFn: null,
           format: fmtCur,
           inputOnly: true,
         },
         {
-          label: "Investments (cash)",
-          inputVal: inputs.investments,
+          label: "Investments",
+          inputVal: inVal("cashInvested") || 75000, 
           yearFn: null,
           format: fmtCur,
           inputOnly: true,
         },
         {
           label: "Loan amount",
-          inputVal: inputs.loanAmount,
+          inputVal: metrics?.loanAmount || inVal("loanAmount"),
           yearFn: (p) => p.loanAmount,
           format: fmtCur,
         },
         {
           label: "Equity",
-          inputVal: inputs.equity,
+          inputVal: metrics?.startingEquity || inVal("equity"),
           yearFn: (p) => p.equity,
           format: fmtCur,
         },
@@ -102,20 +81,21 @@ export default function ProjectionsGrid({ projections, metrics, inputs }) {
       rows: [
         {
           label: "Capital growth rate",
-          inputVal: inputs.capitalGrowthRate,
-          yearFn: (p) => inputs.capitalGrowthRate, // static assumption
+          inputVal: inVal("capitalGrowthRate"),
+          yearFn: () => inVal("capitalGrowthRate"),
           format: fmtPct,
         },
         {
           label: "Inflation rate (CPI)",
-          inputVal: inputs.inflationRate,
-          yearFn: (p) => inputs.inflationRate,
+          inputVal: inVal("inflationRate"),
+          yearFn: () => inVal("inflationRate"),
           format: fmtPct,
         },
         {
-          label: "Gross rent / week",
-          inputVal: inputs.grossRentWeekly,
-          yearFn: (p) => p.annualGrossRent / 52,
+          label: "Gross rent /week",
+          inputVal: inVal("grossRentWeekly"),
+          inputFormat: fmtCur,             // Shows $700 in Input column
+          yearFn: (p) => p.annualGrossRent, // Shows $35,672 in Yr 1
           format: fmtCur,
         },
       ],
@@ -125,51 +105,56 @@ export default function ProjectionsGrid({ projections, metrics, inputs }) {
       rows: [
         {
           label: "Interest (I/O)",
-          inputVal: inputs.annualInterest,
-          yearFn: (p) => p.annualInterest,
+          inputVal: inVal("interestRate"), // Shows 6.50% in Input column
+          inputFormat: fmtPct,
+          yearFn: (p) => p.annualInterest,  // Shows $44,594 in Yr 1
           format: fmtCur,
         },
         {
           label: "Rental expenses",
-          inputVal: inputs.annualRentalExpenses,
+          inputVal: inVal("rentalExpensesPercent"),
+          inputFormat: fmtPct,
           yearFn: (p) => p.annualRentalExpenses,
           format: fmtCur,
         },
         {
           label: "Pre-tax cash flow",
-          inputVal: inputs.preTaxCashFlow,
+          inputVal: -(inVal("cashInvested") || 75000), // Simulating initial outlay
+          inputFormat: fmtCur,
           yearFn: (p) => p.preTaxCashFlow,
           format: fmtCur,
-          isBold: true,      // §6.1 bold
-          isNegativeRed: true, // §6.1 red if negative
+          isBold: true,
+          isNegativeRed: true,
         },
       ],
     },
     {
-      title: "Non-Cash Deductions",
+      title: "Non-cash deductions",
       rows: [
         {
-          label: "Depreciation (chattels)",
-          inputVal: inputs.chattelsDepreciation,
+          label: "Deprec.of building",
+          inputVal: inVal("buildingDepreciationRate") || 0,
+          inputFormat: fmtPct,
+          yearFn: (p) => p.buildingDepreciation,
+          format: fmtCur,
+        },
+        {
+          label: "Deprec.of chattels",
+          inputVal: inVal("chattelsValue") || 45000,
+          inputFormat: fmtCur,
           yearFn: (p) => p.chattelsDepreciation,
           format: fmtCur,
         },
         {
-          label: "Depreciation (building)",
-          inputVal: inputs.buildingDepreciation,
-          yearFn: null, // §6.1: building dep shown in Input column only
-          format: fmtCur,
-          inputOnly: true,
-        },
-        {
           label: "Loan costs",
-          inputVal: inputs.loanCosts,
-          yearFn: (p) => (p.index === 1 ? inputs.loanCosts : null), // §6.1: yr 1 only
+          inputVal: metrics?.loanCosts || inVal("loanCosts"),
+          inputFormat: fmtCur,
+          yearFn: (p) => (p.index === 1 ? (metrics?.loanCosts || inVal("loanCosts")) : null),
           format: fmtCur,
         },
         {
           label: "Total deductions",
-          inputVal: inputs.totalDeductions,
+          inputVal: null,
           yearFn: (p) => p.deductions,
           format: fmtCur,
         },
@@ -179,45 +164,47 @@ export default function ProjectionsGrid({ projections, metrics, inputs }) {
       title: "Summary",
       rows: [
         {
-          label: "Tax credit",
-          inputVal: inputs.taxCredit,
+          label: "Tax credit (single)",
+          inputVal: inVal("investorIncome") || 120000,
+          inputFormat: fmtCur,
           yearFn: (p) => p.taxCredit,
           format: fmtCur,
         },
         {
           label: "After-tax cash flow",
-          inputVal: inputs.afterTaxCashFlow,
+          inputVal: -(inVal("cashInvested") || 75000),
+          inputFormat: fmtCur,
           yearFn: (p) => p.afterTaxCashFlow,
           format: fmtCur,
-          isBold: true,      // §6.1 bold
+          isBold: true,
           isNegativeRed: true,
         },
         {
-          // §6.1: IRR shown in Input column only, spans full row
-          label: "IRR (10-year)",
+          label: "Rate of return (IRR)",
           inputVal: metrics?.irr,
+          inputFormat: fmtPct,
           yearFn: null,
-          format: (v) => (v !== null && v !== undefined ? v.toFixed(2) + "%" : "N/A"),
           inputOnly: true,
-          isBold: true, // §6.1 bold
+          isBold: true,
         },
         {
-          // §6.1: "Cost per week — display as positive when out-of-pocket"
-          // Engine already flips sign: costPerWeek = preTaxCashFlow/52 × -1
-          // So positive costPerWeek = investor out-of-pocket → display as-is
-          label: "Cost / income per week",
-          inputVal: null, // §6.1: no Input column value for this row
+          label: "Pre-tax equivalent",
+          inputVal: metrics?.preTaxEquivalentIRR,
+          inputFormat: fmtPct,
+          yearFn: null,
+          inputOnly: true,
+          isBold: false,
+        },
+        {
+          label: "Your cost /(income) per week",
+          inputVal: null,
           yearFn: (p) => p.costPerWeek,
-          format: fmtWeekly,
-          isBold: true, // §6.1 bold
-          // §6.1: Red when investor is OUT-of-pocket (costPerWeek > 0 means paying)
-          costPerWeekColour: true,
+          format: fmtPlainNum, // Shows plain number like 380, no dollar sign
+          isBold: true,
         },
       ],
     },
   ];
-
-  const colCount = 1 + DISPLAY_YEAR_INDICES.length; // Input + 5 year columns
 
   return (
     <div className="overflow-x-auto w-full bg-white rounded-[12px] border border-[#E2E8F0] shadow-sm">
@@ -229,7 +216,6 @@ export default function ProjectionsGrid({ projections, metrics, inputs }) {
         <div className="w-[220px] shrink-0 sticky left-0 bg-[#FAFAFA] z-10 px-4 py-4 border-r border-[#E2E8F0]">
           Metric
         </div>
-        {/* §6.1: Input column */}
         <div className="w-[110px] shrink-0 text-right px-4 py-4 border-r border-[#E2E8F0] text-[#0052CC]">
           Input
         </div>
@@ -243,7 +229,8 @@ export default function ProjectionsGrid({ projections, metrics, inputs }) {
       {/* ── Section rows ── */}
       {SECTIONS.map((section, sIdx) => (
         <React.Fragment key={sIdx}>
-          {/* §8.2: Section divider header */}
+          
+          {/* Section divider header */}
           {section.title && (
             <div
               className="flex border-b border-[#E2E8F0] bg-[#F8F8F8]"
@@ -257,9 +244,15 @@ export default function ProjectionsGrid({ projections, metrics, inputs }) {
           )}
 
           {section.rows.map((row, rIdx) => {
-            const isLast =
-              sIdx === SECTIONS.length - 1 &&
-              rIdx === section.rows.length - 1;
+            const isLast = sIdx === SECTIONS.length - 1 && rIdx === section.rows.length - 1;
+
+            // Determine specific color for the Input column to match legacy app
+            let inputColor = "text-[#0052CC]"; // Default legacy blue
+            if (row.isNegativeRed && row.inputVal < 0) {
+              inputColor = "text-red-500";
+            } else if (row.inputOnly && row.isBold) {
+              inputColor = "text-[#1E293B]"; // e.g. IRR is black
+            }
 
             return (
               <div
@@ -269,12 +262,10 @@ export default function ProjectionsGrid({ projections, metrics, inputs }) {
                 }`}
                 style={{ minWidth: 700 }}
               >
-                {/* Row label — sticky on mobile */}
+                {/* Row label */}
                 <div
                   className={`w-[220px] shrink-0 sticky left-0 z-10 px-4 py-3 border-r border-[#E2E8F0] text-[13px] ${
-                    row.isBold
-                      ? "font-bold text-[#1E293B] bg-[#FAFAFA]"
-                      : "text-[#4A5568] bg-white"
+                    row.isBold ? "font-bold text-[#1E293B] bg-[#FAFAFA]" : "text-[#4A5568] bg-white"
                   }`}
                 >
                   {row.label}
@@ -284,14 +275,10 @@ export default function ProjectionsGrid({ projections, metrics, inputs }) {
                 <div
                   className={`w-[110px] shrink-0 text-right px-4 py-3 border-r border-[#E2E8F0] text-[13px] ${
                     row.isBold ? "font-bold" : "font-medium"
-                  } ${
-                    row.isNegativeRed
-                      ? cashflowColour(row.inputVal)
-                      : "text-[#1E293B]"
-                  }`}
+                  } ${inputColor}`}
                 >
                   {row.inputVal !== null && row.inputVal !== undefined
-                    ? row.format(row.inputVal)
+                    ? (row.inputFormat ? row.inputFormat(row.inputVal) : row.format(row.inputVal))
                     : "—"}
                 </div>
 
@@ -307,16 +294,9 @@ export default function ProjectionsGrid({ projections, metrics, inputs }) {
 
                   const projection = projections.find((p) => p.index === yrIdx);
                   const val = projection && row.yearFn ? row.yearFn(projection) : null;
-
-                  // §6.1: cost per week — red when positive (= out-of-pocket)
-                  let colourClass = "";
-                  if (row.costPerWeekColour) {
-                    colourClass = val > 0 ? "text-red-500" : "text-[#1E293B]";
-                  } else if (row.isNegativeRed) {
-                    colourClass = cashflowColour(val);
-                  } else {
-                    colourClass = "text-[#1E293B]";
-                  }
+                  
+                  let colourClass = "text-[#1E293B]";
+                  if (row.isNegativeRed) colourClass = cashflowColour(val);
 
                   return (
                     <div

@@ -14,12 +14,17 @@ const InputField = ({
   const [isFocused, setIsFocused] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
 
-  // 1. Formatting logic
+  // 1. Formatting logic (NOW COMMA-PROOF)
   const formatDisplay = (raw) => {
     if (raw === "" || raw === undefined || raw === null) return "";
-    const num = parseFloat(raw);
+    
+    // Strip commas before parsing to prevent the NaN / truncation bug
+    const cleanRaw = String(raw).replace(/,/g, "");
+    const num = parseFloat(cleanRaw);
+    
     if (isNaN(num)) return raw;
-    const parts = String(raw).split(".");
+    
+    const parts = String(cleanRaw).split(".");
     const intFormatted = Math.abs(Math.trunc(num)).toLocaleString("en-NZ");
     const sign = num < 0 ? "-" : "";
     return parts.length > 1
@@ -27,18 +32,14 @@ const InputField = ({
       : `${sign}${intFormatted}`;
   };
 
-  // 2. THE CRITICAL SYNC FIX: 
-  // When focused, show the exact raw string the user is typing.
-  // When blurred (not focused), ALWAYS format the incoming 'value' prop from the parent.
   const displayValue = isFocused ? (value === 0 ? "0" : value || "") : formatDisplay(value);
 
   // 3. Handle typing
   const handleChange = (e) => {
     if (disabled) return;
     const raw = e.target.value.replace(/,/g, "");
-    // Allow empty string or valid numbers (including negative and decimals)
     if (raw === "" || /^-?\d*\.?\d*$/.test(raw)) {
-      onChange(raw); // Send the clean number back to the parent instantly
+      onChange(raw);
     }
   };
 
@@ -55,7 +56,6 @@ const InputField = ({
 
   return (
     <div className="flex flex-col gap-[6px]">
-      {/* Label row (Only render if a label is actually provided) */}
       {label && (
         <div className="flex items-center gap-1.5">
           <label
@@ -91,13 +91,11 @@ const InputField = ({
         </div>
       )}
 
-      {/* Input wrapper */}
       <div
         className={`flex items-center h-[48px] bg-white border rounded-[8px] overflow-hidden transition-all ${borderClass} ${
           disabled ? "bg-[#F8FAFC] opacity-60" : ""
         }`}
       >
-        {/* §8.1: $ prefix for currency */}
         {prefix && (
           <div
             aria-hidden="true"
@@ -128,7 +126,6 @@ const InputField = ({
           }`}
         />
 
-        {/* §8.1: % suffix for percentage fields */}
         {suffix && (
           <div
             aria-hidden="true"
@@ -141,7 +138,6 @@ const InputField = ({
         )}
       </div>
 
-      {/* §8.1: Inline validation error */}
       {hasError && (
         <p id={errorId} role="alert" className="text-[12px] text-[#EF4444] leading-snug">
           {error}
