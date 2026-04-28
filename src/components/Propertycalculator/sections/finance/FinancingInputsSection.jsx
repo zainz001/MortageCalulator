@@ -17,17 +17,21 @@ export default function FinancingInputsSection({
   additionalLoan, setAdditionalLoan,
   taxWriteOffPeriod, setTaxWriteOffPeriod,
   loanError,
-  setIsModalOpen, // We will use this for the new Edit buttons
-  
+
+  isModalOpen,
+  setIsModalOpen,
+
   propertyValue = 0,
   purchaseCosts = 0,
-  renovationCosts = 0
+  renovationCosts = 0,
+  furnitureCosts = 0,
+  holdingCosts = 0
 }) {
 
   // 1. Base Variables
   const pv = parseNum(propertyValue);
   const rc = parseNum(renovationCosts);
-  const pc = purchaseCosts && String(purchaseCosts).trim() !== "" ? parseNum(purchaseCosts) : (pv * 0.005); 
+  const pc = purchaseCosts && String(purchaseCosts).trim() !== "" ? parseNum(purchaseCosts) : (pv * 0.005);
   const ci = parseNum(cashInvested);
   const ei = parseNum(equityInvested);
   const addLoan = parseNum(additionalLoan);
@@ -77,15 +81,15 @@ export default function FinancingInputsSection({
 
   return (
     <CollapsibleSection title="2. Financing Inputs">
-      
-      {/* 1. Loan Amount with Edit Button */}
+
+      {/* 1. Loan Amount */}
       <div className="flex items-end gap-2">
         <div className="flex-1">
           <InputField
             label="Loan Amount"
             prefix="$"
             value={formatVal(loanAmount)}
-            onChange={handleLoanAmountChange} 
+            onChange={handleLoanAmountChange}
           />
         </div>
         <button
@@ -97,27 +101,39 @@ export default function FinancingInputsSection({
         </button>
       </div>
 
-      <InputField
-        label="Cash invested (deposit)"
-        prefix="$"
-        value={cashInvested}
-        onChange={setCashInvested}
-        error={loanError}
-      />
+      {/* 2. Cash Invested */}
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <InputField
+            label="Cash invested (deposit)"
+            prefix="$"
+            value={cashInvested}
+            onChange={setCashInvested}
+            error={loanError}
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsModalOpen("loanAmount")}
+          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+        >
+          Edit ↗
+        </button>
+      </div>
 
-      {/* 2. Amount Required with Edit Button */}
+      {/* 3. Amount Required */}
       <div className="flex items-end gap-2">
         <div className="flex-1">
           <InputField
             label="Amount Required"
             prefix="$"
             value={formatVal(amountRequired)}
-            onChange={handleAmountRequiredChange} 
+            onChange={handleAmountRequiredChange}
           />
         </div>
         <button
           type="button"
-          onClick={() => setIsModalOpen("amountRequired")}
+          onClick={() => setIsModalOpen("loanAmount")} // Usually Amount Required shares the Loan Amount breakdown modal
           className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
@@ -134,7 +150,7 @@ export default function FinancingInputsSection({
         ]}
       />
 
-      {/* 3. Interest Rate with Edit Button */}
+      {/* 4. Interest Rate */}
       <div className="flex items-end gap-2">
         <div className="flex-1">
           <InputField
@@ -153,26 +169,26 @@ export default function FinancingInputsSection({
         </button>
       </div>
 
-      {/* 4. Loan Repayments with Edit Button */}
+      {/* 5. Loan Repayments */}
       <div className="flex items-end gap-2">
         <div className="flex-1">
           <InputField
             label="Loan Repayments"
             prefix="$"
             value={formatVal(loanRepayments)}
-            onChange={handleLoanRepaymentsChange} 
+            onChange={handleLoanRepaymentsChange}
           />
         </div>
         <button
           type="button"
-          onClick={() => setIsModalOpen("loanRepayments")}
+          onClick={() => setIsModalOpen("loanRepayments")} // Might need a specific modal later, for now we can just leave the button
           className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      {/* 5. Loan Costs with Edit Button */}
+      {/* 6. Loan Costs */}
       <div className="flex items-end gap-2">
         <div className="flex-1">
           <InputField
@@ -185,7 +201,7 @@ export default function FinancingInputsSection({
         </div>
         <button
           type="button"
-          onClick={() => setIsModalOpen("loanCosts")}
+          onClick={() => setIsModalOpen("loanCosts")} // Usually Loan Costs shares the Loan Amount breakdown modal
           className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗

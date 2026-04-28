@@ -104,17 +104,12 @@ export function calculatePIA({
   rentTimeline = []
 }) {
   
-  // Safe Parse all core inputs to prevent "comma" NaN bugs
   const pvC = toCents(parseNum(propertyValue));
   
   const purchCostsC = purchaseCostsManual && String(purchaseCostsManual).trim() !== ""
     ? toCents(parseNum(purchaseCostsManual))
     : toCents(parseNum(propertyValue) * 0.005);        
     
-  const loanCostsC = loanCostsManual && String(loanCostsManual).trim() !== "" 
-    ? toCents(parseNum(loanCostsManual)) 
-    : 0;
-
   const cashC = toCents(parseNum(cashInvested));
   const equityC = toCents(parseNum(equityInvested));
   const addLoanC = toCents(parseNum(additionalLoan));
@@ -132,8 +127,26 @@ export function calculatePIA({
   const chattelsDepreciationRateP = parseNum(chattelsDepreciationRate);
   const buildingDepreciationRateP = parseNum(buildingDepreciationRate);
 
-  const totalCostC = pvC + purchCostsC + loanCostsC + renoCostsC + furniC + holdC;
-  const loanAmountC = totalCostC + addLoanC - cashC - equityC;
+  // --- THE FIX: Algebraic Auto-Calculate for Loan Costs ---
+  let loanCostsC = 0;
+  let loanAmountC = 0;
+  let totalCostC = 0;
+
+  const baseCostsC = pvC + purchCostsC + renoCostsC + furniC + holdC;
+  const isLcAuto = !loanCostsManual || String(loanCostsManual).trim() === "";
+
+  if (isLcAuto) {
+    const baseReqC = baseCostsC + toCents(363) + addLoanC - cashC - equityC;
+    loanAmountC = Math.round(baseReqC / 0.99);
+    loanCostsC = Math.round(loanAmountC * 0.01) + toCents(363);
+    totalCostC = baseCostsC + loanCostsC;
+  } else {
+    loanCostsC = toCents(parseNum(loanCostsManual));
+    totalCostC = baseCostsC + loanCostsC;
+    loanAmountC = totalCostC + addLoanC - cashC - equityC;
+  }
+  // --------------------------------------------------------
+
   const startingEquityC = pvC - loanAmountC;
   const LVR = pvC > 0 ? (loanAmountC / pvC) * 100 : 0;
   

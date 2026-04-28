@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import ProjectionsGrid from "../ProjectionsGrid";
-import LoanModal from "../LoanModal";
+// import LoanModal from "../LoanModal";
 import { calculatePIA } from "../../helpers/propertyHelpers";
 import PropertyValueModal from "./componenets/propertyprice/PropertyPriceModal";
 import PurchaseCostsModal from "./componenets/propertyprice/PurchaseCostsModal";
@@ -13,24 +13,26 @@ import RentalIncomeModal from "./componenets/propertyprice/RentalIncomeModal";
 import RentalExpensesModal from "./componenets/propertyprice/RentalExpensesModal";
 import BuildingDepreciationModal from "./componenets/propertyprice/BuildingDepreciationModal";
 import ChattelsDepreciationModal from "./componenets/propertyprice/ChattelsDepreciationModal";
-
+import LoanAmountModal from "./componenets/financemodals/LoanAmountModal"; // Make sure this path is correct for your folder structure!
+import LoanInterestTypeModal from "./componenets/financemodals/LoanInterestTypeModal";
 // --- THE FIX: We must strip commas globally before doing ANY math ---
 const parseNum = (val) => {
   if (val === undefined || val === null || val === "") return 0;
   return parseFloat(String(val).replace(/,/g, "")) || 0;
 };
 
-// Updated Defaults to perfectly match your Legacy Screenshot
 const DEFAULTS = {
   propertyAddress: "",
   propertyDescription: "",
   propertyValue: "750000",
   purchaseCosts: "3840",
   grossRentWeekly: "700",
-  rentalExpensesPercent: "29.77", 
-  cashInvested: "4333",
+  rentalExpensesPercent: "29.77",
+
+  cashInvested: "75000",
+  loanCosts: "7224",
+
   equityInvested: "0",
-  loanCosts: "7937",
   interestRate: "6.50",
   loanType: "Interest only",
   additionalLoan: "0",
@@ -39,7 +41,7 @@ const DEFAULTS = {
   holdingCosts: "0",
   capitalGrowthRate: "5.00",
   inflationRate: "3.00",
-  chattelsValue: "45000", // Required for the $45,000 grid input
+  chattelsValue: "45000",
   depreciationMethod: "DV",
   chattelsDepreciationRate: "25",
   buildingDepreciationRate: "0",
@@ -97,7 +99,7 @@ export default function PropertyInvestmentCalculator() {
   const [isNewBuild, setIsNewBuild] = useState(DEFAULTS.isNewBuild);
   const [ringFencing, setRingFencing] = useState(DEFAULTS.ringFencing);
   const [buildingDepreciation, setBuildingDepreciation] = useState("0");
-  const [chattelsDepreciation, setChattelsDepreciation] = useState("11250"); 
+  const [chattelsDepreciation, setChattelsDepreciation] = useState("11250");
   const [result, setResult] = useState(null);
   const [loanError, setLoanError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -152,7 +154,7 @@ export default function PropertyInvestmentCalculator() {
     const pCostsRaw = String(purchaseCosts).trim();
 
     const calcLoan = pValue + (pCostsRaw !== "" ? parseNum(purchaseCosts) : pValue * 0.005) + (lCostsRaw !== "" ? parseNum(loanCosts) : 0) + aLoan + rCosts + fCosts + hCosts - cInvest - eInvest;
-    
+
     if (calcLoan > pValue && pValue > 0) {
       setLoanError("Loan amount cannot exceed property value");
     } else {
@@ -190,8 +192,7 @@ export default function PropertyInvestmentCalculator() {
     });
 
     const yr1p = res.projections[0];
-    
-    // --- THE FIX: Map values perfectly to the Grid's Input Column ---
+
     res.originalInputs = {
       propertyValue: pValue + rCosts,
       purchaseCosts: res.purchaseCosts,
@@ -201,14 +202,14 @@ export default function PropertyInvestmentCalculator() {
       capitalGrowthRate: parseNum(capitalGrowthRate),
       inflationRate: parseNum(inflationRate),
       grossRentWeekly: parseNum(grossRentWeekly),
-      interestRate: parseNum(interestRate),               // For Grid formatting
-      rentalExpensesPercent: parseNum(rentalExpensesPercent), // For Grid formatting
+      interestRate: parseNum(interestRate),               // MUST be here for % format
+      rentalExpensesPercent: parseNum(rentalExpensesPercent), // MUST be here for % format
       preTaxCashFlow: -(cInvest + eInvest),
       chattelsValue: parseNum(chattelsValue) || 45000,
       buildingDepreciationRate: parseNum(buildingDepreciationRate),
       loanCosts: res.loanCosts,
       totalDeductions: yr1p?.deductions ?? 0,
-      investorIncome: 120000, // Hardcoded Tax Credit input to match legacy app
+      investorIncome: 120000, // Hardcoded Tax Credit base to match legacy app
       taxCredit: yr1p?.taxCredit ?? 0,
       afterTaxCashFlow: -(cInvest + eInvest),
     };
@@ -393,7 +394,7 @@ export default function PropertyInvestmentCalculator() {
         )}
       </div>
 
-      <LoanModal
+      {/* <LoanModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         data={{
@@ -409,7 +410,7 @@ export default function PropertyInvestmentCalculator() {
           loanAmount: result?.loanAmount || 0,
         }}
         setters={{ setRenovationCosts, setFurnitureCosts, setHoldingCosts }}
-      />
+      /> */}
 
       <PropertyValueModal
         isOpen={activeModal === "propertyValue"}
@@ -448,7 +449,7 @@ export default function PropertyInvestmentCalculator() {
       <RentalExpensesModal
         isOpen={activeModal === "rentalExpenses"}
         onClose={() => setActiveModal(null)}
-        grossRentWeekly={grossRentWeekly} 
+        grossRentWeekly={grossRentWeekly}
         propertyValue={propertyValue}
         rentalExpensesPercent={rentalExpensesPercent}
         setRentalExpensesPercent={setRentalExpensesPercent}
@@ -468,6 +469,46 @@ export default function PropertyInvestmentCalculator() {
         onClose={() => setActiveModal(null)}
         propertyValue={propertyValue}
         setChattelsDepreciation={setChattelsDepreciation}
+      />
+
+      <LoanAmountModal
+        isOpen={isModalOpen === "loanAmount" || isModalOpen === true}
+        onClose={() => setIsModalOpen(false)}
+
+        // --- THE FIX: We calculate the raw values right here using parseNum ---
+        propertyCost={parseNum(propertyValue)}
+        renovationCosts={parseNum(renovationCosts)}
+
+        // Auto-calculate purchase costs if empty, just like the engine does
+        purchaseCosts={purchaseCosts && String(purchaseCosts).trim() !== "" ? parseNum(purchaseCosts) : parseNum(propertyValue) * 0.005}
+
+        furnitureCosts={parseNum(furnitureCosts)}
+        holdingCosts={parseNum(holdingCosts)}
+
+        // Auto-calculate loan costs if empty
+        loanCosts={(!loanCosts || String(loanCosts).trim() === "")
+          ? (((parseNum(propertyValue) + (purchaseCosts ? parseNum(purchaseCosts) : parseNum(propertyValue) * 0.005) + parseNum(renovationCosts) + 363 + parseNum(additionalLoan) - parseNum(cashInvested) - parseNum(equityInvested)) / 0.99) * 0.01) + 363
+          : parseNum(loanCosts)
+        }
+
+        initialCashInvested={parseNum(cashInvested)}
+        initialEquityInvested={parseNum(equityInvested)}
+        initialAdditionalLoan={parseNum(additionalLoan)}
+
+        setCashInvested={setCashInvested}
+        setEquityInvested={setEquityInvested}
+        setAdditionalLoan={setAdditionalLoan}
+        setLoanCosts={setLoanCosts}
+      />
+      <LoanInterestTypeModal
+        isOpen={isModalOpen === "interestRate"}
+        onClose={() => setIsModalOpen(false)}
+
+        // --- THE FIX: Safely pull the loanAmount from the result object ---
+        initialLoanAmount={result?.loanAmount || 0}
+
+        initialInterestRate={parseNum(interestRate)}
+        setInterestRate={setInterestRate}
       />
     </div>
   );
