@@ -1,14 +1,6 @@
-/**
- * propertyHelpers.js
- *
- * Core PIA calculation engine.
- * Spec ref: PIA Functional Spec §4 (Calculated Fields & Formulas)
- */
-
 const toCents = (dollars) => Math.round((dollars || 0) * 100);
 const fromCents = (cents) => cents / 100;
 
-// --- THE FIX: Global comma stripper for the entire calculation engine ---
 const parseNum = (val) => {
   if (val === undefined || val === null || val === "") return 0;
   return parseFloat(String(val).replace(/,/g, "")) || 0;

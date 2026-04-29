@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import ReactDOM from "react-dom"; 
 import TimelineRow from "./TimelineRow";
 
 export default function PropertyValueModal({
@@ -30,28 +31,23 @@ export default function PropertyValueModal({
   const rc = +renovationCosts || 0;
   const bookValue = pv + rc;
   
-  // Read calculated future market values from main engine
   const projectedMarketValues = projections.map(p => p.propertyValue);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
+  return ReactDOM.createPortal(
+   <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[800px] flex flex-col border border-[#CBD5E1] overflow-hidden">
         
-        {/* Title Bar */}
         <div className="flex justify-between items-center px-5 py-3 bg-white border-b border-[#E2E8F0]">
           <h2 className="text-[15px] font-bold text-[#1E293B]">Property Value</h2>
           <button onClick={onClose} className="text-[#64748B] hover:text-[#0F172A] text-[18px]">&times;</button>
         </div>
 
-        {/* Content Body */}
         <div className="p-5">
           
-          {/* Section 1: Property Value Grid */}
           <div className="border border-[#CBD5E1] rounded-[6px] p-4 pt-6 bg-white relative mb-6">
             <span className="absolute -top-2.5 left-3 bg-white px-1 text-[12px] font-bold text-[#64748B]">Property Value</span>
             
-            {/* Table Header (End of Year & Sliding Timeline Years) */}
-            <div className="flex items-center mb-4 w-full">
+          <div className="flex items-center mb-4 w-full">
                <div className="w-[130px] text-right pr-4 text-[13px] text-[#1E293B] font-medium">End of year:</div>
                <div className="w-[100px] text-right px-2 font-bold text-[#1E293B] text-[13px]">{currentYear}</div>
                <div className="flex-1 flex gap-2 ml-4">
@@ -123,6 +119,7 @@ export default function PropertyValueModal({
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body 
   );
 }

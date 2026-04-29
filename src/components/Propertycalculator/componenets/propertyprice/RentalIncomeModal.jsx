@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import InputField from "../../../inputField";
 import AnnualRentalIncomeModal from "./AnnualRentalIncomeModal";
-
+import ReactDOM from "react-dom";
 export default function RentalIncomeModal({
     isOpen,
     onClose,
@@ -13,13 +13,13 @@ export default function RentalIncomeModal({
     propertyValue = 750000, // <--- Added for yield calc
     purchaseCosts = 0       // <--- Added for yield calc
 }) {
-    // 1. Core State
+
     const [frequency, setFrequency] = useState("weekly");
     const [rentValue, setRentValue] = useState(grossRentWeekly || ""); // Represents rent per week/month/year
     const [vacancyRate, setVacancyRate] = useState("2.00");
     const [isAnnualModalOpen, setIsAnnualModalOpen] = useState(false);
 
-    // Sync when modal opens
+
     useEffect(() => {
         if (isOpen) {
             setRentValue(grossRentWeekly || "");
@@ -31,7 +31,7 @@ export default function RentalIncomeModal({
     const getMultiplier = (freq) => {
         if (freq === "weekly") return 52;
         if (freq === "monthly") return 12;
-        return 1; // yearly
+        return 1;
     };
 
     const rv = parseFloat(rentValue) || 0;
@@ -40,11 +40,7 @@ export default function RentalIncomeModal({
 
     const potentialAnnualRent = rv * getMultiplier(frequency);
     const actualAnnualRent = potentialAnnualRent * (1 - (vac / 100));
-    
-    // Yield is calculated on actual rent vs total cost
     const grossYield = totalCost > 0 ? (actualAnnualRent / totalCost) * 100 : 0;
-
-    // 3. Reverse Math Handlers (When a user types into a derived field)
     const handlePotentialRentChange = (newVal) => {
         const potential = parseFloat(newVal) || 0;
         const newRentValue = potential / getMultiplier(frequency);
@@ -67,20 +63,15 @@ export default function RentalIncomeModal({
         setRentValue(newRentValue.toString());
     };
 
-    // 4. Handle Frequency Toggle
     const handleFrequencyChange = (newFreq) => {
-        // When changing frequency, we want the *Annual Rent* to stay exactly the same.
-        // So we take current potential rent, and divide by the NEW multiplier.
         const currentPotential = rv * getMultiplier(frequency);
         const newRentValue = currentPotential / getMultiplier(newFreq);
-        
+
         setRentValue(newRentValue.toString());
         setFrequency(newFreq);
     };
 
     const handleOk = () => {
-        // Ensure we always save the WEEKLY equivalent back to the parent state
-        // regardless of what frequency radio button they are currently viewing.
         const potential = rv * getMultiplier(frequency);
         const weeklyEquivalent = potential / 52;
         setGrossRentWeekly(weeklyEquivalent.toString());
@@ -89,14 +80,13 @@ export default function RentalIncomeModal({
 
     if (!isOpen) return null;
 
-    // Formatting helpers for display
     const labelMapping = {
         weekly: "Rent per week:",
         monthly: "Rent per month:",
         yearly: "Rent per year:"
     };
 
-    return (
+    return ReactDOM.createPortal(
         <>
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
                 <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[520px] flex flex-col border border-[#CBD5E1] overflow-hidden">
@@ -190,14 +180,16 @@ export default function RentalIncomeModal({
                 </div>
             </div>
 
-            <AnnualRentalIncomeModal 
-                isOpen={isAnnualModalOpen} 
+            <AnnualRentalIncomeModal
+                isOpen={isAnnualModalOpen}
                 onClose={() => setIsAnnualModalOpen(false)}
-                actualAnnualRent={actualAnnualRent.toString()} 
+                actualAnnualRent={actualAnnualRent.toString()}
                 inflationRate={inflationRate}
                 rentTimeline={rentTimeline}
                 setRentTimeline={setRentTimeline}
             />
         </>
+        ,
+        document.body
     );
 }

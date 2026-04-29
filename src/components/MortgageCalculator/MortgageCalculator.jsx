@@ -129,9 +129,7 @@ export default function MortgageCalculator() {
 
     setResult(res);
 
-    if (!extraRepayment || toNum(extraRepayment) < base) {
-      setExtraRepayment(String(base));
-    }
+  
 
     const periodsPerYear = frequency === "weekly" ? 52 : frequency === "fortnightly" ? 26 : 12;
     const monthsToPayoff = Math.round((res.numberOfRepayments / periodsPerYear) * 12);
@@ -145,6 +143,7 @@ export default function MortgageCalculator() {
     setChartDataSwish(res.scheduleWithExtra);
     setHasCalculated(true);
   };
+
   // Live-derived values
   const loanAmount = Math.max(0, toNum(propertyPrice) - toNum(depositAmount));
   const lvr =
@@ -160,72 +159,79 @@ export default function MortgageCalculator() {
         ? Math.max(0, chartDataSwish[i].balance)
         : 0,
     }));
-  }, [chartDataBank, chartDataSwish, frequency]);
+  }, [chartDataBank, chartDataSwish]);
 
   // Re-run calculation whenever extraRepayment changes, but only if a result already exists
   const prevFrequency = useRef(frequency);
 
-  useEffect(() => {
-    if (!hasCalculated) return;
+ useEffect(() => {
+  if (!hasCalculated) return;
 
-    const price = toNum(propertyPrice);
-    const deposit = toNum(depositAmount);
-    const r = toNum(rate);
-    const y = toNum(years);
-    if (!price || !y || !frequency) return;
+  const price = toNum(propertyPrice);
+  const deposit = toNum(depositAmount);
+  const r = toNum(rate);
+  const y = toNum(years);
+  if (!price || !y || !frequency) return;
 
-    const baseRes = calculateMortgageWithSavings({
-      propertyPrice: price,
-      depositAmount: deposit,
-      rate: r,
-      years: y,
-      frequency,
-      repaymentType,
-      extraRepayment: 0,
-    });
+  const baseRes = calculateMortgageWithSavings({
+    propertyPrice: price,
+    depositAmount: deposit,
+    rate: r,
+    years: y,
+    frequency,
+    repaymentType,
+    extraRepayment: 0,
+  });
 
-    const newBase = Math.round(baseRes.repayment);
-    setBaseRepayment(newBase);
+  const newBase = Math.round(baseRes.repayment);
+  setBaseRepayment(newBase);
 
-    // ← Only reset the field when frequency actually changed
-    if (prevFrequency.current !== frequency) {
-      setExtraRepayment(String(newBase));
-      prevFrequency.current = frequency;
-    }
+  if (prevFrequency.current !== frequency) {
+    setExtraRepayment(String(newBase));
+    prevFrequency.current = frequency;
+  }
 
-    const extraAboveBase = Math.max(0, toNum(extraRepayment) - newBase);
+  const userRepayment = toNum(extraRepayment);
+  const extraAboveBase = Math.max(0, userRepayment - newBase);
 
-    const res = calculateMortgageWithSavings({
-      propertyPrice: price,
-      depositAmount: deposit,
-      rate: r,
-      years: y,
-      frequency,
-      repaymentType,
-      extraRepayment: extraAboveBase,
-    });
+  const res = calculateMortgageWithSavings({
+    propertyPrice: price,
+    depositAmount: deposit,
+    rate: r,
+    years: y,
+    frequency,
+    repaymentType,
+    extraRepayment: extraAboveBase,
+  });
 
-    setResult(res);
-    setChartDataBank(res.scheduleWithoutExtra);
-    setChartDataSwish(res.scheduleWithExtra);
+  // ✅ Show user-typed repayment amount in the summary card
+  setResult({
+    ...res,
+    repayment: userRepayment >= newBase ? userRepayment : res.repayment,
+  });
 
-    const periodsPerYear = frequency === "weekly" ? 52 : frequency === "fortnightly" ? 26 : 12;
-    const monthsToPayoff = Math.round((res.numberOfRepayments / periodsPerYear) * 12);
-    const payoff = new Date();
-    payoff.setMonth(payoff.getMonth() + monthsToPayoff);
-    setPayoffDate(payoff.toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" }));
-  }, [propertyPrice, depositAmount, depositPercent, rate, years, frequency, repaymentType, extraRepayment, hasCalculated]);
-  return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-2 md:p-4">
+  setChartDataBank(res.scheduleWithoutExtra);
+  setChartDataSwish(res.scheduleWithExtra);
+
+  const periodsPerYear = frequency === "weekly" ? 52 : frequency === "fortnightly" ? 26 : 12;
+  const monthsToPayoff = Math.round((res.numberOfRepayments / periodsPerYear) * 12);
+  const payoff = new Date();
+  payoff.setMonth(payoff.getMonth() + monthsToPayoff);
+  setPayoffDate(payoff.toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" }));
+
+}, [propertyPrice, depositAmount, depositPercent, rate, years, frequency, repaymentType, extraRepayment, hasCalculated]);
+
+return (
+     <div className="min-h-screen bg-white flex items-center justify-center p-2 md:p-4">
       <div className="max-w-[1400px] w-full">
-        {/* <h2 className="text-[20px] md:text-[24px] font-bold text-[#0052CC] mb-4 md:mb-6">
-          Mortgage Calculator
+       {/* <h2 className="text-[20px] md:text-[24px] font-bold text-[#0052CC] mb-4 md:mb-6">
+          Offset Mortgage Calculator
         </h2> */}
 
         <div className="flex flex-col lg:flex-row gap-4 md:gap-5 items-stretch">
-          {/* Left Panel: Inputs */}
+         
           <div className="flex-1 bg-[#F8F8F8] rounded-[16px] p-6 md:p-8 flex flex-col">
-            <h3 className="text-[16px] md:text-[18px] font-bold text-[#23303B] mb-[32px] leading-snug">
+             <h3 className="text-[16px] md:text-[18px] font-bold text-[#23303B] mb-[32px] leading-snug">
               Calculate how much you could save in time and interest if you switched your mortgage to Swish.
             </h3>
 
@@ -233,27 +239,34 @@ export default function MortgageCalculator() {
               <InputField
                 label="Property Price"
                 prefix="$"
+                // placeholder="800,000"
                 value={propertyPrice}
                 onChange={handlePropertyPriceChange}
               />
               <InputField
                 label="Deposit Amount"
                 prefix="$"
+                // placeholder="160,000"
                 value={depositAmount}
                 onChange={handleDepositAmountChange}
               />
               <InputField
                 label="Deposit %"
+                numberMode="decimal"
+                // placeholder="20"
                 value={depositPercent}
                 onChange={handleDepositPercentChange}
               />
               <InputField
                 label="Interest Rate (Annual %)"
+                numberMode="decimal"
+                // placeholder="6.5"
                 value={rate}
                 onChange={handleRateChange}
               />
               <InputField
                 label="Loan Term (Years)"
+                // placeholder="30"
                 value={years}
                 onChange={handleYearsChange}
               />
@@ -288,7 +301,7 @@ export default function MortgageCalculator() {
               </div>
 
               {/* ✅ Label updates dynamically based on selected frequency */}
-              <InputField
+               <InputField
                 label={`Repayment Amount ${frequency ? `(per ${frequency.charAt(0).toUpperCase() + frequency.slice(1)})` : ""}`}
                 prefix="$"
                 type="number"

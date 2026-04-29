@@ -14,7 +14,6 @@ const InputField = ({
   const [isFocused, setIsFocused] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
 
-  // 1. Formatting logic (NOW COMMA-PROOF)
   const formatDisplay = (raw) => {
     if (raw === "" || raw === undefined || raw === null) return "";
     

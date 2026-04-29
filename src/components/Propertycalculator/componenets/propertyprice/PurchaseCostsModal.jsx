@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import InputField from "../../../inputField";
-
+import ReactDOM from "react-dom";
 export default function PurchaseCostsModal({
   isOpen,
   onClose,
@@ -53,7 +53,7 @@ export default function PurchaseCostsModal({
     setOtherCosts("0");
   };
 
-  return (
+   return ReactDOM.createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
       <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[480px] flex flex-col border border-[#CBD5E1] overflow-hidden">
         
@@ -151,6 +151,7 @@ export default function PurchaseCostsModal({
         </div>
 
       </div>
-    </div>
+    </div>,
+     document.body
   );
 }

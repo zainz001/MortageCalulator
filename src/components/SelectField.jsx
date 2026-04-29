@@ -1,22 +1,5 @@
 import React from "react";
 
-/**
- * SelectField
- *
- * Spec ref: PIA Functional Spec §3.5, §7.1
- *
- * §7.1: The 'New build' toggle must lock the interest deductibility dropdown
- *       to 100% and DISABLE it. The `disabled` prop enables this.
- * §8.5: Visible labels and ARIA attributes required (WCAG 2.1 AA).
- *
- * Props:
- *   label    {string}              required
- *   value    {string}              required
- *   onChange {(val:string)=>void}  required
- *   options  {Array<{label,value}>} required
- *   disabled {boolean}             optional — Prevents interaction (e.g. deductibility when new build ON)
- *   tooltip  {string}              optional — ⓘ hint text
- */
 export default function SelectField({ label, value, onChange, options, disabled = false, tooltip }) {
   const id = `select-${label.replace(/[\s()*/?.]+/g, "-").toLowerCase()}`;
 

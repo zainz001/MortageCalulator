@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import InputField from "../../../inputField";
-
+import ReactDOM from "react-dom";
 export default function ChattelsDepreciationModal({
   isOpen,
   onClose,
@@ -8,14 +8,12 @@ export default function ChattelsDepreciationModal({
   setChattelsDepreciation
 }) {
   const [startIndex, setStartIndex] = useState(0);
-  
-  // Preferences
-  const [method, setMethod] = useState("DV"); // DV = Diminishing Value, PC = Prime Cost (Straight Line)
+
+const [method, setMethod] = useState("DV"); // DV = Diminishing Value, PC = Prime Cost (Straight Line)
   const [isLinked, setIsLinked] = useState(true);
   const [linkRate, setLinkRate] = useState("6.00");
 
-  // Grid Items
-  const [items, setItems] = useState([
+ const [items, setItems] = useState([
     { id: '1', name: 'Furniture', value: "", rate: "20.00" },
     { id: '2', name: 'General chattels', value: "45000", rate: "25.00" },
     { id: '3', name: 'Curtains', value: "", rate: "25.00" },
@@ -27,17 +25,15 @@ export default function ChattelsDepreciationModal({
     { id: '9', name: 'Other', value: "", rate: "25.00" },
   ]);
 
-  // Handle "Link value to property price"
   useEffect(() => {
     if (isOpen && isLinked) {
       const pv = parseFloat(propertyValue) || 0;
       const rate = parseFloat(linkRate) || 0;
       const calculatedValue = Math.round(pv * (rate / 100));
-      
+
       setItems(prev => {
         const newItems = [...prev];
-        // The legacy app targets the 2nd row (General chattels) for the linked value
-        newItems[1] = { ...newItems[1], value: calculatedValue.toString() };
+       newItems[1] = { ...newItems[1], value: calculatedValue.toString() };
         return newItems;
       });
     }
@@ -76,7 +72,7 @@ export default function ChattelsDepreciationModal({
 
   // Calculate Totals
   const totalValue = items.reduce((sum, item) => sum + (parseFloat(item.value) || 0), 0);
-  
+
   const totalProjections = useMemo(() => {
     const totals = Array(20).fill(0);
     projections.forEach(rowVals => {
@@ -90,9 +86,9 @@ export default function ChattelsDepreciationModal({
   if (!isOpen) return null;
 
   const handleStart = () => setStartIndex(0);
-  const handlePrev  = () => setStartIndex(Math.max(0, startIndex - 1));
-  const handleNext  = () => setStartIndex(Math.min(15, startIndex + 1)); // Max 15 for a 20-yr array viewing 5 at a time
-  const handleEnd   = () => setStartIndex(15);
+  const handlePrev = () => setStartIndex(Math.max(0, startIndex - 1));
+  const handleNext = () => setStartIndex(Math.min(15, startIndex + 1)); // Max 15 for a 20-yr array viewing 5 at a time
+  const handleEnd = () => setStartIndex(15);
 
   const handleItemChange = (index, field, val) => {
     const newItems = [...items];
@@ -114,10 +110,11 @@ export default function ChattelsDepreciationModal({
     onClose();
   };
 
-  return (
+  return ReactDOM.createPortal(
+
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
       <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[850px] flex flex-col border border-[#CBD5E1] overflow-hidden">
-        
+
         {/* Title Bar */}
         <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0]">
           <h2 className="text-[14px] font-bold text-[#1E293B]">Depreciation of Chattels</h2>
@@ -126,11 +123,11 @@ export default function ChattelsDepreciationModal({
 
         {/* Content Body */}
         <div className="p-4 flex flex-col gap-4">
-          
+
           {/* Top: Itemised Schedule */}
           <div className="border border-[#CBD5E1] rounded-[6px] p-4 pt-6 bg-white relative">
             <span className="absolute -top-2.5 left-3 bg-white px-1 text-[12px] font-bold text-[#64748B]">Itemised Depreciation Schedule</span>
-            
+
             {/* Header Row */}
             <div className="flex items-center mb-2 pb-2 border-b border-[#E2E8F0]">
               <div className="w-[150px] text-[12px] font-bold text-[#1E293B]">Items</div>
@@ -150,26 +147,26 @@ export default function ChattelsDepreciationModal({
               {items.map((item, idx) => (
                 <div key={item.id} className="flex items-center">
                   <div className="w-[150px] pr-2">
-                    <input 
-                      type="text" 
-                      value={item.name} 
+                    <input
+                      type="text"
+                      value={item.name}
                       onChange={(e) => handleItemChange(idx, 'name', e.target.value)}
                       className="w-full border border-[#CBD5E1] rounded-[4px] px-1.5 py-1 text-[13px] text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC]"
                     />
                   </div>
                   <div className="w-[80px] pr-2">
-                    <input 
-                      type="text" 
-                      value={item.value} 
+                    <input
+                      type="text"
+                      value={item.value}
                       onChange={(e) => handleItemChange(idx, 'value', e.target.value.replace(/,/g, ''))}
                       disabled={isLinked && idx === 1} // Lock General Chattels if linked
                       className={`w-full border border-[#CBD5E1] rounded-[4px] px-1.5 py-1 text-[13px] text-right text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC] ${isLinked && idx === 1 ? 'bg-[#F1F5F9] font-bold text-[#0052CC]' : 'bg-white'}`}
                     />
                   </div>
                   <div className="w-[70px]">
-                    <input 
-                      type="text" 
-                      value={item.rate} 
+                    <input
+                      type="text"
+                      value={item.rate}
                       onChange={(e) => handleItemChange(idx, 'rate', e.target.value.replace(/%/g, ''))}
                       className="w-full border border-[#CBD5E1] rounded-[4px] px-1.5 py-1 text-[13px] text-center text-[#1E293B] bg-white shadow-sm focus:outline-none focus:border-[#0052CC]"
                     />
@@ -213,10 +210,10 @@ export default function ChattelsDepreciationModal({
 
           {/* Bottom: Preferences & Navigation */}
           <div className="flex gap-4">
-            
+
             <div className="flex-1 border border-[#CBD5E1] rounded-[6px] p-4 pt-5 bg-white relative flex gap-6">
               <span className="absolute -top-2.5 left-3 bg-white px-1 text-[12px] font-bold text-[#64748B]">Depreciation Preferences</span>
-              
+
               <div className="flex-1 border border-[#E2E8F0] rounded-[6px] p-3 relative">
                 <span className="absolute -top-2.5 left-2 bg-white px-1 text-[11px] font-bold text-[#64748B]">Method</span>
                 <div className="flex flex-col gap-1">
@@ -236,7 +233,7 @@ export default function ChattelsDepreciationModal({
                 <span className="absolute -top-2.5 left-2 bg-white px-1 text-[11px] font-bold text-[#64748B]">General</span>
                 <div className="flex items-center justify-between">
                   <label className="flex items-center gap-2 text-[13px] text-[#1E293B] cursor-pointer">
-                    <input type="checkbox" checked={isLinked} onChange={(e) => setIsLinked(e.target.checked)} className="rounded" /> 
+                    <input type="checkbox" checked={isLinked} onChange={(e) => setIsLinked(e.target.checked)} className="rounded" />
                     Link value to property price
                   </label>
                   <div className="w-[60px]">
@@ -255,7 +252,7 @@ export default function ChattelsDepreciationModal({
                 <button onClick={handleNext} className="w-10 h-8 flex items-center justify-center border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#64748B] font-bold hover:bg-[#E2E8F0] shadow-sm">&gt;</button>
                 <button onClick={handleEnd} className="w-10 h-8 flex items-center justify-center border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#64748B] font-bold hover:bg-[#E2E8F0] shadow-sm">&gt;&gt;</button>
               </div>
-              
+
               <div className="flex gap-2">
                 <button onClick={handleOk} className="flex-1 px-4 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] font-bold hover:bg-[#E2E8F0] transition-colors shadow-sm">OK</button>
                 <button onClick={onClose} className="flex-1 px-4 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">Cancel</button>
@@ -266,6 +263,7 @@ export default function ChattelsDepreciationModal({
 
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

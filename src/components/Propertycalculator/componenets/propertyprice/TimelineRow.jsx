@@ -14,7 +14,6 @@ export default function TimelineRow({
   const [focusedBase, setFocusedBase] = useState(false);
   const [focusedTimelineIdx, setFocusedTimelineIdx] = useState(null);
 
-  // Exact same formatting logic as InputField to keep UX identical
   const formatVal = (raw) => {
     if (raw === "" || raw === undefined || raw === null) return "";
     const num = parseFloat(raw);
@@ -48,8 +47,7 @@ export default function TimelineRow({
     onTimelineChange(newArr);
   };
 
-  // Automatically syncs with parent: if not focused, show formatted incoming value.
-  const displayBaseValue = focusedBase ? baseValue : formatVal(baseValue);
+ const displayBaseValue = focusedBase ? baseValue : formatVal(baseValue);
 
   return (
     <div className="flex items-center mb-2 w-full">

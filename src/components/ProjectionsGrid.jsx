@@ -3,7 +3,6 @@ import React from "react";
 
 const DISPLAY_YEAR_INDICES = [1, 2, 3, 5, 10];
 
-// Formatting helpers
 const fmtCur = (val) => {
   if (val === null || val === undefined || isNaN(val)) return "—";
   const rounded = Math.round(val);

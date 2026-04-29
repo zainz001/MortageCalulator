@@ -1,42 +1,16 @@
 import React from "react";
 
-/**
- * ToggleSwitch
- *
- * Spec ref: PIA Functional Spec §3.5, §7.1, §7.5
- * Used for:
- *   - "New build" toggle → locks interest deductibility to 100% (§7.1)
- *   - "Ring-fencing applies (losses carried forward)" toggle (§7.5)
- *
- * Spec notes:
- *   - New build toggle: when ON, must lock deductibility dropdown to 100%
- *     and disable it. Handle this side-effect in the parent via onChange.
- *   - Ring-fencing toggle: when ON, tax credit = 0 for all years in loss
- *     position; show accumulated loss carried forward instead.
- *   - Tooltip (ⓘ) is RECOMMENDED for tax-sensitive toggles per §8.5.
- *
- * This is a CONTROLLED component — no internal state.
- * The parent owns `checked` and must pass `onChange`.
- *
- * Props:
- *   label    {string}              required — Display label to the left of the toggle
- *   checked  {boolean}             required — Controlled on/off value
- *   onChange {(val: boolean)=>void} required — Called with new boolean on click
- *   tooltip  {string}              optional — Hover text shown via ⓘ glyph
- *   disabled {boolean}             optional — Prevents interaction (e.g. when New Build
- *                                             locks the deductibility dropdown to 100%)
- */
 export default function ToggleSwitch({ label, checked, onChange, tooltip, disabled = false }) {
   const handleToggle = () => {
     if (!disabled) onChange(!checked);
   };
 
-  // Generate a stable id for label–input association (WCAG §8.5)
+
   const id = `toggle-${label.replace(/\s+/g, "-").toLowerCase()}`;
 
   return (
     <div className="flex justify-between items-center py-2">
-      {/* Label + optional tooltip */}
+     
       <label
         htmlFor={id}
         className={`text-[14px] font-medium flex items-center gap-2 select-none ${
@@ -79,7 +53,7 @@ export default function ToggleSwitch({ label, checked, onChange, tooltip, disabl
           ${checked ? "bg-[#34A853]" : "bg-[#E2E8F0]"}
         `}
       >
-        {/* Thumb */}
+     
         <span
           aria-hidden="true"
           className={`

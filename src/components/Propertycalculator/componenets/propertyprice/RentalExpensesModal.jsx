@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import InputField from "../../../inputField";
 import AnnualSpecialExpensesModal from "./AnnualSpecialExpensesModal";
+import ReactDOM from "react-dom";
 export default function RentalExpensesModal({
     isOpen,
     onClose,
@@ -50,7 +51,7 @@ export default function RentalExpensesModal({
         onClose();
     };
 
-    return (
+      return ReactDOM.createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
             <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[600px] flex flex-col border border-[#CBD5E1] overflow-hidden">
 
@@ -162,7 +163,8 @@ export default function RentalExpensesModal({
                 baseNormalExpense={totalExpenses} // Pass the 10,845 total into it!
                 inflationRate="3.00" // We'll hardcode 3.00 for now, or you can pass this from the main app
             />
-        </div>
+        </div>,
+     document.body
 
     );
 }

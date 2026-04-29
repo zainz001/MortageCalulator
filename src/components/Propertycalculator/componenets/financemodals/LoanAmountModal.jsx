@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-
+import ReactDOM from "react-dom";
 const parseNum = (val) => {
   if (val === undefined || val === null || val === "") return 0;
   return parseFloat(String(val).replace(/,/g, "")) || 0;
@@ -148,7 +148,7 @@ export default function LoanAmountModal({
     { id: "holding", label: "Holding costs" },
   ];
 
-  return (
+  return ReactDOM.createPortal(
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
       <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[600px] flex flex-col border border-[#CBD5E1] overflow-hidden">
         
@@ -292,6 +292,7 @@ export default function LoanAmountModal({
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

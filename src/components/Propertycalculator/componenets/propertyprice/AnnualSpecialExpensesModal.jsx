@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import InputField from "../../../inputField";
-
+import ReactDOM from "react-dom";
 export default function AnnualSpecialExpensesModal({
   isOpen,
   onClose,
@@ -96,7 +96,7 @@ export default function AnnualSpecialExpensesModal({
     }
   };
 
-  return (
+ return ReactDOM.createPortal(
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
       <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[600px] flex flex-col border border-[#CBD5E1] overflow-hidden">
         
@@ -235,6 +235,7 @@ export default function AnnualSpecialExpensesModal({
         </div>
 
       </div>
-    </div>
+    </div>,
+     document.body 
   );
 }

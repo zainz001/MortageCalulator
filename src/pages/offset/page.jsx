@@ -1,5 +1,5 @@
 import React from "react";
-import MortgageCalculator1 from "../../components/MortgageCalculator1/MortgageCalculator1";
+import MortgageCalculator1 from "../../components/offset/offset";
 
 export default function MortgageCalculatorPage() {
   return <MortgageCalculator1 />;

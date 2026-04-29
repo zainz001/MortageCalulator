@@ -166,6 +166,7 @@ const mergedChartData = useMemo(() => {
               />
               <InputField
                 label="Annual Interest Rate (%)"
+                numberMode="decimal"
                 // placeholder="6.95"
                 value={rate}
                 onChange={setRate}
