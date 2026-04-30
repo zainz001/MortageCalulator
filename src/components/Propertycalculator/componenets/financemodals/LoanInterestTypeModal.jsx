@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
+import AnnualInterestRatesModal from "./AnnualInterestRatesModal";
+
 const parseNum = (val) => {
   if (val === undefined || val === null || val === "") return 0;
   return parseFloat(String(val).replace(/,/g, "")) || 0;
@@ -10,60 +12,42 @@ const formatVal = (val) => Math.round(val).toLocaleString("en-NZ");
 export default function LoanInterestTypeModal({
   isOpen,
   onClose,
-  initialLoanAmount = 0,
-  initialInterestRate = 0,
+  // 1. Accept the props passed from the parent
+  loanA,
+  setLoanA,
+  loanB,
+  setLoanB,
   setInterestRate
 }) {
-  // Master tracking
   const [masterTotal, setMasterTotal] = useState(0);
   const [splitRate, setSplitRate] = useState(false);
   const [capTaxDeductible, setCapTaxDeductible] = useState(false);
+  const [isAnnualRatesOpen, setIsAnnualRatesOpen] = useState(false);
 
-  // State for Loan A (Independent Type)
-  const [loanA, setLoanA] = useState({
-    amount: "0",
-    rate: "0",
-    type: "IO", // IO, PI, CAP, CL
-    ioFrom: "1", ioTo: "40",
-    piFrom: "", piTo: "",
-    capFrom: "", capTo: "",
-    clFrom: "", clTo: ""
-  });
+  // 2. REMOVED local useState for loanA and loanB so we use the parent's state directly!
 
-  // State for Loan B (Independent Type)
-  const [loanB, setLoanB] = useState({
-    amount: "",
-    rate: "0.00",
-    type: "IO",
-    ioFrom: "", ioTo: "",
-    piFrom: "", piTo: "",
-    capFrom: "", capTo: "",
-    clFrom: "", clTo: ""
-  });
-
-  // Initialize values when opened
+  // 3. Update the useEffect to sync the master total when the modal opens
   useEffect(() => {
-    if (isOpen) {
-      const initAmount = Math.round(initialLoanAmount);
-      setMasterTotal(initAmount);
-      setLoanA(prev => ({
-        ...prev,
-        amount: String(initAmount),
-        rate: String(initialInterestRate)
-      }));
-      setLoanB(prev => ({ ...prev, amount: "0" }));
-      setSplitRate(false);
+    if (isOpen && loanA && loanB) {
+      const currentTotal = parseNum(loanA.amount) + parseNum(loanB.amount);
+      setMasterTotal(currentTotal);
+      
+      // Keep split rate toggled on if Loan B has a balance
+      if (parseNum(loanB.amount) > 0) {
+        setSplitRate(true);
+      } else {
+        setSplitRate(false);
+      }
     }
-  }, [isOpen, initialLoanAmount, initialInterestRate]);
+  }, [isOpen, loanA?.amount, loanB?.amount]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !loanA || !loanB) return null; // Safety check
 
-  // --- EXACT LEGACY MATH REPLICATION ---
   const calcTranche = (loan) => {
     const L = parseNum(loan.amount);
-    const R = parseNum(loan.rate) / 100;
+    const R = parseNum(loan.rates[0]) / 100;
     const type = loan.type;
-    
+
     const prefix = type.toLowerCase();
     const startYr = parseNum(loan[`${prefix}From`]) || 1;
     const endYr = parseNum(loan[`${prefix}To`]) || 40;
@@ -71,22 +55,16 @@ export default function LoanInterestTypeModal({
 
     if (L === 0 || isNaN(L)) return { interest: 0, payment: 0 };
 
-    if (type === "IO") {
-      return { interest: L * R, payment: L * R };
-    } 
-    
-    if (type === "CAP") {
-      const capInt = L * (Math.pow(1 + R / 12, 12) - 1);
-      return { interest: capInt, payment: 0 };
-    } 
-    
+    if (type === "IO") return { interest: L * R, payment: L * R };
+    if (type === "CAP") return { interest: L * (Math.pow(1 + R / 12, 12) - 1), payment: 0 };
+
     if (type === "PI") {
       if (R === 0) return { interest: 0, payment: L / (years || 1) };
       const M = R / 12;
       const n = years * 12;
       const monthlyPmt = (L * M) / (1 - Math.pow(1 + M, -n));
       const annualPmt = monthlyPmt * 12;
-      
+
       let balance = L;
       let yr1Int = 0;
       for (let i = 0; i < 12; i++) {
@@ -98,13 +76,11 @@ export default function LoanInterestTypeModal({
     }
 
     if (type === "CL") {
-      // Legacy Credit Line exactly matching screenshot (Payment $66,526)
       if (R === 0) return { interest: 0, payment: L / (years || 1) };
-      
-      const annualPmt = L * (R + 0.0219676); 
+      const annualPmt = L * (R + 0.0219676);
       const monthlyPmt = annualPmt / 12;
       const M = R / 12;
-      
+
       let balance = L;
       let yr1Int = 0;
       for (let i = 0; i < 12; i++) {
@@ -125,22 +101,19 @@ export default function LoanInterestTypeModal({
   const totalInterest = resA.interest + resB.interest;
   const totalPayment = resA.payment + resB.payment;
 
-  // --- THE FIX: Correctly calculate the weighted average rate without mutating it ---
   const handleOk = () => {
     if (totalLoan > 0 && setInterestRate) {
       const amtA = parseNum(loanA.amount);
       const amtB = parseNum(loanB.amount);
-      const rawRateA = parseNum(loanA.rate);
-      const rawRateB = parseNum(loanB.rate);
+      const rawRateA = parseNum(loanA.rates[0]); 
+      const rawRateB = parseNum(loanB.rates[0]);
 
-      // Weighted average of the NOMINAL rates (e.g. 7.5%), not the dollar outputs
       const blendedRate = ((amtA * rawRateA) + (amtB * rawRateB)) / totalLoan;
       setInterestRate(blendedRate.toFixed(2));
     }
     onClose();
   };
 
-  // --- UI Handlers ---
   const handleSplitRateToggle = (e) => {
     const isSplit = e.target.checked;
     setSplitRate(isSplit);
@@ -156,30 +129,32 @@ export default function LoanInterestTypeModal({
     const otherSetter = isA ? setLoanB : setLoanA;
 
     if (field === "type") {
-      const prefix = val.toLowerCase(); 
+      const prefix = val.toLowerCase();
       let toVal = "40";
-      if (val === "PI") toVal = "25"; // Legacy default for PI
-      
+      if (val === "PI") toVal = "25"; 
+
       setter(prev => ({
         ...prev,
         type: val,
-        // ONLY touch the from/to fields, never the rate!
         [`${prefix}From`]: prev[`${prefix}From`] || "1",
         [`${prefix}To`]: prev[`${prefix}To`] || toVal
       }));
     } else if (field === "amount") {
       const cleanVal = val.replace(/,/g, "");
       if (cleanVal !== "" && !/^-?\d*\.?\d*$/.test(cleanVal)) return;
-      
+
       const numVal = parseNum(cleanVal);
       setter(prev => ({ ...prev, amount: cleanVal }));
-      
-      // Auto-balance
+
       if (splitRate) {
         const remaining = Math.max(0, masterTotal - numVal);
         otherSetter(prev => ({ ...prev, amount: String(remaining) }));
       }
-    } else if (field.includes("From") || field.includes("To")) {
+    } 
+    else if (field === "rate") {
+        setter(prev => ({ ...prev, rates: Array(5).fill(val) }));
+    } 
+    else if (field.includes("From") || field.includes("To")) {
       const cleanVal = val.replace(/,/g, "");
       if (cleanVal !== "" && !/^-?\d*\.?\d*$/.test(cleanVal)) return;
       setter(prev => ({ ...prev, [field]: cleanVal }));
@@ -190,14 +165,14 @@ export default function LoanInterestTypeModal({
 
   const TypeColumn = ({ label, typeValue, currentType, loanData, tranche }) => {
     const isSelected = currentType === typeValue;
-    const prefix = typeValue.toLowerCase(); 
+    const prefix = typeValue.toLowerCase();
     const isDisabled = tranche === "B" && !splitRate;
 
     return (
       <div className={`flex flex-col items-center justify-start w-[85px] ${isDisabled ? "opacity-50 pointer-events-none" : ""}`}>
         <label className="flex items-center gap-1.5 text-[11px] text-[#4A5568] font-medium cursor-pointer h-[32px] text-center leading-tight">
-          <input 
-            type="radio" 
+          <input
+            type="radio"
             checked={isSelected}
             onChange={() => handleLoanChange(tranche, "type", typeValue)}
             disabled={isDisabled}
@@ -210,14 +185,14 @@ export default function LoanInterestTypeModal({
           <span>To:</span>
         </div>
         <div className="flex gap-1 mt-0.5">
-          <input 
+          <input
             type="text"
             value={loanData[`${prefix}From`]}
             onChange={(e) => handleLoanChange(tranche, `${prefix}From`, e.target.value)}
             disabled={!isSelected || isDisabled}
             className={`w-[36px] h-[22px] text-center text-[11px] border rounded-[3px] ${isSelected ? "border-[#CBD5E1] bg-white text-[#1E293B]" : "border-transparent bg-[#F1F5F9] text-[#A1A8B2]"}`}
           />
-          <input 
+          <input
             type="text"
             value={loanData[`${prefix}To`]}
             onChange={(e) => handleLoanChange(tranche, `${prefix}To`, e.target.value)}
@@ -235,12 +210,12 @@ export default function LoanInterestTypeModal({
       <div className={`relative border border-[#CBD5E1] rounded-[6px] p-3 pt-5 bg-white mb-4 shadow-sm transition-opacity ${isDisabled ? "opacity-70" : ""}`}>
         <span className="absolute -top-2.5 left-3 bg-white px-2 text-[12px] font-bold text-[#1E293B]">{splitRate ? `Rate ${tranche}` : title}</span>
         <div className="flex gap-4 items-start">
-          
+
           <div className="flex flex-col gap-1 w-[90px]">
             <label className="text-[11px] font-bold text-[#4A5568] text-center h-[32px] flex items-end justify-center">Loan Amount</label>
             <div className="h-[14px]"></div>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={data.amount === "" ? "" : formatVal(parseNum(data.amount))}
               onChange={(e) => handleLoanChange(tranche, "amount", e.target.value)}
               disabled={isDisabled}
@@ -252,9 +227,9 @@ export default function LoanInterestTypeModal({
             <label className="text-[11px] font-bold text-[#4A5568] text-center h-[32px] flex flex-col items-center justify-end leading-tight"><span>Interest Rate</span><span>(Average)</span></label>
             <div className="h-[14px]"></div>
             <div className="relative">
-              <input 
-                type="text" 
-                value={data.rate}
+              <input
+                type="text"
+                value={data.rates[0]} 
                 onChange={(e) => handleLoanChange(tranche, "rate", e.target.value)}
                 disabled={isDisabled}
                 className={`w-full border border-[#CBD5E1] rounded-[4px] pl-2 pr-4 py-1 text-[13px] text-right focus:outline-none focus:border-[#0052CC] ${isDisabled ? "bg-[#F1F5F9] text-[#64748B]" : "bg-white text-[#1E293B]"}`}
@@ -278,7 +253,7 @@ export default function LoanInterestTypeModal({
   return ReactDOM.createPortal(
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
       <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[680px] flex flex-col border border-[#CBD5E1] overflow-hidden">
-        
+
         <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0]">
           <h2 className="text-[14px] font-bold text-[#1E293B]">Loan Interest & Type</h2>
           <button onClick={onClose} className="text-[#64748B] hover:text-[#0F172A] text-[18px]">&times;</button>
@@ -287,7 +262,7 @@ export default function LoanInterestTypeModal({
         <div className="p-4 pb-2">
           <LoanPanel title="Loan A" data={loanA} tranche="A" />
           <LoanPanel title="Loan B" data={loanB} tranche="B" />
-          
+
           <div className="flex gap-4">
             <div className="relative border border-[#CBD5E1] rounded-[6px] p-3 pt-4 bg-[#FAFAFA] flex-1">
               <span className="absolute -top-2.5 left-3 bg-[#FAFAFA] px-1 text-[11px] text-[#64748B]">Loan Summary (1st year)</span>
@@ -308,10 +283,13 @@ export default function LoanInterestTypeModal({
             <div className="relative border border-[#CBD5E1] rounded-[6px] p-3 pt-5 bg-white w-[140px] flex flex-col justify-between">
               <span className="absolute -top-2.5 left-3 bg-white px-1 text-[11px] text-[#64748B]">Loan Type</span>
               <label className="flex items-center gap-2 text-[12px] text-[#1E293B] cursor-pointer">
-                <input type="checkbox" checked={splitRate} onChange={handleSplitRateToggle} className="rounded text-[#0052CC] focus:ring-[#0052CC]" /> 
+                <input type="checkbox" checked={splitRate} onChange={handleSplitRateToggle} className="rounded text-[#0052CC] focus:ring-[#0052CC]" />
                 Split rate
               </label>
-              <button className="w-full mt-2 py-1.5 border border-[#CBD5E1] bg-[#F8FAFC] rounded-[4px] text-[11px] text-[#1E293B] hover:bg-[#E2E8F0] shadow-sm">
+              <button
+                onClick={() => setIsAnnualRatesOpen(true)} 
+                className="w-full mt-2 py-1.5 border border-[#CBD5E1] bg-[#F8FAFC] rounded-[4px] text-[11px] text-[#1E293B] hover:bg-[#E2E8F0] shadow-sm"
+              >
                 Specify Annual Rates
               </button>
             </div>
@@ -319,7 +297,7 @@ export default function LoanInterestTypeModal({
             <div className="relative border border-[#CBD5E1] rounded-[6px] p-3 pt-5 bg-white w-[200px]">
               <span className="absolute -top-2.5 left-3 bg-white px-1 text-[11px] text-[#64748B]">Capitalised Interest</span>
               <label className="flex items-start gap-2 text-[12px] text-[#1E293B] cursor-pointer leading-tight">
-                <input type="checkbox" checked={capTaxDeductible} onChange={(e) => setCapTaxDeductible(e.target.checked)} className="rounded text-[#0052CC] focus:ring-[#0052CC] mt-0.5" /> 
+                <input type="checkbox" checked={capTaxDeductible} onChange={(e) => setCapTaxDeductible(e.target.checked)} className="rounded text-[#0052CC] focus:ring-[#0052CC] mt-0.5" />
                 Capitalised component tax-deductible
               </label>
             </div>
@@ -333,6 +311,17 @@ export default function LoanInterestTypeModal({
         </div>
 
       </div>
+      
+      {/* Renders the secondary modal when the button is clicked */}
+      <AnnualInterestRatesModal 
+        isOpen={isAnnualRatesOpen}
+        onClose={() => setIsAnnualRatesOpen(false)}
+        loanA={loanA}
+        loanB={loanB}
+        splitRate={splitRate}
+        setLoanA={setLoanA} 
+        setLoanB={setLoanB}
+      />
     </div>,
     document.body
   );

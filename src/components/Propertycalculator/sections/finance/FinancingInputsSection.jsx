@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import InputField from "../../../inputField";
 import SelectField from "../../../SelectField";
 import CollapsibleSection from "../../../CollapsibleSection";
@@ -12,8 +12,13 @@ export default function FinancingInputsSection({
   cashInvested, setCashInvested,
   equityInvested, setEquityInvested,
   loanCosts, setLoanCosts,
-  interestRate, setInterestRate,
-  loanType, setLoanType,
+  
+  interestRate, setInterestRate, 
+  
+  loanA, 
+  loanB,
+  setLoanA, 
+  
   additionalLoan, setAdditionalLoan,
   taxWriteOffPeriod, setTaxWriteOffPeriod,
   loanError,
@@ -28,7 +33,6 @@ export default function FinancingInputsSection({
   holdingCosts = 0
 }) {
 
-  // 1. Base Variables
   const pv = parseNum(propertyValue);
   const rc = parseNum(renovationCosts);
   const pc = purchaseCosts && String(purchaseCosts).trim() !== "" ? parseNum(purchaseCosts) : (pv * 0.005);
@@ -41,7 +45,6 @@ export default function FinancingInputsSection({
   let lc = 0;
   let amountRequired = 0;
 
-  // 2. Auto-Calculate formula for Loan Costs
   const isLcAuto = !loanCosts || String(loanCosts).trim() === "";
 
   if (isLcAuto) {
@@ -55,11 +58,61 @@ export default function FinancingInputsSection({
     loanAmount = amountRequired + addLoan - ci - ei;
   }
 
-  const loanRepayments = loanAmount * (ir / 100);
+  // =========================================================================
+  // THE FIX: Actively sync the calculated loan amount to the Loan A object!
+  // =========================================================================
+  useEffect(() => {
+    if (setLoanA && loanA && (!loanB || parseNum(loanB.amount) === 0)) {
+      setLoanA(prev => {
+        const roundedAmount = String(Math.round(loanAmount));
+        // Only update if it actually changed to prevent infinite render loops
+        if (prev.amount !== roundedAmount) {
+          return { ...prev, amount: roundedAmount };
+        }
+        return prev;
+      });
+    }
+  }, [loanAmount, setLoanA, loanB, loanA]);
+  // =========================================================================
 
   const formatVal = (val) => Math.round(val).toLocaleString("en-NZ");
 
-  // 3. Reverse Math Handlers 
+  // --- MATH ENGINE ---
+  const calcTranchePayment = (loanData) => {
+    if (!loanData || !loanData.amount) return 0; 
+    
+    const L = parseNum(loanData.amount); // Now pulls the perfectly synced amount!
+    const R = parseNum(loanData.rates ? loanData.rates[0] : 0) / 100;
+    const type = loanData.type || "IO";
+    
+    const prefix = type.toLowerCase();
+    const startYr = parseNum(loanData[`${prefix}From`]) || 1;
+    const endYr = parseNum(loanData[`${prefix}To`]) || 40;
+    const years = endYr - startYr + 1;
+
+    if (L === 0 || isNaN(L) || years <= 0) return 0;
+    if (type === "IO") return L * R;
+    if (type === "CAP") return 0; 
+    
+    if (type === "PI") {
+      if (R === 0) return L / years;
+      const M = R / 12;
+      const n = years * 12;
+      const monthlyPmt = (L * M) / (1 - Math.pow(1 + M, -n));
+      return monthlyPmt * 12;
+    }
+
+    if (type === "CL") {
+      if (R === 0) return L / years;
+      const annualPmt = L * (R + 0.0219676); 
+      return annualPmt;
+    }
+    return 0;
+  };
+
+  const loanRepayments = calcTranchePayment(loanA) + calcTranchePayment(loanB);
+
+  // --- EVENT HANDLERS ---
   const handleAmountRequiredChange = (val) => {
     const newAmount = parseNum(val);
     const newLc = newAmount - pv - pc - rc;
@@ -79,10 +132,34 @@ export default function FinancingInputsSection({
     setCashInvested(Math.round(newCi).toString());
   };
 
+  const handleInterestRateChange = (val) => {
+    setInterestRate(val);
+    if (setLoanA) {
+      setLoanA(prev => ({
+        ...prev,
+        rates: Array(5).fill(val) 
+      }));
+    }
+  };
+
+  const handleTypeChange = (newType) => {
+    if (setLoanA) {
+      const prefix = newType.toLowerCase(); 
+      let toVal = "40";
+      if (newType === "PI") toVal = "25"; 
+      
+      setLoanA(prev => ({ 
+        ...prev, 
+        type: newType,
+        [`${prefix}From`]: prev[`${prefix}From`] || "1",
+        [`${prefix}To`]: prev[`${prefix}To`] || toVal
+      }));
+    }
+  };
+
   return (
     <CollapsibleSection title="2. Financing Inputs">
 
-      {/* 1. Loan Amount */}
       <div className="flex items-end gap-2">
         <div className="flex-1">
           <InputField
@@ -101,7 +178,6 @@ export default function FinancingInputsSection({
         </button>
       </div>
 
-      {/* 2. Cash Invested */}
       <div className="flex items-end gap-2">
         <div className="flex-1">
           <InputField
@@ -121,7 +197,6 @@ export default function FinancingInputsSection({
         </button>
       </div>
 
-      {/* 3. Amount Required */}
       <div className="flex items-end gap-2">
         <div className="flex-1">
           <InputField
@@ -133,31 +208,43 @@ export default function FinancingInputsSection({
         </div>
         <button
           type="button"
-          onClick={() => setIsModalOpen("loanAmount")} // Usually Amount Required shares the Loan Amount breakdown modal
+          onClick={() => setIsModalOpen("loanAmount")} 
           className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      <SelectField
-        label="Loan type"
-        value={loanType}
-        onChange={setLoanType}
-        options={[
-          { label: "Interest only", value: "Interest only" },
-          { label: "Principal & Interest", value: "P+I" },
-        ]}
-      />
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <SelectField
+            label="Loan type"
+            value={loanA?.type || "IO"} 
+            onChange={handleTypeChange}
+            options={[
+              { label: "Interest only", value: "IO" },
+              { label: "Principal & Interest", value: "PI" },
+              { label: "Capitalise Interest", value: "CAP" },
+              { label: "Credit Line", value: "CL" },
+            ]}
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsModalOpen("interestRate")} 
+          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+        >
+          Edit ↗
+        </button>
+      </div>
 
-      {/* 4. Interest Rate */}
       <div className="flex items-end gap-2">
         <div className="flex-1">
           <InputField
             label="Interest rate (p.a.)"
             suffix="%"
             value={interestRate}
-            onChange={setInterestRate}
+            onChange={handleInterestRateChange} 
           />
         </div>
         <button
@@ -169,7 +256,6 @@ export default function FinancingInputsSection({
         </button>
       </div>
 
-      {/* 5. Loan Repayments */}
       <div className="flex items-end gap-2">
         <div className="flex-1">
           <InputField
@@ -181,14 +267,13 @@ export default function FinancingInputsSection({
         </div>
         <button
           type="button"
-          onClick={() => setIsModalOpen("loanRepayments")} // Might need a specific modal later, for now we can just leave the button
+          onClick={() => setIsModalOpen("interestRate")} 
           className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      {/* 6. Loan Costs */}
       <div className="flex items-end gap-2">
         <div className="flex-1">
           <InputField
@@ -201,7 +286,7 @@ export default function FinancingInputsSection({
         </div>
         <button
           type="button"
-          onClick={() => setIsModalOpen("loanCosts")} // Usually Loan Costs shares the Loan Amount breakdown modal
+          onClick={() => setIsModalOpen("loanCosts")} 
           className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗

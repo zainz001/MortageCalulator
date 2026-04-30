@@ -75,7 +75,8 @@ export function calculatePIA({
   cashInvested,
   equityInvested,
   loanCostsManual,
-  interestRate,
+  loanA, // <-- Receives full Loan A object
+  loanB, // <-- Receives full Loan B object
   loanType,            
   additionalLoan,
   renovationCosts = 0, 
@@ -97,7 +98,6 @@ export function calculatePIA({
 }) {
   
   const pvC = toCents(parseNum(propertyValue));
-  
   const purchCostsC = purchaseCostsManual && String(purchaseCostsManual).trim() !== ""
     ? toCents(parseNum(purchaseCostsManual))
     : toCents(parseNum(propertyValue) * 0.005);        
@@ -111,7 +111,6 @@ export function calculatePIA({
   const chattelsC = toCents(parseNum(chattelsValue));
   const grossRentWkC = toCents(parseNum(grossRentWeekly));
   
-  const interestRateP = parseNum(interestRate);
   const investorTaxRateP = parseNum(investorTaxRate);
   const capitalGrowthRateP = parseNum(capitalGrowthRate);
   const inflationRateP = parseNum(inflationRate);
@@ -119,7 +118,6 @@ export function calculatePIA({
   const chattelsDepreciationRateP = parseNum(chattelsDepreciationRate);
   const buildingDepreciationRateP = parseNum(buildingDepreciationRate);
 
-  // --- THE FIX: Algebraic Auto-Calculate for Loan Costs ---
   let loanCostsC = 0;
   let loanAmountC = 0;
   let totalCostC = 0;
@@ -137,16 +135,57 @@ export function calculatePIA({
     totalCostC = baseCostsC + loanCostsC;
     loanAmountC = totalCostC + addLoanC - cashC - equityC;
   }
-  // --------------------------------------------------------
 
   const startingEquityC = pvC - loanAmountC;
   const LVR = pvC > 0 ? (loanAmountC / pvC) * 100 : 0;
-  
   const effectiveDeductibility = isNewBuild ? 1.0 : (parseNum(interestDeductibility) / 100);
   const taxRate = investorTaxRateP / 100;
 
-  const annualInterestC = toCents(fromCents(loanAmountC) * (interestRateP / 100));
-  const deductibleInterestC = toCents(fromCents(annualInterestC) * effectiveDeductibility);
+  // --- THE FIX: Dynamic Yearly Interest Calculator ---
+  const calculateYearlyInterestCents = (loanObj, yearIndex) => {
+    if (!loanObj || !loanObj.amount) return 0;
+    const L = parseNum(loanObj.amount);
+    if (L === 0) return 0;
+
+    // Use specific year rate (0-4), or fallback to Year 5 rate for years 6-10
+    const rateIndex = Math.min(yearIndex - 1, 4);
+    const R = parseNum(loanObj.rates[rateIndex]) / 100;
+    const type = loanObj.type;
+
+    if (type === "IO") return toCents(L * R);
+    if (type === "CAP") return toCents(L * (Math.pow(1 + R / 12, 12) - 1));
+    
+    if (type === "PI") {
+      if (R === 0) return 0;
+      const M = R / 12;
+      const n = 25 * 12; // Assuming standard 25yr for PI
+      const monthlyPmt = (L * M) / (1 - Math.pow(1 + M, -n));
+      let balance = L;
+      let yrInt = 0;
+      for (let i = 0; i < 12; i++) {
+        const intMonth = balance * M;
+        yrInt += intMonth;
+        balance -= (monthlyPmt - intMonth);
+      }
+      return toCents(yrInt);
+    }
+    
+    if (type === "CL") {
+      if (R === 0) return 0;
+      const annualPmt = L * (R + 0.0219676);
+      const monthlyPmt = annualPmt / 12;
+      const M = R / 12;
+      let balance = L;
+      let yrInt = 0;
+      for (let i = 0; i < 12; i++) {
+        const intMonth = balance * M;
+        yrInt += intMonth;
+        balance -= (monthlyPmt - intMonth);
+      }
+      return toCents(yrInt);
+    }
+    return 0;
+  };
 
   const projections = [];
   let currentBookValueC = chattelsC;
@@ -171,6 +210,10 @@ export function calculatePIA({
         fromCents(grossRentWkC * 52) * Math.pow(1 + inflationRateP / 100, yr)
       );
     }
+
+    // --- Dynamic Interest Calculation per Year ---
+    const annualInterestC = calculateYearlyInterestCents(loanA, yr) + calculateYearlyInterestCents(loanB, yr);
+    const deductibleInterestC = toCents(fromCents(annualInterestC) * effectiveDeductibility);
 
     const rentalExpensesC = toCents(fromCents(annualGrossRentC) * (rentalExpensesPercentP / 100));
     const preTaxCashFlowC = annualGrossRentC - annualInterestC - rentalExpensesC;
@@ -250,11 +293,11 @@ export function calculatePIA({
       loanAmount: fromCents(loanAmountC),
       grossRentWeekly: parseNum(grossRentWeekly),
       inflationRate: inflationRateP,
-      annualInterest: annualInterestC,
+      annualInterest: toCents(fromCents(loanAmountC) * (parseNum(interestRate) / 100)), // Base fallback for infinite loop
       rentalExpensesPercent: rentalExpensesPercentP,
       taxRate,
       ringFencing,
-      deductibleInterestFn: () => deductibleInterestC,
+      deductibleInterestFn: () => toCents(fromCents(loanAmountC) * (parseNum(interestRate) / 100)), // Base fallback
       chattelsValueCents: chattelsC,
       chattelsDepreciationRate: chattelsDepreciationRateP,
       currentYear,
