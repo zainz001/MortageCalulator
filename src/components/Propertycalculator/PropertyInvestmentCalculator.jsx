@@ -15,6 +15,7 @@ import LoanInterestTypeModal from "./componenets/financemodals/LoanInterestTypeM
 import LoanCostsModal from "./componenets/financemodals/LoanCostsModal";
 import InvestorDetailsModal from "./componenets/investormodals/InvestorDetailsModal";
 import HomeLoanDetailsModal from "./componenets/investormodals/HomeLoanDetailsModal"; 
+import TaxCreditsModal from "./componenets/investormodals/TaxCreditsModal";
 const parseNum = (val) => {
   if (val === undefined || val === null || val === "") return 0;
   return parseFloat(String(val).replace(/,/g, "")) || 0;
@@ -493,7 +494,7 @@ export default function PropertyInvestmentCalculator() {
           "investorDetails", 
           "jointWorkIncome", 
           "jointWorkDeductions", 
-          "taxableIncomeSingle"
+          
         ].includes(activeModal)} 
         
         onClose={() => setActiveModal(null)} 
@@ -507,7 +508,7 @@ export default function PropertyInvestmentCalculator() {
         setTaxableIncomeSingle={setTaxableIncomeSingle}
       />
       <HomeLoanDetailsModal
-        // Map it so ANY of these edit buttons open this modal
+       
         isOpen={[
           "principalResidence", 
           "amountOwing", 
@@ -515,6 +516,20 @@ export default function PropertyInvestmentCalculator() {
         ].includes(activeModal)} 
         
         onClose={() => setActiveModal(null)} 
+        principalResidence={principalResidence}
+        setPrincipalResidence={setPrincipalResidence}
+        amountOwing={amountOwing}
+        setAmountOwing={setAmountOwing}
+        homeLoanRepayments={homeLoanRepayments}
+        setHomeLoanRepayments={setHomeLoanRepayments}
+      />
+         <TaxCreditsModal
+       
+        isOpen={[
+          "taxableIncomeSingle"
+        ].includes(activeModal)}
+        onClose={() => setActiveModal(null)} 
+    
         principalResidence={principalResidence}
         setPrincipalResidence={setPrincipalResidence}
         amountOwing={amountOwing}

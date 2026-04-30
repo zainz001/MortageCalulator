@@ -8,21 +8,6 @@ import {
   ModalInfoBox,
 } from "./ModalPrimitives";
 
-/**
- * PurchaseCostsModal
- *
- * Detail popup for the "Purchase costs" field.
- *
- * Props:
- *   isOpen              boolean
- *   onClose             () => void
- *   propertyValue       string  (read-only reference)
- *   purchaseCosts       string  (the parent field value — kept in sync)
- *   setPurchaseCosts    (val: string) => void
- *
- * Internal sub-fields (local state — written back to purchaseCosts on change):
- *   The total of all sub-fields is kept as the canonical purchaseCosts value.
- */
 export default function PurchaseCostsModal({
   isOpen,
   onClose,
