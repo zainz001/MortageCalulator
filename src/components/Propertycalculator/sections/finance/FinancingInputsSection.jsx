@@ -12,13 +12,13 @@ export default function FinancingInputsSection({
   cashInvested, setCashInvested,
   equityInvested, setEquityInvested,
   loanCosts, setLoanCosts,
-  
-  interestRate, setInterestRate, 
-  
-  loanA, 
+
+  interestRate, setInterestRate,
+
+  loanA,
   loanB,
-  setLoanA, 
-  
+  setLoanA,
+
   additionalLoan, setAdditionalLoan,
   taxWriteOffPeriod, setTaxWriteOffPeriod,
   loanError,
@@ -79,12 +79,12 @@ export default function FinancingInputsSection({
 
   // --- MATH ENGINE ---
   const calcTranchePayment = (loanData) => {
-    if (!loanData || !loanData.amount) return 0; 
-    
+    if (!loanData || !loanData.amount) return 0;
+
     const L = parseNum(loanData.amount); // Now pulls the perfectly synced amount!
     const R = parseNum(loanData.rates ? loanData.rates[0] : 0) / 100;
     const type = loanData.type || "IO";
-    
+
     const prefix = type.toLowerCase();
     const startYr = parseNum(loanData[`${prefix}From`]) || 1;
     const endYr = parseNum(loanData[`${prefix}To`]) || 40;
@@ -92,8 +92,8 @@ export default function FinancingInputsSection({
 
     if (L === 0 || isNaN(L) || years <= 0) return 0;
     if (type === "IO") return L * R;
-    if (type === "CAP") return 0; 
-    
+    if (type === "CAP") return 0;
+
     if (type === "PI") {
       if (R === 0) return L / years;
       const M = R / 12;
@@ -104,7 +104,7 @@ export default function FinancingInputsSection({
 
     if (type === "CL") {
       if (R === 0) return L / years;
-      const annualPmt = L * (R + 0.0219676); 
+      const annualPmt = L * (R + 0.0219676);
       return annualPmt;
     }
     return 0;
@@ -137,19 +137,19 @@ export default function FinancingInputsSection({
     if (setLoanA) {
       setLoanA(prev => ({
         ...prev,
-        rates: Array(5).fill(val) 
+        rates: Array(5).fill(val)
       }));
     }
   };
 
   const handleTypeChange = (newType) => {
     if (setLoanA) {
-      const prefix = newType.toLowerCase(); 
+      const prefix = newType.toLowerCase();
       let toVal = "40";
-      if (newType === "PI") toVal = "25"; 
-      
-      setLoanA(prev => ({ 
-        ...prev, 
+      if (newType === "PI") toVal = "25";
+
+      setLoanA(prev => ({
+        ...prev,
         type: newType,
         [`${prefix}From`]: prev[`${prefix}From`] || "1",
         [`${prefix}To`]: prev[`${prefix}To`] || toVal
@@ -208,7 +208,7 @@ export default function FinancingInputsSection({
         </div>
         <button
           type="button"
-          onClick={() => setIsModalOpen("loanAmount")} 
+          onClick={() => setIsModalOpen("loanAmount")}
           className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
@@ -219,7 +219,7 @@ export default function FinancingInputsSection({
         <div className="flex-1">
           <SelectField
             label="Loan type"
-            value={loanA?.type || "IO"} 
+            value={loanA?.type || "IO"}
             onChange={handleTypeChange}
             options={[
               { label: "Interest only", value: "IO" },
@@ -231,7 +231,7 @@ export default function FinancingInputsSection({
         </div>
         <button
           type="button"
-          onClick={() => setIsModalOpen("interestRate")} 
+          onClick={() => setIsModalOpen("interestRate")}
           className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
@@ -244,7 +244,7 @@ export default function FinancingInputsSection({
             label="Interest rate (p.a.)"
             suffix="%"
             value={interestRate}
-            onChange={handleInterestRateChange} 
+            onChange={handleInterestRateChange}
           />
         </div>
         <button
@@ -267,7 +267,7 @@ export default function FinancingInputsSection({
         </div>
         <button
           type="button"
-          onClick={() => setIsModalOpen("interestRate")} 
+          onClick={() => setIsModalOpen("interestRate")}
           className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
@@ -286,20 +286,29 @@ export default function FinancingInputsSection({
         </div>
         <button
           type="button"
-          onClick={() => setIsModalOpen("loanCosts")} 
+          onClick={() => setIsModalOpen("loanCosts")}
           className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
-
-      <InputField
-        label="Tax Write-Off Period"
-        suffix="yr"
-        value={taxWriteOffPeriod}
-        onChange={setTaxWriteOffPeriod}
-      />
-
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <InputField
+            label="Tax Write-Off Period"
+            suffix="yr"
+            value={taxWriteOffPeriod}
+            onChange={setTaxWriteOffPeriod}
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsModalOpen("loanCosts")}
+          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+        >
+          Edit ↗
+        </button>
+      </div>
     </CollapsibleSection>
   );
 }

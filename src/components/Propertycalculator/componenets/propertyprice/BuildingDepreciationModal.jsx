@@ -22,12 +22,9 @@ export default function BuildingDepreciationModal({
   useEffect(() => {
     if (isOpen) {
       if (linkToPrice && pv > 0 && !buildingCosts) {
-        // By default, the legacy app seems to use 70% for the building split
-        setBuildingCosts(Math.round(pv * 0.70).toString());
+       setBuildingCosts(Math.round(pv * 0.70).toString());
       }
       
-      // If we already have a saved depreciation value, we could reverse-calculate the rate here,
-      // but for simplicity, we will just let the user edit the rate directly.
     }
   }, [isOpen, pv, linkToPrice, buildingCosts]);
 

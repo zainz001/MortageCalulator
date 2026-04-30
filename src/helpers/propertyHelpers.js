@@ -94,7 +94,8 @@ export function calculatePIA({
   ringFencing,
   renovationTimeline = [],
   furnitureTimeline = [],
-  rentTimeline = []
+  rentTimeline = [],
+  vacancyRate = 2
 }) {
   
   const pvC = toCents(parseNum(propertyValue));
@@ -197,21 +198,31 @@ export function calculatePIA({
   const maxProjectedYears = Math.max(10, renovationTimeline?.length || 0, furnitureTimeline?.length || 0);
   let lastMarketValueC = pvC + renoCostsC; 
 
-  for (let yr = 1; yr <= maxProjectedYears; yr++) {
+ // Make sure you accept vacancyRate in the calculatePIA function parameters at the top!
+  // If not passed, we'll default it to 2% based on your screenshot.
+ // Add this instead:
+const vacancyRateP = parseNum(vacancyRate);
+ for (let yr = 1; yr <= maxProjectedYears; yr++) {
+    // --- ADD THESE 3 LINES BACK IN ---
     const renoYrC = toCents(parseNum(renovationTimeline[yr - 1] || 0));
     const propValueC = toCents(fromCents(lastMarketValueC) * (1 + capitalGrowthRateP / 100)) + renoYrC;
     lastMarketValueC = propValueC;
+    // ---------------------------------
 
     let annualGrossRentC;
     if (rentTimeline && rentTimeline[yr - 1]) {
       annualGrossRentC = toCents(parseNum(rentTimeline[yr - 1]));
     } else {
-      annualGrossRentC = toCents(
-        fromCents(grossRentWkC * 52) * Math.pow(1 + inflationRateP / 100, yr)
+      // 1. Calculate Base Annual Rent (52 weeks)
+      const baseAnnualRent = fromCents(grossRentWkC) * 52;
+      
+      const actualAnnualRent = baseAnnualRent * (1 - (vacancyRateP / 100));
+      
+     annualGrossRentC = toCents(
+        actualAnnualRent * Math.pow(1 + inflationRateP / 100, yr - 1)
       );
     }
-
-    // --- Dynamic Interest Calculation per Year ---
+    
     const annualInterestC = calculateYearlyInterestCents(loanA, yr) + calculateYearlyInterestCents(loanB, yr);
     const deductibleInterestC = toCents(fromCents(annualInterestC) * effectiveDeductibility);
 
@@ -286,6 +297,8 @@ export function calculatePIA({
   const netYieldYr1 = fromCents(totalCostC) > 0 ? (netRentYr1 / fromCents(totalCostC)) * 100 : 0;
   const cashNeutralInvestment = fromCents(loanAmountC) / 2;
 
+const fallbackRate = loanA?.rates?.[0] ? parseNum(loanA.rates[0]) : 0;
+
   const cashPositiveYear = (() => {
     const found = projections.find((p) => p.afterTaxCashFlow > 0);
     if (found) return found.year;
@@ -293,11 +306,13 @@ export function calculatePIA({
       loanAmount: fromCents(loanAmountC),
       grossRentWeekly: parseNum(grossRentWeekly),
       inflationRate: inflationRateP,
-      annualInterest: toCents(fromCents(loanAmountC) * (parseNum(interestRate) / 100)), // Base fallback for infinite loop
+      // FIX: Use fallbackRate instead of interestRate
+      annualInterest: toCents(fromCents(loanAmountC) * (fallbackRate / 100)), 
       rentalExpensesPercent: rentalExpensesPercentP,
       taxRate,
       ringFencing,
-      deductibleInterestFn: () => toCents(fromCents(loanAmountC) * (parseNum(interestRate) / 100)), // Base fallback
+      // FIX: Use fallbackRate instead of interestRate
+      deductibleInterestFn: () => toCents(fromCents(loanAmountC) * (fallbackRate / 100)), 
       chattelsValueCents: chattelsC,
       chattelsDepreciationRate: chattelsDepreciationRateP,
       currentYear,

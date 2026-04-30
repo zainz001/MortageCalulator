@@ -9,11 +9,11 @@ export default function PropertyDetailsSection({
   purchaseCosts, setPurchaseCosts,
   grossRentWeekly, setGrossRentWeekly,
   rentalExpensesPercent, setRentalExpensesPercent,
-  buildingDepreciation, setBuildingDepreciation, // <--- Added prop
-  chattelsDepreciation, setChattelsDepreciation, // <--- Added prop
+  buildingDepreciation, setBuildingDepreciation,
+  chattelsDepreciation, setChattelsDepreciation,
   setActiveModal,
   renovationCosts,
-  renovationTimeline = []
+  renovationTimeline = [],
 }) {
 
   const basePrice = parseFloat(propertyValue) || 0;
@@ -110,7 +110,6 @@ export default function PropertyDetailsSection({
         </button>
       </div>
 
-      {/* NEW: Depreciation of Building */}
       <div className="flex items-end gap-2">
         <div className="flex-1">
           <InputField
@@ -129,7 +128,6 @@ export default function PropertyDetailsSection({
         </button>
       </div>
 
-      {/* NEW: Depreciation of Chattels */}
       <div className="flex items-end gap-2">
         <div className="flex-1">
           <InputField

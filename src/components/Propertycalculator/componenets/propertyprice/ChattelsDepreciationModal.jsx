@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import InputField from "../../../inputField";
 import ReactDOM from "react-dom";
+
 export default function ChattelsDepreciationModal({
   isOpen,
   onClose,
@@ -9,11 +10,11 @@ export default function ChattelsDepreciationModal({
 }) {
   const [startIndex, setStartIndex] = useState(0);
 
-const [method, setMethod] = useState("DV"); // DV = Diminishing Value, PC = Prime Cost (Straight Line)
+  const [method, setMethod] = useState("DV"); // DV = Diminishing Value, PC = Prime Cost (Straight Line)
   const [isLinked, setIsLinked] = useState(true);
   const [linkRate, setLinkRate] = useState("6.00");
 
- const [items, setItems] = useState([
+  const [items, setItems] = useState([
     { id: '1', name: 'Furniture', value: "", rate: "20.00" },
     { id: '2', name: 'General chattels', value: "45000", rate: "25.00" },
     { id: '3', name: 'Curtains', value: "", rate: "25.00" },
@@ -25,6 +26,7 @@ const [method, setMethod] = useState("DV"); // DV = Diminishing Value, PC = Prim
     { id: '9', name: 'Other', value: "", rate: "25.00" },
   ]);
 
+  // Links General Chattels to Property Value
   useEffect(() => {
     if (isOpen && isLinked) {
       const pv = parseFloat(propertyValue) || 0;
@@ -33,7 +35,7 @@ const [method, setMethod] = useState("DV"); // DV = Diminishing Value, PC = Prim
 
       setItems(prev => {
         const newItems = [...prev];
-       newItems[1] = { ...newItems[1], value: calculatedValue.toString() };
+        newItems[1] = { ...newItems[1], value: calculatedValue.toString() };
         return newItems;
       });
     }
@@ -111,7 +113,6 @@ const [method, setMethod] = useState("DV"); // DV = Diminishing Value, PC = Prim
   };
 
   return ReactDOM.createPortal(
-
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
       <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[850px] flex flex-col border border-[#CBD5E1] overflow-hidden">
 
@@ -158,8 +159,13 @@ const [method, setMethod] = useState("DV"); // DV = Diminishing Value, PC = Prim
                     <input
                       type="text"
                       value={item.value}
-                      onChange={(e) => handleItemChange(idx, 'value', e.target.value.replace(/,/g, ''))}
-                      disabled={isLinked && idx === 1} // Lock General Chattels if linked
+                      onChange={(e) => {
+                        handleItemChange(idx, 'value', e.target.value.replace(/,/g, ''));
+                        // Auto-unlink if the user manually types in the General Chattels field
+                        if (idx === 1 && isLinked) {
+                          setIsLinked(false);
+                        }
+                      }}
                       className={`w-full border border-[#CBD5E1] rounded-[4px] px-1.5 py-1 text-[13px] text-right text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC] ${isLinked && idx === 1 ? 'bg-[#F1F5F9] font-bold text-[#0052CC]' : 'bg-white'}`}
                     />
                   </div>

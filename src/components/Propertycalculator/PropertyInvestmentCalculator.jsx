@@ -5,8 +5,7 @@ import PropertyValueModal from "./componenets/propertyprice/PropertyPriceModal";
 import PurchaseCostsModal from "./componenets/propertyprice/PurchaseCostsModal";
 import PropertyDetailsSection from "./sections/property/PropertyDetailsSection";
 import FinancingInputsSection from "./sections/finance/FinancingInputsSection";
-import GrowthAndInflationSection from "./sections/growthandinflation/GrowthAndInflationSection";
-import TaxSettingsSection from "./sections/tax/TaxSettingsSection";
+import InvestorSection from "./sections/Investor/InvestorSection";
 import RentalIncomeModal from "./componenets/propertyprice/RentalIncomeModal";
 import RentalExpensesModal from "./componenets/propertyprice/RentalExpensesModal";
 import BuildingDepreciationModal from "./componenets/propertyprice/BuildingDepreciationModal";
@@ -14,6 +13,8 @@ import ChattelsDepreciationModal from "./componenets/propertyprice/ChattelsDepre
 import LoanAmountModal from "./componenets/financemodals/LoanAmountModal";
 import LoanInterestTypeModal from "./componenets/financemodals/LoanInterestTypeModal";
 import LoanCostsModal from "./componenets/financemodals/LoanCostsModal";
+import InvestorDetailsModal from "./componenets/investormodals/InvestorDetailsModal";
+import HomeLoanDetailsModal from "./componenets/investormodals/HomeLoanDetailsModal"; 
 const parseNum = (val) => {
   if (val === undefined || val === null || val === "") return 0;
   return parseFloat(String(val).replace(/,/g, "")) || 0;
@@ -47,6 +48,17 @@ const DEFAULTS = {
   isNewBuild: false,
   ringFencing: false,
   taxWriteOffPeriod: "1",
+  // Added investor defaults
+  investorDetails: "Person(s)",
+  jointWorkIncome: "170,000",
+  jointWorkDeductions: "0",
+  principalResidence: "900,000",
+  amountOwing: "630,000",
+  homeLoanRepayments: "58,338",
+  livingExpenses: "45,000",
+  portfolioProperties: "0",
+  portfolioValue: "0",
+  taxableIncomeSingle: "120,000",
 };
 
 const fmt = (val) => val !== null && val !== undefined ? "$" + Math.round(val).toLocaleString("en-NZ") : "—";
@@ -96,6 +108,18 @@ export default function PropertyInvestmentCalculator() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeModal, setActiveModal] = useState(null);
 
+  // New Investor State Variables
+  const [investorDetails, setInvestorDetails] = useState(DEFAULTS.investorDetails);
+  const [jointWorkIncome, setJointWorkIncome] = useState(DEFAULTS.jointWorkIncome);
+  const [jointWorkDeductions, setJointWorkDeductions] = useState(DEFAULTS.jointWorkDeductions);
+  const [principalResidence, setPrincipalResidence] = useState(DEFAULTS.principalResidence);
+  const [amountOwing, setAmountOwing] = useState(DEFAULTS.amountOwing);
+  const [homeLoanRepayments, setHomeLoanRepayments] = useState(DEFAULTS.homeLoanRepayments);
+  const [livingExpenses, setLivingExpenses] = useState(DEFAULTS.livingExpenses);
+  const [portfolioProperties, setPortfolioProperties] = useState(DEFAULTS.portfolioProperties);
+  const [portfolioValue, setPortfolioValue] = useState(DEFAULTS.portfolioValue);
+  const [taxableIncomeSingle, setTaxableIncomeSingle] = useState(DEFAULTS.taxableIncomeSingle);
+
   const [loanA, setLoanA] = useState({
     amount: "0", rates: Array(5).fill(DEFAULTS.interestRate), type: "IO",
     ioFrom: "1", ioTo: "40", piFrom: "1", piTo: "25", capFrom: "1", capTo: "40", clFrom: "1", clTo: "40"
@@ -144,6 +168,19 @@ export default function PropertyInvestmentCalculator() {
     setInterestDeductibility(DEFAULTS.interestDeductibility);
     setIsNewBuild(DEFAULTS.isNewBuild);
     setRingFencing(DEFAULTS.ringFencing);
+
+    // Reset Investor values
+    setInvestorDetails(DEFAULTS.investorDetails);
+    setJointWorkIncome(DEFAULTS.jointWorkIncome);
+    setJointWorkDeductions(DEFAULTS.jointWorkDeductions);
+    setPrincipalResidence(DEFAULTS.principalResidence);
+    setAmountOwing(DEFAULTS.amountOwing);
+    setHomeLoanRepayments(DEFAULTS.homeLoanRepayments);
+    setLivingExpenses(DEFAULTS.livingExpenses);
+    setPortfolioProperties(DEFAULTS.portfolioProperties);
+    setPortfolioValue(DEFAULTS.portfolioValue);
+    setTaxableIncomeSingle(DEFAULTS.taxableIncomeSingle);
+
     setResult(null);
     setLoanError("");
     setLoanB(prev => ({ ...prev, amount: "0", rates: Array(5).fill("0.00") }));
@@ -223,7 +260,7 @@ export default function PropertyInvestmentCalculator() {
       buildingDepreciationRate: parseNum(buildingDepreciationRate),
       loanCosts: res.loanCosts,
       totalDeductions: yr1p?.deductions ?? 0,
-      investorIncome: 120000,
+      investorIncome: parseNum(jointWorkIncome) || 120000, // Tied to investor details
       taxCredit: yr1p?.taxCredit ?? 0,
       afterTaxCashFlow: -(cInvest + eInvest),
     };
@@ -236,7 +273,8 @@ export default function PropertyInvestmentCalculator() {
     capitalGrowthRate, inflationRate,
     chattelsValue, depreciationMethod, chattelsDepreciationRate, buildingDepreciationRate,
     investorTaxRate, investorType, interestDeductibility, isNewBuild, ringFencing,
-    renovationTimeline, furnitureTimeline, loanA, loanB
+    renovationTimeline, furnitureTimeline, loanA, loanB,
+    jointWorkIncome // Added to dependency array
   ]);
 
   useEffect(() => {
@@ -300,19 +338,26 @@ export default function PropertyInvestmentCalculator() {
                 purchaseCosts={purchaseCosts}
                 renovationCosts={renovationCosts}
               />
-
+              {/* 
               <GrowthAndInflationSection
                 capitalGrowthRate={capitalGrowthRate} setCapitalGrowthRate={setCapitalGrowthRate}
                 inflationRate={inflationRate} setInflationRate={setInflationRate}
+              /> */}
+
+              <InvestorSection
+                investorDetails={investorDetails} setInvestorDetails={setInvestorDetails}
+                jointWorkIncome={jointWorkIncome} setJointWorkIncome={setJointWorkIncome}
+                jointWorkDeductions={jointWorkDeductions} setJointWorkDeductions={setJointWorkDeductions}
+                principalResidence={principalResidence} setPrincipalResidence={setPrincipalResidence}
+                amountOwing={amountOwing} setAmountOwing={setAmountOwing}
+                homeLoanRepayments={homeLoanRepayments} setHomeLoanRepayments={setHomeLoanRepayments}
+                livingExpenses={livingExpenses} setLivingExpenses={setLivingExpenses}
+                portfolioProperties={portfolioProperties} setPortfolioProperties={setPortfolioProperties}
+                portfolioValue={portfolioValue} setPortfolioValue={setPortfolioValue}
+                taxableIncomeSingle={taxableIncomeSingle} setTaxableIncomeSingle={setTaxableIncomeSingle}
+              setActiveModal={setActiveModal}
               />
 
-              <TaxSettingsSection
-                investorTaxRate={investorTaxRate} setInvestorTaxRate={setInvestorTaxRate}
-                investorType={investorType} setInvestorType={setInvestorType}
-                isNewBuild={isNewBuild} handleNewBuildToggle={handleNewBuildToggle}
-                interestDeductibility={interestDeductibility} setInterestDeductibility={setInterestDeductibility}
-                ringFencing={ringFencing} setRingFencing={setRingFencing}
-              />
             </div>
 
             <button
@@ -394,7 +439,7 @@ export default function PropertyInvestmentCalculator() {
       <RentalIncomeModal isOpen={activeModal === "rentalIncome"} onClose={() => setActiveModal(null)} grossRentWeekly={grossRentWeekly} setGrossRentWeekly={setGrossRentWeekly} inflationRate={inflationRate} rentTimeline={rentTimeline} setRentTimeline={setRentTimeline} />
       <RentalExpensesModal isOpen={activeModal === "rentalExpenses"} onClose={() => setActiveModal(null)} grossRentWeekly={grossRentWeekly} propertyValue={propertyValue} rentalExpensesPercent={rentalExpensesPercent} setRentalExpensesPercent={setRentalExpensesPercent} />
       <BuildingDepreciationModal isOpen={activeModal === "buildingDepreciation"} onClose={() => setActiveModal(null)} propertyValue={propertyValue} renovationCosts={renovationCosts} buildingDepreciation={buildingDepreciation} setBuildingDepreciation={setBuildingDepreciation} />
-      <ChattelsDepreciationModal isOpen={activeModal === "chattelsDepreciation"} onClose={() => setActiveModal(null)} propertyValue={propertyValue} setChattelsDepreciation={setChattelsDepreciation} />
+      <ChattelsDepreciationModal isOpen={activeModal === "chattelsDepreciation"} chattelsDepreciation={chattelsDepreciation} onClose={() => setActiveModal(null)} propertyValue={propertyValue} setChattelsDepreciation={setChattelsDepreciation} />
 
       <LoanAmountModal
         isOpen={isModalOpen === "loanAmount" || isModalOpen === true}
@@ -441,6 +486,41 @@ export default function PropertyInvestmentCalculator() {
           parseNum(equityInvested)
         }
         setLoanCosts={setLoanCosts}
+      />
+     <InvestorDetailsModal
+        // Map it so ANY of these edit buttons open this modal
+        isOpen={[
+          "investorDetails", 
+          "jointWorkIncome", 
+          "jointWorkDeductions", 
+          "taxableIncomeSingle"
+        ].includes(activeModal)} 
+        
+        onClose={() => setActiveModal(null)} 
+        investorDetails={investorDetails}
+        setInvestorDetails={setInvestorDetails}
+        jointWorkIncome={jointWorkIncome}
+        setJointWorkIncome={setJointWorkIncome}
+        jointWorkDeductions={jointWorkDeductions}
+        setJointWorkDeductions={setJointWorkDeductions}
+        taxableIncomeSingle={taxableIncomeSingle}
+        setTaxableIncomeSingle={setTaxableIncomeSingle}
+      />
+      <HomeLoanDetailsModal
+        // Map it so ANY of these edit buttons open this modal
+        isOpen={[
+          "principalResidence", 
+          "amountOwing", 
+          "homeLoanRepayments"
+        ].includes(activeModal)} 
+        
+        onClose={() => setActiveModal(null)} 
+        principalResidence={principalResidence}
+        setPrincipalResidence={setPrincipalResidence}
+        amountOwing={amountOwing}
+        setAmountOwing={setAmountOwing}
+        homeLoanRepayments={homeLoanRepayments}
+        setHomeLoanRepayments={setHomeLoanRepayments}
       />
     </div>
   );

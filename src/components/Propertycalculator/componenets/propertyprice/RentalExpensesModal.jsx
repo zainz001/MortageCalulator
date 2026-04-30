@@ -16,7 +16,7 @@ export default function RentalExpensesModal({
         rates: "3750",
         insurance: "1875",
         maintenance: "1500",
-        bodyCorporate: "10",
+        bodyCorporate: "0",
         cleaning: "0",
         pestControl: "0",
         mowing: "0",
