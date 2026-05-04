@@ -507,14 +507,8 @@ export default function PropertyInvestmentCalculator() {
         taxableIncomeSingle={taxableIncomeSingle}
         setTaxableIncomeSingle={setTaxableIncomeSingle}
       />
-      <HomeLoanDetailsModal
-       
-        isOpen={[
-          "principalResidence", 
-          "amountOwing", 
-          "homeLoanRepayments"
-        ].includes(activeModal)} 
-        
+<HomeLoanDetailsModal
+        isOpen={["principalResidence", "amountOwing", "homeLoanRepayments"].includes(activeModal)} 
         onClose={() => setActiveModal(null)} 
         principalResidence={principalResidence}
         setPrincipalResidence={setPrincipalResidence}
@@ -523,19 +517,12 @@ export default function PropertyInvestmentCalculator() {
         homeLoanRepayments={homeLoanRepayments}
         setHomeLoanRepayments={setHomeLoanRepayments}
       />
-         <TaxCreditsModal
-       
-        isOpen={[
-          "taxableIncomeSingle"
-        ].includes(activeModal)}
+   <TaxCreditsModal
+        isOpen={["taxableIncomeSingle"].includes(activeModal)}
         onClose={() => setActiveModal(null)} 
-    
-        principalResidence={principalResidence}
-        setPrincipalResidence={setPrincipalResidence}
-        amountOwing={amountOwing}
-        setAmountOwing={setAmountOwing}
-        homeLoanRepayments={homeLoanRepayments}
-        setHomeLoanRepayments={setHomeLoanRepayments}
+        initialTaxable={taxableIncomeSingle}
+        projections={result?.projections || []} // Passes the real 10-year data
+        onSave={(newTotal) => setTaxableIncomeSingle(newTotal)}
       />
     </div>
   );
