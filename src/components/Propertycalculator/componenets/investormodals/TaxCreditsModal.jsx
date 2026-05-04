@@ -5,46 +5,84 @@ import TaxBenefitsModal from "./TaxBenefitsModal";
 const parseNum = (val) => parseFloat(String(val).replace(/[^0-9.-]+/g, "")) || 0;
 const formatVal = (val) => Math.round(val).toLocaleString("en-NZ");
 
-// FIX: Added `projections` to the props
-export default function TaxCreditsModal({ isOpen, onClose, onSave, initialTaxable, projections }) {
+export default function TaxCreditsModal({ 
+  isOpen, 
+  onClose, 
+  onSave, 
+  investorIncome, // <-- Received safely from Parent Component
+  partnerIncome,  // <-- Received safely from Parent Component
+  projections 
+}) {
   const [calcMethod, setCalcMethod] = useState("taxable"); 
   const [marginalRate, setMarginalRate] = useState("");
   const [ownershipType, setOwnershipType] = useState("single"); 
   const [investorOwnership, setInvestorOwnership] = useState("100.00%");
   const [partnerOwnership, setPartnerOwnership] = useState("0.00%");
 
-  const [investorAssessable, setInvestorAssessable] = useState("10,000");
-  const [partnerAssessable, setPartnerAssessable] = useState("50,000");
-
-  const [investorTaxable, setInvestorTaxable] = useState("10,000");
-  const [partnerTaxable, setPartnerTaxable] = useState("50,000");
+  // Local state for the modal's input fields
+  const [investorAssessable, setInvestorAssessable] = useState("");
+  const [partnerAssessable, setPartnerAssessable] = useState("");
+  const [investorTaxable, setInvestorTaxable] = useState("");
+  const [partnerTaxable, setPartnerTaxable] = useState("");
 
   const [autoIndexed, setAutoIndexed] = useState(true);
   const [indexYear, setIndexYear] = useState("1yr");
   const [indexRate, setIndexRate] = useState("3.00%");
 
+  const [currentYear, setCurrentYear] = useState(1);
   const [isTaxBenefitsModalOpen, setIsTaxBenefitsModalOpen] = useState(false);
 
+  // Wires the Parent's Income Data directly into this Modal when opened
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentYear(1); 
+      
+      const invVal = investorIncome || "120,000";
+      const partVal = partnerIncome || "50,000";
+
+      setInvestorAssessable(invVal);
+      setInvestorTaxable(invVal);
+
+      if (ownershipType === "joint") {
+        setPartnerAssessable(partVal);
+        setPartnerTaxable(partVal);
+      } else {
+        setPartnerAssessable("0");
+        setPartnerTaxable("0");
+      }
+    }
+  }, [isOpen, investorIncome, partnerIncome, ownershipType]);
+
+  // Handles Ownership toggle logic
   useEffect(() => {
     if (ownershipType === "single") {
       setInvestorOwnership("100.00%");
       setPartnerOwnership("0.00%");
+      setPartnerAssessable("0");
+      setPartnerTaxable("0");
     } else if (ownershipType === "joint") {
       setInvestorOwnership("50.00%");
       setPartnerOwnership("50.00%");
+      setPartnerAssessable(partnerIncome || "50,000");
+      setPartnerTaxable(partnerIncome || "50,000");
     }
-  }, [ownershipType]);
-
-  useEffect(() => {
-    if (isOpen && initialTaxable) {
-      setInvestorTaxable(initialTaxable);
-    }
-  }, [isOpen, initialTaxable]);
+  }, [ownershipType, partnerIncome]);
 
   if (!isOpen) return null;
 
-  const totalAssessable = formatVal(parseNum(investorAssessable) + parseNum(partnerAssessable));
-  const totalTaxable = formatVal(parseNum(investorTaxable) + parseNum(partnerTaxable));
+  const handleNextYear = () => setCurrentYear(prev => Math.min(prev + 1, 30));
+  const handlePrevYear = () => setCurrentYear(prev => Math.max(prev - 1, 1));
+  const handleFastForward = () => setCurrentYear(prev => Math.min(prev + 5, 30));
+  const handleFastRewind = () => setCurrentYear(prev => Math.max(prev - 5, 1));
+
+  const startIdxYear = parseNum(indexYear) || 1;
+  const rateVal = parseNum(indexRate) / 100;
+  const yearsOfGrowth = Math.max(0, currentYear - startIdxYear);
+  const growthFactor = autoIndexed ? Math.pow(1 + rateVal, yearsOfGrowth) : 1;
+
+  const displayInvTaxable = formatVal(parseNum(investorTaxable) * growthFactor);
+  const displayPartTaxable = formatVal(parseNum(partnerTaxable) * growthFactor);
+  const displayTotalTaxable = formatVal((parseNum(investorTaxable) + parseNum(partnerTaxable)) * growthFactor);
 
   const handleInput = (setter) => (e) => {
     const val = e.target.value.replace(/[^0-9.,]/g, '');
@@ -52,7 +90,7 @@ export default function TaxCreditsModal({ isOpen, onClose, onSave, initialTaxabl
   };
 
   const handleOk = () => {
-    if (onSave) onSave(totalTaxable); 
+    if (onSave) onSave(displayTotalTaxable); 
     onClose();
   };
 
@@ -97,7 +135,6 @@ export default function TaxCreditsModal({ isOpen, onClose, onSave, initialTaxabl
                         <input type="radio" name="ownershipType" checked={ownershipType === "joint"} onChange={() => setOwnershipType("joint")} className="w-3.5 h-3.5 accent-[#0052CC]" />
                         <span>Joint names</span>
                       </label>
-                      
                       <button onClick={() => setIsTaxBenefitsModalOpen(true)} className="mt-2 py-1.5 px-3 border border-[#CBD5E1] bg-white rounded-[4px] text-[12px] text-[#1E293B] font-medium hover:bg-[#E2E8F0] transition-colors shadow-sm">
                         Tax Benefits
                       </button>
@@ -118,7 +155,7 @@ export default function TaxCreditsModal({ isOpen, onClose, onSave, initialTaxabl
               </div>
 
               <fieldset className="border border-[#CBD5E1] rounded-[6px] px-4 pb-5 pt-1 relative mt-1">
-                <legend className="px-2 text-[13px] font-bold text-[#1E293B]">Taxable Income Year 1</legend>
+                <legend className="px-2 text-[13px] font-bold text-[#1E293B]">Taxable Income Year {currentYear}</legend>
                 <div className="grid grid-cols-[1fr_90px_90px_90px] gap-3 mt-3 items-center text-right text-[13px] text-[#1E293B]">
                   <div></div>
                   <div className="text-center font-medium">Investor</div>
@@ -126,14 +163,12 @@ export default function TaxCreditsModal({ isOpen, onClose, onSave, initialTaxabl
                   <div className="text-center font-medium">Total</div>
 
                   <div className="text-left">Assessable Income</div>
-                  <div>{investorAssessable}</div>
-                  <div>{partnerAssessable}</div>
-                  <div>{totalAssessable}</div>
+                  <div>{formatVal(parseNum(investorAssessable) * growthFactor)}</div>
+                  <div>{formatVal(parseNum(partnerAssessable) * growthFactor)}</div>
+                  <div>{formatVal((parseNum(investorAssessable) + parseNum(partnerAssessable)) * growthFactor)}</div>
 
                   <div className="text-left">Allowable Deductions</div>
-                  <div>0</div>
-                  <div>0</div>
-                  <div>0</div>
+                  <div>0</div><div>0</div><div>0</div>
 
                   <div className="text-left mt-2">
                     <button className="py-1.5 px-3 border border-[#CBD5E1] bg-white rounded-[4px] text-[12px] text-[#1E293B] font-medium hover:bg-[#E2E8F0] transition-colors shadow-sm">
@@ -141,12 +176,12 @@ export default function TaxCreditsModal({ isOpen, onClose, onSave, initialTaxabl
                     </button>
                   </div>
                   <div className="mt-2">
-                    <input type="text" value={investorTaxable} onChange={handleInput(setInvestorTaxable)} className="w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC]" />
+                    <input type="text" value={displayInvTaxable} onChange={handleInput(setInvestorTaxable)} className="w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC]" />
                   </div>
                   <div className="mt-2">
-                    <input type="text" value={partnerTaxable} onChange={handleInput(setPartnerTaxable)} className="w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC]" />
+                    <input type="text" value={displayPartTaxable} onChange={handleInput(setPartnerTaxable)} className="w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC]" />
                   </div>
-                  <div className="mt-2 font-bold text-[14px] text-[#0052CC]">{totalTaxable}</div>
+                  <div className="mt-2 font-bold text-[14px] text-[#0052CC]">{displayTotalTaxable}</div>
                 </div>
               </fieldset>
 
@@ -168,12 +203,13 @@ export default function TaxCreditsModal({ isOpen, onClose, onSave, initialTaxabl
               <div className="flex items-center gap-3">
                 <button className="py-1.5 px-4 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">Advanced</button>
                 <button className="py-1.5 px-3 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">?</button>
-                <span className="ml-2 mr-3 text-[13px] text-[#1E293B] font-bold">Year: 1yr</span>
+                <span className="ml-2 mr-3 text-[13px] text-[#1E293B] font-bold w-[70px]">Year: {currentYear}yr</span>
+                
                 <div className="flex items-center gap-1.5">
-                  <button className="w-8 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[11px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">&lt;&lt;</button>
-                  <button className="w-8 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[11px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">&lt;</button>
-                  <button className="w-8 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[11px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">&gt;</button>
-                  <button className="w-8 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[11px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">&gt;&gt;</button>
+                  <button onClick={handleFastRewind} className="w-8 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[11px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">&lt;&lt;</button>
+                  <button onClick={handlePrevYear} className="w-8 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[11px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">&lt;</button>
+                  <button onClick={handleNextYear} className="w-8 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[11px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">&gt;</button>
+                  <button onClick={handleFastForward} className="w-8 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[11px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">&gt;&gt;</button>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -186,12 +222,11 @@ export default function TaxCreditsModal({ isOpen, onClose, onSave, initialTaxabl
         document.body
       )}
 
-      {/* FIX: PASS PROJECTIONS AND AUTO-INDEX DATA DOWN! */}
       <TaxBenefitsModal 
         isOpen={isTaxBenefitsModalOpen} 
         onClose={() => setIsTaxBenefitsModalOpen(false)} 
-        initialInvestorTaxable={investorTaxable}
-        initialPartnerTaxable={partnerTaxable}
+        initialInvestorTaxable={displayInvTaxable} // Uses the currently navigated year's value
+        initialPartnerTaxable={displayPartTaxable} 
         initialInvOwnership={investorOwnership}
         initialPartOwnership={partnerOwnership}
         initialOwnershipType={ownershipType}
