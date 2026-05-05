@@ -406,8 +406,8 @@ export default function PropertyInvestmentCalculator() {
                   ["Net rent (yr 1)", fmt(m?.netRentYr1)],
                   ["Net yield (yr 1)", fmtPct(m?.netYieldYr1)],
                   ["Cash neutral investment", fmt(m?.cashNeutralInvestment)],
-                  ["Cash positive by", m?.cashPositiveYear ? `Year ${m.cashPositiveYear}` : "—"],
-                ].map(([label, val]) => (
+               ["Cash positive by", m?.cashPositiveYear ? m.cashPositiveYear : "—"],
+               ].map(([label, val]) => (
                   <React.Fragment key={label}>
                     <span className="text-[13px] text-[#64748B]">{label}</span>
                     <span className="text-[13px] font-medium text-[#1E293B] text-right">{val}</span>

@@ -9,14 +9,14 @@ export default function WhatIfSection({
   taxableIncomeRate, setTaxableIncomeRate,
   livingExpensesRate, setLivingExpensesRate,
   capitalGrowthRate, setCapitalGrowthRate,
-  setActiveModal // <-- Make sure to pass this prop from the parent!
+  setActiveModal
 }) {
   return (
-    <CollapsibleSection title="4. What If?" defaultOpen={true}>
+    <CollapsibleSection title="4. What If?">
       
       <div className="flex flex-col gap-2">
         
-        {/* Inflation Rate */}
+     
         <div className="flex items-end gap-2">
           <div className="flex-1">
             <InputField

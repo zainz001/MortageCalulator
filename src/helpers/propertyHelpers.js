@@ -6,7 +6,7 @@ const parseNum = (val) => {
   return parseFloat(String(val).replace(/,/g, "")) || 0;
 };
 
-// NEW: Calculates IRR based on monthly cash flows to match desktop app precision
+// Calculates IRR based on monthly cash flows to match desktop app precision
 function calculateMonthlyIRR(cashflowsCents, guess = 0.01) {
   const maxIter = 200;
   const tol = 0.000001;
@@ -23,14 +23,13 @@ function calculateMonthlyIRR(cashflowsCents, guess = 0.01) {
     }
     if (dNpv === 0) return null; 
     const newIrr = irr - npv / dNpv;
-    if (Math.abs(newIrr - irr) < tol) return newIrr; // Returns raw monthly decimal
+    if (Math.abs(newIrr - irr) < tol) return newIrr; 
     irr = newIrr;
   }
   return null; 
 }
 
 function findCashPositiveYear(params) {
-  // ... [Keep your existing findCashPositiveYear function exactly as it is] ...
   const { loanAmount, grossRentWeekly, inflationRate, annualInterest,
     rentalExpensesPercent, taxRate, ringFencing, deductibleInterestFn,
     currentYear } = params;
@@ -71,7 +70,6 @@ function findCashPositiveYear(params) {
 }
 
 export function calculatePIA({
-  // ... [Keep your existing parameters] ...
   propertyValue, purchaseCostsManual, grossRentWeekly, rentalExpensesPercent,
   cashInvested, equityInvested, loanCostsManual, loanA, loanB, loanType,            
   additionalLoan, renovationCosts = 0, furnitureCosts = 0, holdingCosts = 0,
@@ -81,7 +79,6 @@ export function calculatePIA({
   furnitureTimeline = [], rentTimeline = [], vacancyRate = 2 
 }) {
   
-  // ... [Keep your existing setup variables, calculateYearlyInterestCents, and exact baseline float logic] ...
   const pvC = toCents(parseNum(propertyValue));
   const purchCostsC = purchaseCostsManual && String(purchaseCostsManual).trim() !== ""
     ? toCents(parseNum(purchaseCostsManual))
@@ -126,58 +123,92 @@ export function calculatePIA({
   const effectiveDeductibility = isNewBuild ? 1.0 : (parseNum(interestDeductibility) / 100);
   const taxRate = investorTaxRateP / 100;
 
-  const calculateYearlyInterestCents = (loanObj, yearIndex) => {
-      // ... [Keep your existing interest function] ...
-      if (!loanObj || !loanObj.amount) return 0;
-      const L = parseNum(loanObj.amount);
-      if (L === 0) return 0;
-  
-      const rateIndex = Math.min(yearIndex - 1, 4);
-      const R = parseNum(loanObj.rates[rateIndex]) / 100;
-      const type = loanObj.type;
-  
-      if (type === "IO") return toCents(L * R);
-      if (type === "CAP") return toCents(L * (Math.pow(1 + R / 12, 12) - 1));
-      
-      if (type === "PI") {
-        if (R === 0) return 0;
-        const M = R / 12;
-        const n = 25 * 12; 
-        const monthlyPmt = (L * M) / (1 - Math.pow(1 + M, -n));
-        let balance = L;
-        let yrInt = 0;
-        for (let i = 0; i < 12; i++) {
-          const intMonth = balance * M;
-          yrInt += intMonth;
-          balance -= (monthlyPmt - intMonth);
-        }
-        return toCents(yrInt);
+  // --- RESTORED: Stateful loan initializers that live OUTSIDE the year loop ---
+  const initLoanState = (loan) => {
+    if (!loan || !loan.amount) return null;
+    const originalAmount = parseNum(loan.amount);
+    if (originalAmount === 0) return null;
+    return {
+      originalAmount,
+      balance: originalAmount,
+      type: loan.type || "IO",
+      rates: loan.rates || [],
+    };
+  };
+
+  const loanStateA = initLoanState(loanA);
+  const loanStateB = initLoanState(loanB);
+
+  // --- RESTORED: Yearly process that computes both Interest and Principal to hit Debt Service ---
+  const processLoanYear = (state, yrIndex) => {
+    if (!state || state.balance <= 0) return { interest: 0, principal: 0 };
+
+    const rateIndex = Math.min(yrIndex - 1, 4);
+    const R = parseNum(state.rates[rateIndex]) / 100;
+
+    if (state.type === "IO") {
+      const interest = state.balance * R;
+      return { interest: toCents(interest), principal: 0 };
+    }
+    
+    if (state.type === "CAP") {
+      const interest = state.balance * (Math.pow(1 + R / 12, 12) - 1);
+      state.balance += interest; // Balance grows
+      // Debt service is 0 because cash isn't spent; principal cleanly offsets interest here
+      return { interest: toCents(interest), principal: toCents(-interest) };
+    }
+    
+    if (state.type === "PI") {
+      if (R === 0) return { interest: 0, principal: 0 };
+      const M = R / 12;
+      const n = 25 * 12; 
+      const monthlyPmt = (state.originalAmount * M) / (1 - Math.pow(1 + M, -n));
+
+      let yrInt = 0;
+      let yrPrin = 0;
+      for (let i = 0; i < 12; i++) {
+        const intMonth = state.balance * M;
+        yrInt += intMonth;
+        let prinMonth = monthlyPmt - intMonth;
+        if (state.balance - prinMonth < 0) prinMonth = state.balance;
+        yrPrin += prinMonth;
+        state.balance -= prinMonth;
+        if (state.balance <= 0) break;
       }
-      
-      if (type === "CL") {
-        if (R === 0) return 0;
-        const annualPmt = L * (R + 0.0219676);
-        const monthlyPmt = annualPmt / 12;
-        const M = R / 12;
-        let balance = L;
-        let yrInt = 0;
-        for (let i = 0; i < 12; i++) {
-          const intMonth = balance * M;
-          yrInt += intMonth;
-          balance -= (monthlyPmt - intMonth);
-        }
-        return toCents(yrInt);
+      return { interest: toCents(yrInt), principal: toCents(yrPrin) };
+    }
+    
+    if (state.type === "CL") {
+      if (R === 0) return { interest: 0, principal: 0 };
+      const annualPmt = state.originalAmount * (R + 0.0219676);
+      const monthlyPmt = annualPmt / 12;
+      const M = R / 12;
+
+      let yrInt = 0;
+      let yrPrin = 0;
+      for (let i = 0; i < 12; i++) {
+        const intMonth = state.balance * M;
+        yrInt += intMonth;
+        let prinMonth = monthlyPmt - intMonth;
+        if (state.balance - prinMonth < 0) prinMonth = state.balance;
+        yrPrin += prinMonth;
+        state.balance -= prinMonth;
+        if (state.balance <= 0) break;
       }
-      return 0;
+      return { interest: toCents(yrInt), principal: toCents(yrPrin) };
+    }
+    
+    return { interest: 0, principal: 0 };
   };
 
   const projections = [];
   let currentBookValueC = chattelsC;
   let accumulatedLossC = 0;
+  let currentLoanBalanceC = loanAmountC; // Tracked dynamically
 
   const currentYear = new Date().getFullYear();
   const initialInvestmentC = -(cashC + equityC);
-  const historicalAfterTaxCents = []; // Stores exact cents for monthly slicing
+  const historicalAfterTaxCents = []; 
 
   const maxProjectedYears = 30;
   let lastMarketValueC = pvC + renoCostsC; 
@@ -209,10 +240,18 @@ export function calculatePIA({
     }
     
     const annualGrossRentC = toCents(fromCents(baseAnnualRentC) * (1 - (vacancyRateP / 100)));
-    const annualInterestC = calculateYearlyInterestCents(loanA, yr) + calculateYearlyInterestCents(loanB, yr);
+    
+    // Process states and retrieve debt service chunks
+    const resA = processLoanYear(loanStateA, yr);
+    const resB = processLoanYear(loanStateB, yr);
+    const annualInterestC = resA.interest + resB.interest;
+    const annualPrincipalC = resA.principal + resB.principal;
+    const annualDebtServiceC = annualInterestC + annualPrincipalC;
+
     const deductibleInterestC = toCents(fromCents(annualInterestC) * effectiveDeductibility);
 
-    const preTaxCashFlowC = annualGrossRentC - annualInterestC - rentalExpensesC;
+    // FIXED: Pre-tax cashflow now subtracts complete debt service, not just interest
+    const preTaxCashFlowC = annualGrossRentC - annualDebtServiceC - rentalExpensesC;
 
     let chattelsDepC = 0;
     if (currentBookValueC > 0) {
@@ -247,12 +286,13 @@ export function calculatePIA({
 
     const afterTaxCashFlowC = preTaxCashFlowC + taxCreditC;
     const costPerWeekC = Math.round((-preTaxCashFlowC) / 52);
-    const equityC_yr = propValueC - loanAmountC;
+    
+    // FIXED: Equity calculation deducts the dynamic global loan balance, cleanly offsetting auto-calculations
+    currentLoanBalanceC -= annualPrincipalC;
+    const equityC_yr = propValueC - currentLoanBalanceC;
 
-    // --- EXACT DESKTOP APP IRR REPLICATION ---
     historicalAfterTaxCents.push(afterTaxCashFlowC);
     
-    // 1. Slice historical annual cashflows into months
     const monthlyCFs = [initialInvestmentC];
     for (let i = 0; i < yr; i++) {
       const monthlyC = Math.round(historicalAfterTaxCents[i] / 12);
@@ -260,24 +300,18 @@ export function calculatePIA({
         monthlyCFs.push(monthlyC);
       }
     }
-    // 2. Add terminal equity to the very last month
     monthlyCFs[monthlyCFs.length - 1] += equityC_yr;
 
-    // 3. Calculate raw monthly IRR
     const monthlyIRRDecimal = calculateMonthlyIRR(monthlyCFs, 0.01);
     
     let calculatedIRR = null;
     let preTaxEquivalentIRR = null;
 
     if (monthlyIRRDecimal !== null) {
-      // 4. Annualize it back up to get the After-Tax IRR
       calculatedIRR = (Math.pow(1 + monthlyIRRDecimal, 12) - 1) * 100;
-      
-      // 5. Apply tax rate gross-up to the MONTHLY IRR, then annualize (This perfectly matches 20.54%)
       const preTaxMonthlyIRRDecimal = monthlyIRRDecimal / (1 - taxRate);
       preTaxEquivalentIRR = (Math.pow(1 + preTaxMonthlyIRRDecimal, 12) - 1) * 100;
     }
-    // ------------------------------------------
 
     projections.push({
       year: (currentYear + yr - 1).toString(),
@@ -296,24 +330,32 @@ export function calculatePIA({
       afterTaxCashFlow: fromCents(afterTaxCashFlowC),
       costPerWeek: fromCents(costPerWeekC),
       accumulatedLoss: fromCents(accumulatedLossC), 
-      loanAmount: fromCents(loanAmountC),      
+      loanAmount: fromCents(currentLoanBalanceC), // Passes out correct amortized balances
       irr: calculatedIRR, 
       preTaxEquivalentIRR: preTaxEquivalentIRR, 
     });
   }
 
-  // ... [Keep your existing bottom returns unchanged] ...
+  // --- NEW MERGED FIXES: Yields, Cash Neutral, and Cash Positive logic ---
   const yr1 = projections[0];
-  const grossYieldYr1 = fromCents(totalCostC) > 0 ? (yr1.annualGrossRent / fromCents(totalCostC)) * 100 : 0;
+  const propertyCostC = pvC + renoCostsC; // Use property cost, not total cost for yield
+  const grossYieldYr1 = fromCents(propertyCostC) > 0 ? (yr1.annualGrossRent / fromCents(propertyCostC)) * 100 : 0;
   const netRentYr1 = yr1.annualGrossRent - yr1.annualRentalExpenses;
-  const netYieldYr1 = fromCents(totalCostC) > 0 ? (netRentYr1 / fromCents(totalCostC)) * 100 : 0;
-  const cashNeutralInvestment = fromCents(loanAmountC) / 2;
+  const netYieldYr1 = fromCents(propertyCostC) > 0 ? (netRentYr1 / fromCents(propertyCostC)) * 100 : 0;
   const fallbackRate = loanA?.rates?.[0] ? parseNum(loanA.rates[0]) : 0;
 
+  // Real cash neutral formula
+  const maxSupportableLoanC = fallbackRate > 0 ? toCents(netRentYr1 / (fallbackRate / 100)) : 0;
+  let cashNeutralC = totalCostC - maxSupportableLoanC;
+  if (cashNeutralC < 0) cashNeutralC = 0;
+  const cashNeutralInvestment = fromCents(cashNeutralC);
+
+  // Return relative "yr" format for your React array mapping
   const cashPositiveYear = (() => {
     const found = projections.find((p) => p.afterTaxCashFlow > 0);
-    if (found) return found.year;
-    return findCashPositiveYear({
+    if (found) return `${found.index}yr`; 
+    
+    const futureYearStr = findCashPositiveYear({
       loanAmount: fromCents(loanAmountC),
       grossRentWeekly: parseNum(grossRentWeekly),
       inflationRate: inflationRateP,
@@ -327,6 +369,12 @@ export function calculatePIA({
       currentYear,
       startFromYear: 11,
     });
+
+    if (futureYearStr && futureYearStr !== "30yr+") {
+      const diff = parseInt(futureYearStr) - currentYear + 1;
+      return `${diff}yr`;
+    }
+    return "30yr+";
   })();
 
   const totalRent = projections.reduce((s, p) => s + p.annualGrossRent, 0);
