@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
-import TaxBenefitsModal from "./TaxBenefitsModal"; 
+import TaxBenefitsModal from "./TaxBenefitsModal";
 
 const parseNum = (val) => parseFloat(String(val).replace(/[^0-9.-]+/g, "")) || 0;
 const formatVal = (val) => Math.round(val).toLocaleString("en-NZ");
 
-export default function TaxCreditsModal({ 
-  isOpen, 
-  onClose, 
-  onSave, 
+export default function TaxCreditsModal({
+  isOpen,
+  onClose,
+  onSave,
   investorIncome, // <-- Received safely from Parent Component
   partnerIncome,  // <-- Received safely from Parent Component
-  projections 
+  projections
 }) {
-  const [calcMethod, setCalcMethod] = useState("taxable"); 
+  const [calcMethod, setCalcMethod] = useState("taxable");
   const [marginalRate, setMarginalRate] = useState("");
-  const [ownershipType, setOwnershipType] = useState("single"); 
+  const [ownershipType, setOwnershipType] = useState("single");
   const [investorOwnership, setInvestorOwnership] = useState("100.00%");
   const [partnerOwnership, setPartnerOwnership] = useState("0.00%");
 
@@ -35,8 +35,8 @@ export default function TaxCreditsModal({
   // Wires the Parent's Income Data directly into this Modal when opened
   useEffect(() => {
     if (isOpen) {
-      setCurrentYear(1); 
-      
+      setCurrentYear(1);
+
       const invVal = investorIncome || "120,000";
       const partVal = partnerIncome || "50,000";
 
@@ -90,7 +90,7 @@ export default function TaxCreditsModal({
   };
 
   const handleOk = () => {
-    if (onSave) onSave(displayTotalTaxable); 
+    if (onSave) onSave(displayTotalTaxable);
     onClose();
   };
 
@@ -99,7 +99,7 @@ export default function TaxCreditsModal({
       {ReactDOM.createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
           <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[580px] flex flex-col border border-[#CBD5E1] overflow-hidden font-sans">
-            
+
             <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0]">
               <h2 className="text-[14px] font-bold text-[#1E293B]">Tax Credits</h2>
               <button onClick={onClose} className="text-[#64748B] hover:text-[#0F172A] text-[18px]">&times;</button>
@@ -198,13 +198,13 @@ export default function TaxCreditsModal({
                 </div>
               </fieldset>
             </div>
-            
+
             <div className="px-4 py-3 bg-[#F1F5F9] border-t border-[#E2E8F0] flex justify-between items-center rounded-b-[8px]">
               <div className="flex items-center gap-3">
                 <button className="py-1.5 px-4 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">Advanced</button>
                 <button className="py-1.5 px-3 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">?</button>
                 <span className="ml-2 mr-3 text-[13px] text-[#1E293B] font-bold w-[70px]">Year: {currentYear}yr</span>
-                
+
                 <div className="flex items-center gap-1.5">
                   <button onClick={handleFastRewind} className="w-8 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[11px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">&lt;&lt;</button>
                   <button onClick={handlePrevYear} className="w-8 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[11px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">&lt;</button>
@@ -222,18 +222,18 @@ export default function TaxCreditsModal({
         document.body
       )}
 
-      <TaxBenefitsModal 
-        isOpen={isTaxBenefitsModalOpen} 
-        onClose={() => setIsTaxBenefitsModalOpen(false)} 
+      <TaxBenefitsModal
+        isOpen={isTaxBenefitsModalOpen}
+        onClose={() => setIsTaxBenefitsModalOpen(false)}
         initialInvestorTaxable={displayInvTaxable} // Uses the currently navigated year's value
-        initialPartnerTaxable={displayPartTaxable} 
+        initialPartnerTaxable={displayPartTaxable}
         initialInvOwnership={investorOwnership}
         initialPartOwnership={partnerOwnership}
         initialOwnershipType={ownershipType}
         autoIndexed={autoIndexed}
         indexYear={indexYear}
         indexRate={indexRate}
-        projections={projections} 
+        projections={projections}
       />
     </>
   );

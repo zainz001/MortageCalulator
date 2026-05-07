@@ -42,7 +42,7 @@ export default function TimelineRow({
     while (newArr.length <= startIndex + idx) {
       newArr.push("0");
     }
-    
+
     newArr[startIndex + idx] = raw;
     onTimelineChange(newArr);
   };
@@ -55,7 +55,7 @@ export default function TimelineRow({
       <div className="w-[130px] text-right pr-4 text-[13px] text-[#64748B] font-bold flex-shrink-0">
         {label}:
       </div>
-      
+
       {/* Base Input (Time 0) */}
       <div className="w-[100px] flex-shrink-0">
         {baseValue !== undefined && (
@@ -68,8 +68,8 @@ export default function TimelineRow({
             onBlur={() => setFocusedBase(false)}
             readOnly={isReadOnly}
             className={`w-full border rounded-[4px] px-2 py-1.5 text-[13px] text-right transition-colors focus:outline-none ${
-              isReadOnly 
-                ? "bg-transparent border-transparent text-[#1E293B] font-bold" 
+              isReadOnly
+                ? "bg-transparent border-transparent text-[#1E293B] font-bold"
                 : "border-[#CBD5E1] text-[#1E293B] focus:border-[#0052CC] bg-white shadow-sm"
             }`}
           />
@@ -80,10 +80,10 @@ export default function TimelineRow({
       <div className="flex-1 flex gap-2 ml-4">
         {[0, 1, 2, 3, 4].map(idx => {
           if (isBaseOnly) return <div key={idx} className="flex-1"></div>;
-          
+
           const rawVal = timelineValues[startIndex + idx] || (isReadOnly ? 0 : "");
           const isFocused = focusedTimelineIdx === idx;
-          
+
           // Format large numbers with "m" perfectly matching the old software for ReadOnly
           let displayVal = rawVal;
           if (isReadOnly) {
@@ -108,8 +108,8 @@ export default function TimelineRow({
                 onBlur={() => setFocusedTimelineIdx(null)}
                 readOnly={isReadOnly}
                 className={`w-full border rounded-[4px] px-1 py-1.5 text-[13px] text-center transition-colors focus:outline-none ${
-                  isReadOnly 
-                    ? "bg-transparent border-transparent text-[#1E293B] font-medium" 
+                  isReadOnly
+                    ? "bg-transparent border-transparent text-[#1E293B] font-medium"
                     : "border-[#CBD5E1] text-[#1E293B] focus:border-[#0052CC] bg-white shadow-sm"
                 }`}
               />

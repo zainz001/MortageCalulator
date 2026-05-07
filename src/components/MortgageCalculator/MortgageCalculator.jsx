@@ -129,7 +129,7 @@ export default function MortgageCalculator() {
 
     setResult(res);
 
-  
+
 
     const periodsPerYear = frequency === "weekly" ? 52 : frequency === "fortnightly" ? 26 : 12;
     const monthsToPayoff = Math.round((res.numberOfRepayments / periodsPerYear) * 12);
@@ -229,7 +229,7 @@ return (
         </h2> */}
 
         <div className="flex flex-col lg:flex-row gap-4 md:gap-5 items-stretch">
-         
+
           <div className="flex-1 bg-[#F8F8F8] rounded-[16px] p-6 md:p-8 flex flex-col">
              <h3 className="text-[16px] md:text-[18px] font-bold text-[#23303B] mb-[32px] leading-snug">
               Calculate how much you could save in time and interest if you switched your mortgage to Swish.

@@ -16,13 +16,13 @@ const InputField = ({
 
   const formatDisplay = (raw) => {
     if (raw === "" || raw === undefined || raw === null) return "";
-    
+
     // Strip commas before parsing to prevent the NaN / truncation bug
     const cleanRaw = String(raw).replace(/,/g, "");
     const num = parseFloat(cleanRaw);
-    
+
     if (isNaN(num)) return raw;
-    
+
     const parts = String(cleanRaw).split(".");
     const intFormatted = Math.abs(Math.trunc(num)).toLocaleString("en-NZ");
     const sign = num < 0 ? "-" : "";
@@ -54,7 +54,8 @@ const InputField = ({
     : "border-[#E2E8F0] hover:border-[#94A3B8]";
 
   return (
-    <div className="flex flex-col gap-[6px]">
+    // FIXED 1: Added w-full min-w-0 to the outer container
+    <div className="flex flex-col gap-[6px] w-full min-w-0">
       {label && (
         <div className="flex items-center gap-1.5">
           <label
@@ -98,7 +99,8 @@ const InputField = ({
         {prefix && (
           <div
             aria-hidden="true"
-            className={`flex items-center justify-center h-full px-4 border-r border-[#E2E8F0] select-none text-[15px] font-bold flex-shrink-0 ${
+            // FIXED 2: Changed px-4 to px-2.5 sm:px-4 to make the dollar sign box smaller on mobile
+            className={`flex items-center justify-center h-full px-2.5 sm:px-4 border-r border-[#E2E8F0] select-none text-[15px] font-bold shrink-0 ${
               disabled ? "bg-[#E9EEF4] text-[#CBD5E1]" : "bg-white text-[#23303B]"
             }`}
           >
@@ -118,9 +120,10 @@ const InputField = ({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           onChange={handleChange}
-          className={`flex-1 h-full bg-transparent text-[15px] focus:outline-none placeholder-[#A1A8B2] ${
-            prefix ? "pl-3" : "pl-4"
-          } ${suffix ? "pr-2" : "pr-4"} ${
+          // FIXED 3: Added w-full min-w-0 to the input to prevent default browser widths from breaking the layout
+          className={`flex-1 w-full min-w-0 h-full bg-transparent text-[15px] focus:outline-none placeholder-[#A1A8B2] ${
+            prefix ? "pl-2 sm:pl-3" : "pl-3 sm:pl-4"
+          } ${suffix ? "pr-2" : "pr-3 sm:pr-4"} ${
             disabled ? "text-[#94A3B8] cursor-not-allowed" : "text-[#23303B]"
           }`}
         />
@@ -128,7 +131,8 @@ const InputField = ({
         {suffix && (
           <div
             aria-hidden="true"
-            className={`flex items-center h-full pr-4 pl-1 select-none text-[14px] flex-shrink-0 ${
+            // Adjusted suffix padding similarly
+            className={`flex items-center h-full pr-2.5 sm:pr-4 pl-1 select-none text-[14px] shrink-0 ${
               disabled ? "text-[#CBD5E1]" : "text-[#94A3B8]"
             }`}
           >

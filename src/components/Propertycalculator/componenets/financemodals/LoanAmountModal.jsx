@@ -10,7 +10,7 @@ const formatVal = (val) => Math.round(val).toLocaleString("en-NZ");
 export default function LoanAmountModal({
   isOpen,
   onClose,
-  
+
   // Costs (Read-only data from the main engine)
   propertyCost = 0,
   renovationCosts = 0,
@@ -30,7 +30,7 @@ export default function LoanAmountModal({
   setAdditionalLoan,
   setLoanCosts // <-- NEW PROP ADDED HERE
 }) {
-  
+
   const [grid, setGrid] = useState({
     property: { cash: "0", equity: "0", loan: "0" },
     renovation: { cash: "0", equity: "0", loan: "0" },
@@ -57,10 +57,10 @@ export default function LoanAmountModal({
       const propCost = costs.property;
       const initialCash = parseNum(initialCashInvested);
       const initialEquity = parseNum(initialEquityInvested);
-      
+
       setGrid({
-        property: { 
-          cash: String(initialCash), 
+        property: {
+          cash: String(initialCash),
           equity: String(initialEquity),
           loan: String(propCost - initialCash - initialEquity)
         },
@@ -82,7 +82,7 @@ export default function LoanAmountModal({
     if (cleanVal !== "" && !/^-?\d*\.?\d*$/.test(cleanVal)) return;
 
     const numVal = parseNum(cleanVal);
-    
+
     // We get the cost dynamically to account for the auto-calculating loanCosts row
     const rowCost = rowId === "loanCosts" ? dynamicLoanCosts : costs[rowId];
 
@@ -94,7 +94,7 @@ export default function LoanAmountModal({
         const c = field === "cash" ? numVal : parseNum(row.cash);
         const e = field === "equity" ? numVal : parseNum(row.equity);
         row.loan = String(rowCost - c - e);
-      } 
+      }
       else if (field === "loan") {
         const l = numVal;
         const e = parseNum(row.equity);
@@ -128,7 +128,7 @@ export default function LoanAmountModal({
   const totalCash = Object.values(grid).reduce((sum, row) => sum + parseNum(row.cash), 0);
   const totalEquity = Object.values(grid).reduce((sum, row) => sum + parseNum(row.equity), 0);
   const totalCosts = baseCostSum + dynamicLoanCosts;
-  
+
   const baseLoanSum = Object.keys(grid).reduce((sum, id) => sum + getRowLoan(id), 0);
   const totalLoan = baseLoanSum + parseNum(addLoan);
 
@@ -151,7 +151,7 @@ export default function LoanAmountModal({
   return ReactDOM.createPortal(
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
       <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[600px] flex flex-col border border-[#CBD5E1] overflow-hidden">
-        
+
         <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0]">
           <h2 className="text-[14px] font-bold text-[#1E293B]">Loan Amount</h2>
           <button onClick={onClose} className="text-[#64748B] hover:text-[#0F172A] text-[18px]">&times;</button>
@@ -160,7 +160,7 @@ export default function LoanAmountModal({
         <div className="p-4">
           <div className="border border-[#CBD5E1] rounded-[6px] p-4 pt-6 bg-white relative">
             <span className="absolute -top-2.5 left-3 bg-white px-1 text-[12px] font-bold text-[#1E293B]">At {new Date().getFullYear()}</span>
-            
+
             <div className="flex items-center mb-2 pb-1 border-b border-[#F1F5F9]">
               <div className="w-[140px]"></div>
               <div className="w-[90px] text-center text-[12px] text-[#64748B] font-bold">Cash Invested</div>
@@ -177,8 +177,8 @@ export default function LoanAmountModal({
                     <span className="text-[13px] text-[#1E293B]">{row.label}</span>
                   </div>
                   <div className="w-[90px] px-1">
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       value={grid[row.id].cash}
                       onChange={(e) => handleGridChange(row.id, "cash", e.target.value)}
                       onBlur={(e) => handleGridChange(row.id, "cash", formatVal(parseNum(e.target.value)))}
@@ -186,8 +186,8 @@ export default function LoanAmountModal({
                     />
                   </div>
                   <div className="w-[90px] px-1">
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       value={grid[row.id].equity}
                       onChange={(e) => handleGridChange(row.id, "equity", e.target.value)}
                       onBlur={(e) => handleGridChange(row.id, "equity", formatVal(parseNum(e.target.value)))}
@@ -195,8 +195,8 @@ export default function LoanAmountModal({
                     />
                   </div>
                   <div className="w-[100px] px-1">
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       value={grid[row.id].loan}
                       onChange={(e) => handleGridChange(row.id, "loan", e.target.value)}
                       onBlur={(e) => handleGridChange(row.id, "loan", formatVal(parseNum(e.target.value)))}
@@ -217,8 +217,8 @@ export default function LoanAmountModal({
                   </div>
                 </div>
                 <div className="w-[90px] px-1">
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={grid.loanCosts.cash}
                     onChange={(e) => handleGridChange("loanCosts", "cash", e.target.value)}
                     onBlur={(e) => handleGridChange("loanCosts", "cash", formatVal(parseNum(e.target.value)))}
@@ -226,8 +226,8 @@ export default function LoanAmountModal({
                   />
                 </div>
                 <div className="w-[90px] px-1">
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={grid.loanCosts.equity}
                     onChange={(e) => handleGridChange("loanCosts", "equity", e.target.value)}
                     onBlur={(e) => handleGridChange("loanCosts", "equity", formatVal(parseNum(e.target.value)))}
@@ -250,8 +250,8 @@ export default function LoanAmountModal({
                 <div className="w-[90px] px-1"></div>
                 <div className="w-[90px] px-1"></div>
                 <div className="w-[100px] px-1">
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={addLoan}
                     onChange={(e) => setAddLoan(e.target.value.replace(/,/g, ""))}
                     onBlur={(e) => setAddLoan(formatVal(parseNum(e.target.value)))}
@@ -272,18 +272,18 @@ export default function LoanAmountModal({
 
             </div>
           </div>
-          
+
           <div className="mt-3 pl-3 text-[11px] text-[#64748B]">
             * To be used where you already have equity in the property
           </div>
         </div>
-        
+
         {/* Footer */}
         <div className="px-4 py-3 bg-[#F1F5F9] border-t border-[#E2E8F0] flex justify-between items-center rounded-b-[8px]">
           <button className="px-4 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">
             Loan Type
           </button>
-          
+
           <div className="flex gap-2">
              <button className="px-3 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] font-bold hover:bg-[#E2E8F0] transition-colors shadow-sm">?</button>
              <button onClick={handleOk} className="px-6 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] font-bold hover:bg-[#E2E8F0] transition-colors shadow-sm">OK</button>

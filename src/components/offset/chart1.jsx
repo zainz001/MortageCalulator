@@ -85,7 +85,7 @@ export default function Chart({
     // Generate a high-density set of years to ensure the curve is perfectly smooth (no straight triangles)
     const yearSet = new Set(result.unifiedSchedule.map(r => Number(r.year)));
     yearSet.add(exactDropYear);
-    
+
     // Inject intermediate half-year points to force a smooth curve
     for (let y = Math.floor(startYearRaw); y <= exactDropYear; y += 0.5) {
       if (y >= startYearRaw) yearSet.add(y);
@@ -246,9 +246,9 @@ export default function Chart({
           <SummaryRow label="Loan Term (Standard)" value={hasData ? `${result.payoffYearsStandard} Years` : "—"} />
           <SummaryRow label="Total Repaid (Offset)" value={hasData ? fmt(result.totalRepaidOffset) : "—"} />
           <SummaryRow label="Total Interest (Offset)" value={hasData ? fmt(result.totalInterestOffset) : "—"} />
-          
+
           <SummaryRow label="Loan Term (Offset)" value={hasData ? offsetTermText : "—"} />
-          
+
           <SummaryRow label="Interest Saved" value={hasData ? fmt(result.interestSaved || savings) : "—"} />
           <SummaryRow label="Time Saved" value={hasData ? timeSavedText : "—"} />
           <SummaryRow label="Effective Balance for Interest" value={hasData ? fmt(result.currentEffectiveBalance) : "—"} />

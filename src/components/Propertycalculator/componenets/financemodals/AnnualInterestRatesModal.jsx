@@ -54,8 +54,8 @@ export default function AnnualInterestRatesModal({
   // --- THE FIX: Cascading Formatting Logic ---
   const handleRateBlur = (tranche, index, val) => {
     const num = parseNum(val);
-    const formattedVal = num.toFixed(2); 
-    
+    const formattedVal = num.toFixed(2);
+
     if (tranche === "A") {
       const newRates = [...ratesA];
       for (let i = index; i < 5; i++) {
@@ -91,14 +91,14 @@ export default function AnnualInterestRatesModal({
 
     if (type === "IO") return { interest: L * R, payment: L * R };
     if (type === "CAP") return { interest: L * (Math.pow(1 + R / 12, 12) - 1), payment: 0 };
-    
+
     if (type === "PI") {
       if (R === 0) return { interest: 0, payment: L / years };
       const M = R / 12;
       const n = years * 12;
       const monthlyPmt = (L * M) / (1 - Math.pow(1 + M, -n));
       const annualPmt = monthlyPmt * 12;
-      
+
       let balance = L;
       let intTotal = 0;
       for (let i = 0; i < 12; i++) {
@@ -111,10 +111,10 @@ export default function AnnualInterestRatesModal({
 
     if (type === "CL") {
       if (R === 0) return { interest: 0, payment: L / years };
-      const annualPmt = L * (R + 0.0219676); 
+      const annualPmt = L * (R + 0.0219676);
       const monthlyPmt = annualPmt / 12;
       const M = R / 12;
-      
+
       let balance = L;
       let intTotal = 0;
       for (let i = 0; i < 12; i++) {
@@ -130,18 +130,18 @@ export default function AnnualInterestRatesModal({
 
   const TrancheRow = ({ title, loanData, rates, isDisabled }) => {
     const trancheId = title.charAt(title.length-1);
-    
+
     return (
       <div className={`mb-4 ${isDisabled ? "opacity-50 pointer-events-none" : ""}`}>
         <h3 className="font-bold text-[#1E293B] text-[13px] mb-2">{title}</h3>
-        
+
         {/* Rates Row */}
         <div className="flex gap-4 items-center mb-1">
           <div className="w-[60px] text-right text-[12px] text-[#4A5568]">Rates</div>
           {[0, 1, 2, 3, 4].map(i => (
             <div key={i} className="flex-1 relative">
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={rates[i]}
                 onChange={(e) => handleRateChange(trancheId, i, e.target.value)}
                 onBlur={(e) => handleRateBlur(trancheId, i, e.target.value)}
@@ -178,14 +178,14 @@ export default function AnnualInterestRatesModal({
   return ReactDOM.createPortal(
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
       <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[600px] flex flex-col border border-[#CBD5E1] overflow-hidden">
-        
+
         <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0]">
           <h2 className="text-[14px] font-bold text-[#1E293B]">Annual Interest Rates</h2>
           <button onClick={onClose} className="text-[#64748B] hover:text-[#0F172A] text-[18px]">&times;</button>
         </div>
 
         <div className="p-4 pt-2">
-          
+
           {/* Header Row */}
           <div className="flex gap-4 mb-2 border-b border-[#E2E8F0] pb-2">
             <div className="w-[60px] text-left text-[12px] text-[#4A5568] font-bold">Year</div>
@@ -202,7 +202,7 @@ export default function AnnualInterestRatesModal({
 
           {/* Totals Section */}
           <div className="mt-4 pt-3 border-t border-[#CBD5E1]">
-            
+
             <div className="flex gap-4 items-center mb-1">
               <div className="w-[60px] text-right text-[12px] font-bold text-[#1E293B]">Totals</div>
               {[0, 1, 2, 3, 4].map(i => (
@@ -239,7 +239,7 @@ export default function AnnualInterestRatesModal({
                 const R_B = splitRate ? parseNum(ratesB[i]) : 0;
                 const totalL = L_A + L_B;
                 const blended = totalL > 0 ? ((L_A * R_A) + (L_B * R_B)) / totalL : 0;
-                
+
                 return (
                   <div key={i} className="flex-1">
                      <div className="border border-[#CBD5E1] bg-[#F1F5F9] rounded-[3px] py-0.5 px-1 text-[12px] text-center text-[#1E293B]">

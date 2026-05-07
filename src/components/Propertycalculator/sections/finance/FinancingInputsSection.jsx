@@ -160,8 +160,8 @@ export default function FinancingInputsSection({
   return (
     <CollapsibleSection title="2. Financing Inputs">
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label="Loan Amount"
             prefix="$"
@@ -172,14 +172,14 @@ export default function FinancingInputsSection({
         <button
           type="button"
           onClick={() => setIsModalOpen("loanAmount")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label="Cash invested (deposit)"
             prefix="$"
@@ -191,14 +191,14 @@ export default function FinancingInputsSection({
         <button
           type="button"
           onClick={() => setIsModalOpen("loanAmount")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label="Amount Required"
             prefix="$"
@@ -209,14 +209,14 @@ export default function FinancingInputsSection({
         <button
           type="button"
           onClick={() => setIsModalOpen("loanAmount")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <SelectField
             label="Loan type"
             value={loanA?.type || "IO"}
@@ -232,14 +232,14 @@ export default function FinancingInputsSection({
         <button
           type="button"
           onClick={() => setIsModalOpen("interestRate")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label="Interest rate (p.a.)"
             suffix="%"
@@ -250,14 +250,14 @@ export default function FinancingInputsSection({
         <button
           type="button"
           onClick={() => setIsModalOpen("interestRate")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label="Loan Repayments"
             prefix="$"
@@ -268,14 +268,14 @@ export default function FinancingInputsSection({
         <button
           type="button"
           onClick={() => setIsModalOpen("interestRate")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label="Loan costs"
             prefix="$"
@@ -287,13 +287,14 @@ export default function FinancingInputsSection({
         <button
           type="button"
           onClick={() => setIsModalOpen("loanCosts")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label="Tax Write-Off Period"
             suffix="yr"
@@ -304,11 +305,12 @@ export default function FinancingInputsSection({
         <button
           type="button"
           onClick={() => setIsModalOpen("loanCosts")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
+      
     </CollapsibleSection>
   );
 }

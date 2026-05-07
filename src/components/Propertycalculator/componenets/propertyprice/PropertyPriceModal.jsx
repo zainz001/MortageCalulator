@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import ReactDOM from "react-dom"; 
+import ReactDOM from "react-dom";
 import TimelineRow from "./TimelineRow";
 
 export default function PropertyValueModal({
@@ -14,7 +14,7 @@ export default function PropertyValueModal({
   furnitureTimeline, setFurnitureTimeline,
   linkValueFittings, setLinkValueFittings,
   linkConstructionCost, setLinkConstructionCost,
-  projections = [] 
+  projections = []
 }) {
   const [startIndex, setStartIndex] = useState(0);
   const currentYear = new Date().getFullYear();
@@ -30,23 +30,23 @@ export default function PropertyValueModal({
   const pv = +propertyValue || 0;
   const rc = +renovationCosts || 0;
   const bookValue = pv + rc;
-  
+
   const projectedMarketValues = projections.map(p => p.propertyValue);
 
   return ReactDOM.createPortal(
    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[800px] flex flex-col border border-[#CBD5E1] overflow-hidden">
-        
+
         <div className="flex justify-between items-center px-5 py-3 bg-white border-b border-[#E2E8F0]">
           <h2 className="text-[15px] font-bold text-[#1E293B]">Property Value</h2>
           <button onClick={onClose} className="text-[#64748B] hover:text-[#0F172A] text-[18px]">&times;</button>
         </div>
 
         <div className="p-5">
-          
+
           <div className="border border-[#CBD5E1] rounded-[6px] p-4 pt-6 bg-white relative mb-6">
             <span className="absolute -top-2.5 left-3 bg-white px-1 text-[12px] font-bold text-[#64748B]">Property Value</span>
-            
+
           <div className="flex items-center mb-4 w-full">
                <div className="w-[130px] text-right pr-4 text-[13px] text-[#1E293B] font-medium">End of year:</div>
                <div className="w-[100px] text-right px-2 font-bold text-[#1E293B] text-[13px]">{currentYear}</div>
@@ -96,7 +96,7 @@ export default function PropertyValueModal({
             </div>
           </div>
         </div>
-        
+
         {/* Footer Panel with Arrows */}
         <div className="px-5 py-3 bg-[#F1F5F9] border-t border-[#E2E8F0] flex justify-between items-center rounded-b-[8px]">
           <button className="px-3 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">
@@ -120,6 +120,6 @@ export default function PropertyValueModal({
 
       </div>
     </div>,
-    document.body 
+    document.body
   );
 }

@@ -5,7 +5,7 @@ export default function CollapsibleSection({ title, children, defaultOpen = fals
 
   return (
     <div className="border-b border-[#E2E8F0] py-4 last:border-0">
-      
+
       <button
         type="button"
         aria-expanded={isOpen}
@@ -15,14 +15,14 @@ export default function CollapsibleSection({ title, children, defaultOpen = fals
       >
         <h3 className="font-bold text-[#1E293B] text-[15px] leading-snug">{title}</h3>
 
-      
+
         <span
           aria-hidden="true"
           className={`text-[#64748B] transition-transform duration-200 ease-in-out flex-shrink-0 ml-2 ${
             isOpen ? "rotate-180" : "rotate-0"
           }`}
         >
-       
+
           <svg
             width="16"
             height="16"

@@ -31,7 +31,7 @@ export default function LoanInterestTypeModal({
     if (isOpen && loanA && loanB) {
       const currentTotal = parseNum(loanA.amount) + parseNum(loanB.amount);
       setMasterTotal(currentTotal);
-      
+
       // Keep split rate toggled on if Loan B has a balance
       if (parseNum(loanB.amount) > 0) {
         setSplitRate(true);
@@ -105,7 +105,7 @@ export default function LoanInterestTypeModal({
     if (totalLoan > 0 && setInterestRate) {
       const amtA = parseNum(loanA.amount);
       const amtB = parseNum(loanB.amount);
-      const rawRateA = parseNum(loanA.rates[0]); 
+      const rawRateA = parseNum(loanA.rates[0]);
       const rawRateB = parseNum(loanB.rates[0]);
 
       const blendedRate = ((amtA * rawRateA) + (amtB * rawRateB)) / totalLoan;
@@ -131,7 +131,7 @@ export default function LoanInterestTypeModal({
     if (field === "type") {
       const prefix = val.toLowerCase();
       let toVal = "40";
-      if (val === "PI") toVal = "25"; 
+      if (val === "PI") toVal = "25";
 
       setter(prev => ({
         ...prev,
@@ -150,10 +150,10 @@ export default function LoanInterestTypeModal({
         const remaining = Math.max(0, masterTotal - numVal);
         otherSetter(prev => ({ ...prev, amount: String(remaining) }));
       }
-    } 
+    }
     else if (field === "rate") {
         setter(prev => ({ ...prev, rates: Array(5).fill(val) }));
-    } 
+    }
     else if (field.includes("From") || field.includes("To")) {
       const cleanVal = val.replace(/,/g, "");
       if (cleanVal !== "" && !/^-?\d*\.?\d*$/.test(cleanVal)) return;
@@ -229,7 +229,7 @@ export default function LoanInterestTypeModal({
             <div className="relative">
               <input
                 type="text"
-                value={data.rates[0]} 
+                value={data.rates[0]}
                 onChange={(e) => handleLoanChange(tranche, "rate", e.target.value)}
                 disabled={isDisabled}
                 className={`w-full border border-[#CBD5E1] rounded-[4px] pl-2 pr-4 py-1 text-[13px] text-right focus:outline-none focus:border-[#0052CC] ${isDisabled ? "bg-[#F1F5F9] text-[#64748B]" : "bg-white text-[#1E293B]"}`}
@@ -287,7 +287,7 @@ export default function LoanInterestTypeModal({
                 Split rate
               </label>
               <button
-                onClick={() => setIsAnnualRatesOpen(true)} 
+                onClick={() => setIsAnnualRatesOpen(true)}
                 className="w-full mt-2 py-1.5 border border-[#CBD5E1] bg-[#F8FAFC] rounded-[4px] text-[11px] text-[#1E293B] hover:bg-[#E2E8F0] shadow-sm"
               >
                 Specify Annual Rates
@@ -311,15 +311,15 @@ export default function LoanInterestTypeModal({
         </div>
 
       </div>
-      
+
       {/* Renders the secondary modal when the button is clicked */}
-      <AnnualInterestRatesModal 
+      <AnnualInterestRatesModal
         isOpen={isAnnualRatesOpen}
         onClose={() => setIsAnnualRatesOpen(false)}
         loanA={loanA}
         loanB={loanB}
         splitRate={splitRate}
-        setLoanA={setLoanA} 
+        setLoanA={setLoanA}
         setLoanB={setLoanB}
       />
     </div>,

@@ -14,10 +14,10 @@ export default function AnnualSpecialExpensesModal({
   const [startIndex, setStartIndex] = useState(0);
   const [useInflation, setUseInflation] = useState(true);
   const [inflationStartYear, setInflationStartYear] = useState("1");
-  
+
   const [localNormal, setLocalNormal] = useState([]);
   const [localSpecial, setLocalSpecial] = useState([]);
-  
+
   // Track which input is actively being typed in so we don't format it while typing
   const [focusedCell, setFocusedCell] = useState({ type: null, idx: null });
 
@@ -33,16 +33,16 @@ export default function AnnualSpecialExpensesModal({
       const baseExpense = parseFloat(baseNormalExpense) || 0;
       const rate = parseFloat(inflationRate) || 0;
       const startYear = parseInt(inflationStartYear) || 1;
-      
+
       let newNormals = [];
       let newSpecials = [];
-      
+
       for (let i = 1; i <= 20; i++) {
         // Build Inflation for Normal Expenses
         if (!useInflation || i < startYear) {
           newNormals.push(Math.round(baseExpense).toString());
         } else {
-          const yearsOfGrowth = i - startYear; 
+          const yearsOfGrowth = i - startYear;
           const projected = baseExpense * Math.pow(1 + rate / 100, yearsOfGrowth);
           newNormals.push(Math.round(projected).toString());
         }
@@ -99,7 +99,7 @@ export default function AnnualSpecialExpensesModal({
  return ReactDOM.createPortal(
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
       <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[600px] flex flex-col border border-[#CBD5E1] overflow-hidden">
-        
+
         <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0]">
           <h2 className="text-[14px] font-bold text-[#1E293B]">Annual & Special Rental Expenses</h2>
           <button onClick={onClose} className="text-[#64748B] hover:text-[#0F172A] text-[18px]">&times;</button>
@@ -107,7 +107,7 @@ export default function AnnualSpecialExpensesModal({
 
         <div className="p-4">
           <div className="border border-[#CBD5E1] rounded-[6px] p-4 pt-6 bg-white relative mb-4">
-            
+
             {/* Header Row */}
             <div className="flex items-center mb-4 w-full">
                <div className="w-[120px] text-right pr-4 text-[13px] text-[#1E293B] font-medium">Year:</div>
@@ -202,7 +202,7 @@ export default function AnnualSpecialExpensesModal({
              <span className="absolute -top-2.5 left-3 bg-white px-1 text-[12px] font-bold text-[#64748B]">Projecting Normal Expenses</span>
              <div className="flex items-center gap-3">
                <label className="flex items-center gap-2 text-[13px] text-[#1E293B] cursor-pointer font-medium">
-                 <input type="checkbox" checked={useInflation} onChange={(e) => setUseInflation(e.target.checked)} className="rounded" /> 
+                 <input type="checkbox" checked={useInflation} onChange={(e) => setUseInflation(e.target.checked)} className="rounded" />
                  Inflation indexed from year:
                </label>
                <div className="w-[60px]">
@@ -216,11 +216,11 @@ export default function AnnualSpecialExpensesModal({
           </div>
 
         </div>
-        
+
         {/* Footer Navigation */}
         <div className="px-4 py-3 bg-[#F1F5F9] border-t border-[#E2E8F0] flex justify-between items-center rounded-b-[8px]">
-        
-          
+
+
           <div className="flex items-center gap-1">
              <button onClick={handleStart} className="w-8 h-8 flex items-center justify-center border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#64748B] font-bold hover:bg-[#E2E8F0] shadow-sm">&lt;&lt;</button>
              <button onClick={handlePrev} className="w-8 h-8 flex items-center justify-center border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#64748B] font-bold hover:bg-[#E2E8F0] shadow-sm">&lt;</button>
@@ -236,6 +236,6 @@ export default function AnnualSpecialExpensesModal({
 
       </div>
     </div>,
-     document.body 
+     document.body
   );
 }

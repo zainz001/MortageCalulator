@@ -22,7 +22,7 @@ export default function InvestorDetailsModal({
   // Income & Deductions State
   const [invSalary, setInvSalary] = useState("120,000");
   const [partSalary, setPartSalary] = useState("50,000");
-  
+
   const [invOtherInc, setInvOtherInc] = useState("0");
   const [partOtherInc, setPartOtherInc] = useState("0");
 
@@ -47,11 +47,11 @@ export default function InvestorDetailsModal({
   // --- Dynamic Labels based on Investor Type ---
   const isPerson = investorType === "Person(s)";
   const isSuper = investorType === "Super Fund";
-  
+
   const sectionTitle = isPerson ? "Work-Related Income & Deductions" : `${investorType} Income & Deductions`;
   const col1Header = isPerson ? "Investor" : investorType;
   const col2Header = isPerson ? "Partner" : "n/a";
-  
+
   const row1Label = isPerson ? "Salary/Wages:" : isSuper ? "Fund contributions:" : "Company income:";
   const row4Label = isPerson ? "Work related:" : isSuper ? "Fund expenses:" : "Company expenses:";
   const finalLabel = isPerson ? "Taxable Work Income:" : isSuper ? "Fund Taxable Income:" : "Company Taxable Income:";
@@ -94,7 +94,7 @@ export default function InvestorDetailsModal({
   return ReactDOM.createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
       <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[600px] flex flex-col border border-[#CBD5E1] overflow-hidden">
-        
+
         {/* Title Bar */}
         <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0]">
           <h2 className="text-[14px] font-bold text-[#1E293B]">Investor's Personal Details</h2>
@@ -103,7 +103,7 @@ export default function InvestorDetailsModal({
 
         {/* Content Body */}
         <div className="p-4 flex flex-col gap-5">
-          
+
           {/* Top Row: Type & Details */}
           <div className="flex gap-4">
             {/* Investor Type */}
@@ -134,9 +134,9 @@ export default function InvestorDetailsModal({
                 ].map(([label, val, setter]) => (
                   <div key={label} className="flex items-center">
                     <span className="w-[70px] text-[13px] text-[#1E293B]">{label}</span>
-                    <input 
-                      type="text" 
-                      value={val} 
+                    <input
+                      type="text"
+                      value={val}
                       onChange={(e) => setter(e.target.value)}
                       className="flex-1 border border-[#CBD5E1] rounded-[4px] px-2 py-1 text-[13px] text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC]"
                     />
@@ -149,7 +149,7 @@ export default function InvestorDetailsModal({
           {/* Bottom Row: Income & Deductions */}
           <div className="border border-[#CBD5E1] rounded-[6px] p-4 pt-6 bg-white relative">
             <span className="absolute -top-2.5 left-2 bg-white px-1 text-[12px] font-bold text-[#64748B]">{sectionTitle}</span>
-            
+
             <div className="grid grid-cols-[140px_1fr_1fr_1fr] gap-x-4 gap-y-2 items-center">
               {/* Headers */}
               <div className="font-bold text-[13px] text-[#1E293B]">Assessable Income</div>
@@ -204,7 +204,7 @@ export default function InvestorDetailsModal({
             </div>
           </div>
         </div>
-        
+
         {/* Footer */}
         <div className="px-4 py-3 bg-[#F1F5F9] border-t border-[#E2E8F0] flex justify-center gap-3 rounded-b-[8px]">
           <button onClick={handleOk} className="w-[80px] py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] font-bold hover:bg-[#E2E8F0] transition-colors shadow-sm">OK</button>

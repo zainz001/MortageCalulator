@@ -10,7 +10,7 @@ export default function ToggleSwitch({ label, checked, onChange, tooltip, disabl
 
   return (
     <div className="flex justify-between items-center py-2">
-     
+
       <label
         htmlFor={id}
         className={`text-[14px] font-medium flex items-center gap-2 select-none ${
@@ -53,7 +53,7 @@ export default function ToggleSwitch({ label, checked, onChange, tooltip, disabl
           ${checked ? "bg-[#34A853]" : "bg-[#E2E8F0]"}
         `}
       >
-     
+
         <span
           aria-hidden="true"
           className={`

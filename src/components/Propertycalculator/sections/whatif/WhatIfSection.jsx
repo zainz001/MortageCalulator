@@ -16,9 +16,8 @@ export default function WhatIfSection({
       
       <div className="flex flex-col gap-2">
         
-     
-        <div className="flex items-end gap-2">
-          <div className="flex-1">
+        <div className="flex items-end gap-2 w-full">
+          <div className="flex-1 min-w-0">
             <InputField
               label="Inflation Rate (CPI)"
               suffix="%"
@@ -29,15 +28,15 @@ export default function WhatIfSection({
           <button
             type="button"
             onClick={() => setActiveModal("inflationRate")}
-            className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+            className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
           >
             Edit ↗
           </button>
         </div>
 
         {/* Rental Income Rate */}
-        <div className="flex items-end gap-2">
-          <div className="flex-1">
+        <div className="flex items-end gap-2 w-full">
+          <div className="flex-1 min-w-0">
             <InputField
               label="Rental Income Rate"
               suffix="%"
@@ -48,15 +47,15 @@ export default function WhatIfSection({
           <button
             type="button"
             onClick={() => setActiveModal("rentalIncomeRate")}
-            className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+            className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
           >
             Edit ↗
           </button>
         </div>
 
         {/* Rental Expense Rate */}
-        <div className="flex items-end gap-2">
-          <div className="flex-1">
+        <div className="flex items-end gap-2 w-full">
+          <div className="flex-1 min-w-0">
             <InputField
               label="Rental Expense Rate"
               suffix="%"
@@ -67,15 +66,15 @@ export default function WhatIfSection({
           <button
             type="button"
             onClick={() => setActiveModal("rentalExpenseRate")}
-            className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+            className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
           >
             Edit ↗
           </button>
         </div>
 
         {/* Taxable Income Rate */}
-        <div className="flex items-end gap-2">
-          <div className="flex-1">
+        <div className="flex items-end gap-2 w-full">
+          <div className="flex-1 min-w-0">
             <InputField
               label="Taxable Income Rate"
               suffix="%"
@@ -86,15 +85,15 @@ export default function WhatIfSection({
           <button
             type="button"
             onClick={() => setActiveModal("taxableIncomeRate")}
-            className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+            className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
           >
             Edit ↗
           </button>
         </div>
 
         {/* Living Expenses Rate */}
-        <div className="flex items-end gap-2">
-          <div className="flex-1">
+        <div className="flex items-end gap-2 w-full">
+          <div className="flex-1 min-w-0">
             <InputField
               label="Living Expenses Rate"
               suffix="%"
@@ -105,15 +104,15 @@ export default function WhatIfSection({
           <button
             type="button"
             onClick={() => setActiveModal("livingExpensesRate")}
-            className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+            className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
           >
             Edit ↗
           </button>
         </div>
 
         {/* Capital Growth Rate */}
-        <div className="flex items-end gap-2">
-          <div className="flex-1">
+        <div className="flex items-end gap-2 w-full">
+          <div className="flex-1 min-w-0">
             <InputField
               label="Capital Growth Rate"
               suffix="%"
@@ -124,7 +123,7 @@ export default function WhatIfSection({
           <button
             type="button"
             onClick={() => setActiveModal("capitalGrowthRate")}
-            className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+            className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
           >
             Edit ↗
           </button>

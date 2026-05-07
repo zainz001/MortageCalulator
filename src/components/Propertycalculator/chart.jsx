@@ -29,29 +29,29 @@ export default function Chart({ data }) {
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-          <XAxis 
-            dataKey="year" 
-            axisLine={false} 
-            tickLine={false} 
-            tick={{ fill: "#A0AEC0", fontSize: 12 }} 
-            dy={10} 
+          <XAxis
+            dataKey="year"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#A0AEC0", fontSize: 12 }}
+            dy={10}
           />
-          <YAxis 
-            axisLine={false} 
-            tickLine={false} 
-            tickFormatter={formatYAxis} 
-            tick={{ fill: "#A0AEC0", fontSize: 12 }} 
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={formatYAxis}
+            tick={{ fill: "#A0AEC0", fontSize: 12 }}
             dx={-10}
               domain={[0, 'auto']}
           />
           <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#CBD5E1', strokeWidth: 2 }} />
-          <Line 
-            type="monotone" 
-            dataKey="propertyValue" 
-            stroke="#0052CC" 
-            strokeWidth={2} 
-            dot={{ r: 4, fill: "#0052CC", strokeWidth: 0 }} 
-            activeDot={{ r: 6, fill: "#0052CC", stroke: "#fff", strokeWidth: 2 }} 
+          <Line
+            type="monotone"
+            dataKey="propertyValue"
+            stroke="#0052CC"
+            strokeWidth={2}
+            dot={{ r: 4, fill: "#0052CC", strokeWidth: 0 }}
+            activeDot={{ r: 6, fill: "#0052CC", stroke: "#fff", strokeWidth: 2 }}
           />
         </LineChart>
       </ResponsiveContainer>

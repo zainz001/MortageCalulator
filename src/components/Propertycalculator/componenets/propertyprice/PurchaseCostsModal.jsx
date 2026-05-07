@@ -8,27 +8,26 @@ export default function PurchaseCostsModal({
   setPurchaseCosts,
   propertyValue,
 }) {
-  // Local state to manage the breakdown fields
+  
   const [stampDuty, setStampDuty] = useState("");
   const [transferOfTitle, setTransferOfTitle] = useState("90");
   const [conveyancing, setConveyancing] = useState("3750");
   const [otherCosts, setOtherCosts] = useState("0");
-  
-  // Tax Status / Stamp Duty Scales (Visual Only for now based on your screenshot)
-  const [taxStatus, setTaxStatus] = useState("capital");
+
+   const [taxStatus, setTaxStatus] = useState("capital");
 
   // Calculate the total dynamically
-  const total = 
-    (parseFloat(stampDuty) || 0) + 
-    (parseFloat(transferOfTitle) || 0) + 
-    (parseFloat(conveyancing) || 0) + 
+  const total =
+    (parseFloat(stampDuty) || 0) +
+    (parseFloat(transferOfTitle) || 0) +
+    (parseFloat(conveyancing) || 0) +
     (parseFloat(otherCosts) || 0);
 
   // Sync initial values if purchaseCosts already has a value, otherwise use defaults
   useEffect(() => {
     if (isOpen) {
       if (purchaseCosts && parseFloat(purchaseCosts) > 0) {
-        // If a total exists, arbitrarily put it in conveyancing for now, 
+        // If a total exists, arbitrarily put it in conveyancing for now,
         // or you could store these break-downs in the main state if needed later.
         setConveyancing(purchaseCosts.toString());
         setStampDuty("0");
@@ -56,7 +55,7 @@ export default function PurchaseCostsModal({
    return ReactDOM.createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
       <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[480px] flex flex-col border border-[#CBD5E1] overflow-hidden">
-        
+
         {/* Title Bar */}
         <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0]">
           <h2 className="text-[14px] font-bold text-[#1E293B]">Purchase Costs</h2>
@@ -65,10 +64,10 @@ export default function PurchaseCostsModal({
 
         {/* Content Body */}
         <div className="p-4">
-          
+
           <div className="border border-[#CBD5E1] rounded-[6px] p-4 pt-6 bg-white relative mb-4">
             <span className="absolute -top-2.5 left-3 bg-white px-1 text-[12px] font-bold text-[#64748B]">Purchase Costs</span>
-            
+
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <span className="text-[13px] text-[#64748B] w-[140px] text-right pr-3">Purchase price:</span>
@@ -76,7 +75,7 @@ export default function PurchaseCostsModal({
                   {parseFloat(propertyValue || 0).toLocaleString("en-NZ")}
                 </span>
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <span className="text-[13px] text-[#64748B] w-[140px] text-right pr-3">Stamp duty:</span>
                 <div className="w-[120px]">
@@ -138,7 +137,7 @@ export default function PurchaseCostsModal({
             </div>
           </div>
         </div>
-        
+
         {/* Footer */}
         <div className="px-4 py-3 bg-[#F1F5F9] border-t border-[#E2E8F0] flex justify-between items-center rounded-b-[8px]">
           <button className="px-3 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors font-bold shadow-sm">

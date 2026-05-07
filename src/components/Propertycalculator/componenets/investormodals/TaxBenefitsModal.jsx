@@ -10,7 +10,7 @@ const formatVal = (val) => Math.round(val).toLocaleString("en-NZ");
 // =========================================================
 const calculateTax = (income) => {
   if (income <= 0) return 0;
-  
+
   // Exact match to PIA historical bracket/ACC logic
   // Guarantees zero math drift as you scale up in future years
   if (income <= 50000) {
@@ -22,14 +22,14 @@ const calculateTax = (income) => {
     return 31482 + (income - 120000) * ((32730 - 31482) / 3600);
   } else {
     // Top bracket fallback
-    return 52282 + (income - 180000) * 0.39; 
+    return 52282 + (income - 180000) * 0.39;
   }
 };
 
-export default function TaxBenefitsModal({ 
-  isOpen, 
-  onClose, 
-  initialInvestorTaxable, 
+export default function TaxBenefitsModal({
+  isOpen,
+  onClose,
+  initialInvestorTaxable,
   initialPartnerTaxable,
   initialInvOwnership,
   initialPartOwnership,
@@ -37,7 +37,7 @@ export default function TaxBenefitsModal({
   autoIndexed,
   indexYear,
   indexRate,
-  projections = [] 
+  projections = []
 }) {
   const [invOwnership, setInvOwnership] = useState("100.00");
   const [partOwnership, setPartOwnership] = useState("0.00");
@@ -45,7 +45,7 @@ export default function TaxBenefitsModal({
   const [partTaxable, setPartTaxable] = useState("50,000");
 
   const [propertyCount, setPropertyCount] = useState("1");
-  const [ownershipType, setOwnershipType] = useState("single"); 
+  const [ownershipType, setOwnershipType] = useState("single");
   const [personalUse, setPersonalUse] = useState("0.00");
   const [quarantineLosses, setQuarantineLosses] = useState(true);
 
@@ -53,7 +53,7 @@ export default function TaxBenefitsModal({
 
   useEffect(() => {
     if (isOpen) {
-      setYear(1); 
+      setYear(1);
       if (initialInvestorTaxable) setInvTaxable(initialInvestorTaxable);
       if (initialPartnerTaxable) setPartTaxable(initialPartnerTaxable);
       if (initialInvOwnership) setInvOwnership(initialInvOwnership.replace('%', ''));
@@ -101,7 +101,7 @@ export default function TaxBenefitsModal({
   if (projections && projections.length > 0) {
     const activeProjIndex = Math.min(year - 1, projections.length - 1);
     const activeProj = projections[activeProjIndex];
-    
+
     currentYearRent = (activeProj?.annualGrossRent || 0) * propCountNum;
     currentYearDed = (activeProj?.deductions || 0) * propCountNum * allowedDeductionFactor;
   }
@@ -136,7 +136,7 @@ export default function TaxBenefitsModal({
   return ReactDOM.createPortal(
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
       <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[780px] flex flex-col border border-[#CBD5E1] overflow-hidden font-sans transition-all">
-        
+
         <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0]">
           <h2 className="text-[14px] font-bold text-[#1E293B]">Tax Benefits</h2>
           <button onClick={onClose} className="text-[#64748B] hover:text-[#0F172A] text-[18px]">&times;</button>
@@ -275,7 +275,7 @@ export default function TaxBenefitsModal({
             </fieldset>
           </div>
         </div>
-        
+
         <div className="px-4 py-3 bg-[#F1F5F9] border-t border-[#E2E8F0] flex justify-between items-center rounded-b-[8px]">
           <div className="flex items-center gap-3">
             <span className="text-[13px] text-[#1E293B] font-bold mr-1 w-[70px]">Year: <span className="ml-1">{year}yr</span></span>

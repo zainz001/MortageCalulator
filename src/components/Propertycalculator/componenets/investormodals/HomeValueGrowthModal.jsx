@@ -72,7 +72,7 @@ export default function HomeValueGrowthModal({ isOpen, onClose, initialHomeValue
   return ReactDOM.createPortal(
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
       <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[680px] flex flex-col border border-[#CBD5E1] overflow-hidden transition-all">
-        
+
         <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0]">
           <h2 className="text-[14px] font-bold text-[#1E293B]">Home Value Growth (30 Years)</h2>
           <button onClick={onClose} className="text-[#64748B] hover:text-[#0F172A] text-[18px]">&times;</button>
@@ -91,24 +91,24 @@ export default function HomeValueGrowthModal({ isOpen, onClose, initialHomeValue
 
           <div className="grid grid-cols-7 gap-3 items-center">
             <div className="text-[13px] text-[#1E293B] text-right pr-2">Property value:</div>
-            
-            <input 
-              type="text" 
-              value={startYear === 1 ? baseValue : formatGrowthVal(projectedValues[startYear - 2] || baseValue)} 
+
+            <input
+              type="text"
+              value={startYear === 1 ? baseValue : formatGrowthVal(projectedValues[startYear - 2] || baseValue)}
               onChange={startYear === 1 ? handleBaseValueChange : undefined}
               readOnly={startYear > 1}
-              className={`w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right shadow-sm focus:outline-none focus:border-[#0052CC] ${startYear === 1 ? "bg-[#EFF6FF] text-[#0052CC] font-medium" : "bg-gray-100 text-gray-500"}`} 
+              className={`w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right shadow-sm focus:outline-none focus:border-[#0052CC] ${startYear === 1 ? "bg-[#EFF6FF] text-[#0052CC] font-medium" : "bg-gray-100 text-gray-500"}`}
             />
 
             {[0, 1, 2, 3, 4].map((offset) => {
               const yearIndex = startYear - 1 + offset;
               return (
-                <input 
+                <input
                   key={`val-${yearIndex}`}
-                  type="text" 
-                  value={formatGrowthVal(projectedValues[yearIndex])} 
+                  type="text"
+                  value={formatGrowthVal(projectedValues[yearIndex])}
                   readOnly
-                  className="w-full border border-[#CBD5E1] bg-gray-50 rounded-[4px] px-2 py-1.5 text-[13px] text-right text-[#1E293B] shadow-sm focus:outline-none" 
+                  className="w-full border border-[#CBD5E1] bg-gray-50 rounded-[4px] px-2 py-1.5 text-[13px] text-right text-[#1E293B] shadow-sm focus:outline-none"
                 />
               );
             })}
@@ -116,14 +116,14 @@ export default function HomeValueGrowthModal({ isOpen, onClose, initialHomeValue
 
           <div className="grid grid-cols-7 gap-3 items-center">
             <div className="text-[13px] text-[#1E293B] text-right pr-2">Growth rates:</div>
-            
+
             <div className="relative">
-              <input 
-                type="text" 
-                value={averageRate} 
+              <input
+                type="text"
+                value={averageRate}
                 onChange={handleAverageRateChange}
                 onBlur={handleAvgRateBlur}
-                className="w-full border border-[#CBD5E1] bg-white rounded-[4px] px-2 py-1.5 text-[13px] text-right text-[#1E293B] pr-5 shadow-sm focus:outline-none focus:border-[#0052CC]" 
+                className="w-full border border-[#CBD5E1] bg-white rounded-[4px] px-2 py-1.5 text-[13px] text-right text-[#1E293B] pr-5 shadow-sm focus:outline-none focus:border-[#0052CC]"
               />
               <span className="absolute right-2 top-1.5 text-[13px] text-gray-500">%</span>
             </div>
@@ -132,12 +132,12 @@ export default function HomeValueGrowthModal({ isOpen, onClose, initialHomeValue
               const yearIndex = startYear - 1 + offset;
               return (
                 <div key={`rate-${yearIndex}`} className="relative">
-                  <input 
-                    type="text" 
-                    value={rates[yearIndex]} 
+                  <input
+                    type="text"
+                    value={rates[yearIndex]}
                     onChange={(e) => handleIndividualRateChange(yearIndex, e.target.value)}
                     onBlur={() => handleRateBlur(yearIndex)}
-                    className="w-full border border-[#CBD5E1] bg-white rounded-[4px] px-2 py-1.5 text-[13px] text-right text-[#1E293B] pr-5 shadow-sm focus:outline-none focus:border-[#0052CC]" 
+                    className="w-full border border-[#CBD5E1] bg-white rounded-[4px] px-2 py-1.5 text-[13px] text-right text-[#1E293B] pr-5 shadow-sm focus:outline-none focus:border-[#0052CC]"
                   />
                   <span className="absolute right-2 top-1.5 text-[13px] text-gray-500">%</span>
                 </div>

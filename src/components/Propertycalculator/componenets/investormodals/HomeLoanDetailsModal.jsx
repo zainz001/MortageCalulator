@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 
 // IMPORT YOUR SEPARATE COMPONENTS HERE
-import HomeValueGrowthModal from "./HomeValueGrowthModal"; 
+import HomeValueGrowthModal from "./HomeValueGrowthModal";
 import InterestRatesModal from "./InterestRatesModal";
 import LoanConsolidationModal from "./LoanConsolidationModal";
 
@@ -21,7 +21,7 @@ export default function HomeLoanDetailsModal({
   const [owing, setOwing] = useState("630,000");
   const [interest, setInterest] = useState("6.50");
   const [monthlyPayment, setMonthlyPayment] = useState("4,861");
-  
+
   // NEW: State to hold the exact annual total
   const [annualTotal, setAnnualTotal] = useState("58,332");
 
@@ -49,15 +49,15 @@ export default function HomeLoanDetailsModal({
     const annualRate = parseNum(interest);
 
     if (currentOwing > 0 && annualRate > 0) {
-      const r = (annualRate / 100) / 12; 
-      const n = 25 * 12; 
+      const r = (annualRate / 100) / 12;
+      const n = 25 * 12;
 
       const originalPrincipal = currentOwing * (720000 / 630000);
       const pmt = (originalPrincipal * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
 
       // We format them separately so the annual total uses the exact un-rounded math
       setMonthlyPayment(formatVal(pmt));
-      setAnnualTotal(formatVal(pmt * 12)); 
+      setAnnualTotal(formatVal(pmt * 12));
     }
   }, [interest, owing]);
 
@@ -78,7 +78,7 @@ export default function HomeLoanDetailsModal({
     if (setPrincipalResidence) setPrincipalResidence(homeValue);
     if (setAmountOwing) setAmountOwing(owing);
     // Send the state value instead of calculating on the fly
-    if (setHomeLoanRepayments) setHomeLoanRepayments(annualTotal); 
+    if (setHomeLoanRepayments) setHomeLoanRepayments(annualTotal);
     onClose();
   };
 
@@ -89,7 +89,7 @@ export default function HomeLoanDetailsModal({
       {ReactDOM.createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
           <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[400px] flex flex-col border border-[#CBD5E1] overflow-hidden">
-            
+
             <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0]">
               <h2 className="text-[14px] font-bold text-[#1E293B]">Home Loan Details</h2>
               <button onClick={onClose} className="text-[#64748B] hover:text-[#0F172A] text-[18px]">&times;</button>
@@ -97,50 +97,50 @@ export default function HomeLoanDetailsModal({
 
             <div className="p-8 flex flex-col gap-4 items-center bg-white">
               <div className="flex flex-col gap-3 w-full max-w-[280px]">
-                
+
                 {/* Home Value */}
                 <div className="flex items-center gap-3">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => setIsHomeValueModalOpen(true)}
                     className="w-[110px] py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] font-medium hover:bg-[#E2E8F0] transition-colors shadow-sm"
                   >
                     Home Value
                   </button>
-                  <input 
-                    type="text" 
-                    value={homeValue} 
-                    onChange={handleInputChange(setHomeValue)} 
-                    className="w-[120px] border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC]" 
+                  <input
+                    type="text"
+                    value={homeValue}
+                    onChange={handleInputChange(setHomeValue)}
+                    className="w-[120px] border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC]"
                   />
                 </div>
 
                 {/* Amount owing */}
                 <div className="flex items-center gap-3">
                   <div className="w-[110px] text-[13px] text-[#1E293B] text-right font-medium">Amount owing:</div>
-                  <input 
-                    type="text" 
-                    value={owing} 
-                    onChange={handleInputChange(setOwing)} 
-                    className="w-[120px] border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC]" 
+                  <input
+                    type="text"
+                    value={owing}
+                    onChange={handleInputChange(setOwing)}
+                    className="w-[120px] border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC]"
                   />
                 </div>
 
                 {/* Loan Interest */}
                 <div className="flex items-center gap-3">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => setIsInterestRatesModalOpen(true)}
                     className="w-[110px] py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] font-medium hover:bg-[#E2E8F0] transition-colors shadow-sm"
                   >
                     Loan Interest
                   </button>
                   <div className="flex items-center gap-1">
-                    <input 
-                      type="text" 
-                      value={interest} 
-                      onChange={handleInputChange(setInterest)} 
-                      className="w-[90px] border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC]" 
+                    <input
+                      type="text"
+                      value={interest}
+                      onChange={handleInputChange(setInterest)}
+                      className="w-[90px] border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC]"
                     />
                     <span className="text-[13px] text-[#1E293B]">%</span>
                   </div>
@@ -148,19 +148,19 @@ export default function HomeLoanDetailsModal({
 
                 {/* Loan Payments */}
                 <div className="flex items-center gap-3">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => setIsLoanConsolidationModalOpen(true)}
                     className="w-[110px] py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] font-medium hover:bg-[#E2E8F0] transition-colors shadow-sm"
                   >
                     Loan Payments
                   </button>
                   <div className="flex items-center gap-2">
-                    <input 
-                      type="text" 
-                      value={monthlyPayment} 
+                    <input
+                      type="text"
+                      value={monthlyPayment}
                       onChange={handleMonthlyPaymentChange} // Uses the new specific handler
-                      className="w-[90px] border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC]" 
+                      className="w-[90px] border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC]"
                     />
                     <span className="text-[13px] text-[#64748B]">/mth</span>
                   </div>
@@ -177,7 +177,7 @@ export default function HomeLoanDetailsModal({
 
               </div>
             </div>
-            
+
             <div className="px-4 py-3 bg-[#F1F5F9] border-t border-[#E2E8F0] flex justify-center gap-3 rounded-b-[8px]">
               <button onClick={handleOk} className="w-[80px] py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] font-bold hover:bg-[#E2E8F0] transition-colors shadow-sm">OK</button>
               <button onClick={onClose} className="w-[80px] py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">Cancel</button>
@@ -189,9 +189,9 @@ export default function HomeLoanDetailsModal({
       )}
 
       {/* Render the Home Value Growth modal */}
-      <HomeValueGrowthModal 
-        isOpen={isHomeValueModalOpen} 
-        onClose={() => setIsHomeValueModalOpen(false)} 
+      <HomeValueGrowthModal
+        isOpen={isHomeValueModalOpen}
+        onClose={() => setIsHomeValueModalOpen(false)}
         initialHomeValue={homeValue}
         onSave={(newValue) => setHomeValue(newValue)}
       />
@@ -211,11 +211,11 @@ export default function HomeLoanDetailsModal({
         initialOwing={owing}
         initialInterest={interest}
         initialPayment={monthlyPayment}
-        onSave={(newOwing, newInterest, newPayment) => { 
-          setOwing(newOwing); 
-          setInterest(newInterest); 
-          setMonthlyPayment(newPayment); 
-        }} 
+        onSave={(newOwing, newInterest, newPayment) => {
+          setOwing(newOwing);
+          setInterest(newInterest);
+          setMonthlyPayment(newPayment);
+        }}
       />
     </>
   );

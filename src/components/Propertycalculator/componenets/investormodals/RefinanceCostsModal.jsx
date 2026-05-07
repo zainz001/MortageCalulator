@@ -17,7 +17,7 @@ export default function RefinanceCostsModal({ isOpen, onClose, onSave, currentLo
   ]);
 
   const [applyToLoan, setApplyToLoan] = useState(false);
-  
+
   // Totals state
   const [totalPct, setTotalPct] = useState("0.00");
   const [totalCost, setTotalCost] = useState("0");
@@ -28,7 +28,7 @@ export default function RefinanceCostsModal({ isOpen, onClose, onSave, currentLo
   const recalculateAll = useCallback((currentCosts) => {
     const flatFeesSum = currentCosts.filter(c => c.flat).reduce((acc, c) => acc + parseNum(c.amt), 0);
     const pctSum = currentCosts.filter(c => !c.flat).reduce((acc, c) => acc + parseNum(c.pct), 0);
-    
+
     let grossLoan = baseLoanAmount;
     if (pctSum < 100) {
       grossLoan = (baseLoanAmount + flatFeesSum) / (1 - pctSum / 100);
@@ -82,13 +82,13 @@ export default function RefinanceCostsModal({ isOpen, onClose, onSave, currentLo
     if (!newCosts[index].flat) {
        const flatFeesSum = newCosts.filter(c => c.flat).reduce((acc, c) => acc + parseNum(c.amt), 0);
        const pctSumOther = newCosts.filter((c, i) => !c.flat && i !== index).reduce((acc, c) => acc + parseNum(c.pct), 0);
-       
+
        const numVal = parseNum(cleanVal);
        const impliedGross = (baseLoanAmount + flatFeesSum + numVal) / (1 - pctSumOther / 100);
        const impliedPct = impliedGross > 0 ? (numVal / impliedGross) * 100 : 0;
        newCosts[index].pct = impliedPct.toFixed(2);
     }
-    
+
     setCosts(recalculateAll(newCosts));
   };
 
@@ -114,14 +114,14 @@ export default function RefinanceCostsModal({ isOpen, onClose, onSave, currentLo
   return ReactDOM.createPortal(
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
       <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[600px] flex flex-col border border-[#CBD5E1] overflow-hidden transition-all">
-        
+
         <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0]">
           <h2 className="text-[14px] font-bold text-[#1E293B]">Home Loan Refinance Costs</h2>
           <button onClick={onClose} className="text-[#64748B] hover:text-[#0F172A] text-[18px]">&times;</button>
         </div>
 
         <div className="p-6 bg-white flex flex-col gap-4">
-          
+
           <div className="grid grid-cols-[2fr_0.8fr_1fr_0.6fr] gap-3 text-[12px] font-medium text-[#1E293B] items-end px-1">
             <div>Cost Component</div>
             <div className="text-right">%. of Loan</div>
@@ -132,37 +132,37 @@ export default function RefinanceCostsModal({ isOpen, onClose, onSave, currentLo
           <div className="flex flex-col gap-2">
             {costs.map((cost, idx) => (
               <div key={cost.id} className="grid grid-cols-[2fr_0.8fr_1fr_0.6fr] gap-3 items-center">
-                <input 
-                  type="text" 
-                  value={cost.label} 
-                  onChange={(e) => handleLabelChange(idx, e.target.value)} 
-                  className="w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC]" 
+                <input
+                  type="text"
+                  value={cost.label}
+                  onChange={(e) => handleLabelChange(idx, e.target.value)}
+                  className="w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC]"
                 />
-                
+
                 <div className="relative">
-                  <input 
-                    type="text" 
-                    value={cost.pct} 
-                    onChange={(e) => handlePctChange(idx, e.target.value)} 
-                    className={`w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right pr-4 shadow-sm focus:outline-none focus:border-[#0052CC] ${cost.flat ? 'bg-gray-50 text-gray-500' : 'bg-[#EFF6FF] text-[#0052CC] font-medium'}`} 
-                    readOnly={cost.flat} 
+                  <input
+                    type="text"
+                    value={cost.pct}
+                    onChange={(e) => handlePctChange(idx, e.target.value)}
+                    className={`w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right pr-4 shadow-sm focus:outline-none focus:border-[#0052CC] ${cost.flat ? 'bg-gray-50 text-gray-500' : 'bg-[#EFF6FF] text-[#0052CC] font-medium'}`}
+                    readOnly={cost.flat}
                   />
                   <span className="absolute right-1.5 top-1.5 text-[12px] text-gray-500">%</span>
                 </div>
 
-                <input 
-                  type="text" 
-                  value={cost.amt} 
-                  onChange={(e) => handleAmtChange(idx, e.target.value)} 
-                  className="w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC]" 
+                <input
+                  type="text"
+                  value={cost.amt}
+                  onChange={(e) => handleAmtChange(idx, e.target.value)}
+                  className="w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC]"
                 />
 
                 <div className="flex justify-center">
-                  <input 
-                    type="checkbox" 
-                    checked={cost.flat} 
-                    onChange={() => handleCheckboxChange(idx)} 
-                    className="w-4 h-4 text-[#0052CC] border-[#CBD5E1] rounded focus:ring-[#0052CC] cursor-pointer" 
+                  <input
+                    type="checkbox"
+                    checked={cost.flat}
+                    onChange={() => handleCheckboxChange(idx)}
+                    className="w-4 h-4 text-[#0052CC] border-[#CBD5E1] rounded focus:ring-[#0052CC] cursor-pointer"
                   />
                 </div>
               </div>
@@ -187,15 +187,15 @@ export default function RefinanceCostsModal({ isOpen, onClose, onSave, currentLo
           </div>
 
           <div className="flex justify-between items-end mt-4">
-            
+
             <div className="border border-[#CBD5E1] rounded-[6px] p-4 relative min-w-[150px]">
               <span className="absolute -top-2.5 left-3 bg-white px-1.5 text-[12px] font-bold text-[#64748B]">Refinance costs</span>
               <label className="flex items-center gap-2 cursor-pointer mt-1">
-                <input 
-                  type="checkbox" 
-                  checked={applyToLoan} 
-                  onChange={() => setApplyToLoan(!applyToLoan)} 
-                  className="w-4 h-4 text-[#0052CC] border-[#CBD5E1] rounded focus:ring-[#0052CC]" 
+                <input
+                  type="checkbox"
+                  checked={applyToLoan}
+                  onChange={() => setApplyToLoan(!applyToLoan)}
+                  className="w-4 h-4 text-[#0052CC] border-[#CBD5E1] rounded focus:ring-[#0052CC]"
                 />
                 <span className="text-[13px] text-[#1E293B]">Apply to loan</span>
               </label>

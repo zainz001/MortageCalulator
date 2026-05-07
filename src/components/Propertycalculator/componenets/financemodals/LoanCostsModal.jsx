@@ -23,7 +23,7 @@ const INITIAL_ROWS = [
 export default function LoanCostsModal({
   isOpen,
   onClose,
-  baseLoanRequired = 0, 
+  baseLoanRequired = 0,
   setLoanCosts
 }) {
   const [rows, setRows] = useState(INITIAL_ROWS);
@@ -34,7 +34,7 @@ export default function LoanCostsModal({
   const totalFlatCosts = rows.filter(r => r.isFlat).reduce((sum, r) => sum + parseNum(r.cost), 0);
   const totalPctCosts = rows.filter(r => !r.isFlat).reduce((sum, r) => sum + (parseNum(r.pct) / 100), 0);
 
-  const safePctCosts = Math.min(totalPctCosts, 0.99); 
+  const safePctCosts = Math.min(totalPctCosts, 0.99);
   const newTotalLoan = baseLoanRequired > 0 ? (baseLoanRequired + totalFlatCosts) / (1 - safePctCosts) : 0;
 
   const computedRows = rows.map(row => {
@@ -55,7 +55,7 @@ export default function LoanCostsModal({
   // 2. Event Handler with Auto-Toggling
   const handleRowChange = (index, field, val) => {
     const newRows = [...rows];
-    
+
     if (field === "isFlat") {
       newRows[index].isFlat = val;
       // Freeze the calculated values so the numbers don't jump when manually clicking the checkbox
@@ -70,10 +70,10 @@ export default function LoanCostsModal({
       if (field === "pct") {
         cleanVal = cleanVal.replace(/%/g, "").trim();
       }
-      
+
       // Stop typing if they enter invalid characters (letters)
       if (cleanVal !== "" && !/^-?\d*\.?\d*$/.test(cleanVal)) return;
-      
+
       newRows[index][field] = val;
 
       // MAGIC: Auto-toggle the checkbox based on which input the user is typing in!
@@ -83,7 +83,7 @@ export default function LoanCostsModal({
         newRows[index].isFlat = true;
       }
     }
-    
+
     setRows(newRows);
   };
 
@@ -97,7 +97,7 @@ export default function LoanCostsModal({
   return ReactDOM.createPortal(
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
       <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[480px] flex flex-col border border-[#CBD5E1] overflow-hidden">
-        
+
         {/* Title Bar */}
         <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0]">
           <h2 className="text-[14px] font-bold text-[#1E293B]">Loan Costs</h2>
@@ -105,7 +105,7 @@ export default function LoanCostsModal({
         </div>
 
         <div className="p-5 pt-4">
-          
+
           {/* Header Row */}
           <div className="flex gap-3 mb-2 pb-1 border-b border-[#E2E8F0]">
             <div className="w-[180px] text-[12px] text-[#4A5568] font-bold">Cost Component</div>
@@ -118,11 +118,11 @@ export default function LoanCostsModal({
           <div className="flex flex-col gap-1.5 mb-6">
             {computedRows.map((row, i) => (
               <div key={row.id} className="flex gap-3 items-center">
-                
+
                 {/* 1. Name */}
                 <div className="w-[180px]">
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={row.name}
                     readOnly
                     className="w-full border border-[#CBD5E1] bg-white rounded-[3px] py-1 px-2 text-[12px] text-[#1E293B] shadow-sm cursor-default focus:outline-none"
@@ -131,7 +131,7 @@ export default function LoanCostsModal({
 
                 {/* 2. % of Loan Input (ALWAYS EDITABLE) */}
                 <div className="w-[60px]">
-                  <input 
+                  <input
                     type="text"
                     // If flat is checked, show the computed percentage. Otherwise, show what the user typed.
                     value={row.isFlat ? row.calculatedPct.toFixed(2) + "%" : rows[i].pct}
@@ -145,7 +145,7 @@ export default function LoanCostsModal({
 
                 {/* 3. Cost ($) Input (ALWAYS EDITABLE) */}
                 <div className="w-[80px]">
-                  <input 
+                  <input
                     type="text"
                     // If flat is checked, show what the user typed. Otherwise, show the computed cost.
                     value={row.isFlat ? rows[i].cost : formatVal(row.calculatedCost)}
@@ -159,7 +159,7 @@ export default function LoanCostsModal({
 
                 {/* 4. Checkbox */}
                 <div className="w-[60px] flex justify-center">
-                  <input 
+                  <input
                     type="checkbox"
                     checked={row.isFlat}
                     onChange={(e) => handleRowChange(i, "isFlat", e.target.checked)}
@@ -186,11 +186,11 @@ export default function LoanCostsModal({
             <div className="flex gap-3 items-center">
               <div className="w-[180px] text-[13px] text-[#4A5568]">Total loan <span className="text-[11px]">(including costs)</span></div>
               <div className="w-[60px]"></div>
-              
+
               <div className="w-[80px] text-[13px] font-bold text-[#1E293B] text-right pr-2">
                 {formatVal(newTotalLoan)}
               </div>
-              
+
               <div className="w-[60px]"></div>
             </div>
           </div>
@@ -200,7 +200,7 @@ export default function LoanCostsModal({
         {/* Footer */}
         <div className="px-4 py-3 bg-[#F1F5F9] border-t border-[#E2E8F0] flex justify-between items-center rounded-b-[8px]">
           <button className="px-3 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] font-bold hover:bg-[#E2E8F0] shadow-sm">?</button>
-          
+
           <div className="flex gap-2">
             <button onClick={handleOk} className="px-8 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] font-bold hover:bg-[#E2E8F0] shadow-sm">OK</button>
             <button onClick={onClose} className="px-5 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] shadow-sm">Cancel</button>

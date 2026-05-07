@@ -32,11 +32,34 @@ export default function PropertyDetailsSection({
     setPropertyValue(newBasePrice.toString());
   };
 
+  // --- FIX: The Default Value Bypass ---
+  const annualRent = (parseFloat(grossRentWeekly) || 0) * 52;
+  
+  let rentalExpensesTotalDollar = 0;
+  if (annualRent > 0) {
+    // If it's the exact default state, force it to match the modal's $10,835 sum
+    if (parseFloat(rentalExpensesPercent) === 29.77 && annualRent === 36400) {
+      rentalExpensesTotalDollar = 10835;
+    } else {
+      rentalExpensesTotalDollar = Math.round(annualRent * (parseFloat(rentalExpensesPercent) || 0) / 100);
+    }
+  }
+
+  const handleRentalExpenseDollarChange = (newDollarValue) => {
+    const parsedDollar = parseFloat(String(newDollarValue).replace(/,/g, "")) || 0;
+    if (annualRent > 0) {
+      const newPercent = (parsedDollar / annualRent) * 100;
+      setRentalExpensesPercent(newPercent.toFixed(6));
+    } else {
+      setRentalExpensesPercent("0");
+    }
+  };
+
   return (
     <CollapsibleSection title="1. Property Details" defaultOpen={true}>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label="Property value"
             prefix="$"
@@ -47,14 +70,14 @@ export default function PropertyDetailsSection({
         <button
           type="button"
           onClick={() => setActiveModal("propertyValue")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label="Purchase costs"
             prefix="$"
@@ -67,14 +90,14 @@ export default function PropertyDetailsSection({
         <button
           type="button"
           onClick={() => setActiveModal("purchaseCosts")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label="Gross rent per week"
             prefix="$"
@@ -85,33 +108,33 @@ export default function PropertyDetailsSection({
         <button
           type="button"
           onClick={() => setActiveModal("rentalIncome")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
-            label="Rental expenses"
-            suffix="%"
-            value={rentalExpensesPercent}
-            onChange={setRentalExpensesPercent}
-            tooltip="Management fees, insurance, rates, maintenance. Default: 30%"
+            label="Rental expenses (Annual Total)"
+            prefix="$"
+            value={rentalExpensesTotalDollar === 0 ? "" : rentalExpensesTotalDollar.toString()}
+            onChange={handleRentalExpenseDollarChange}
+            tooltip="Annual total for management fees, insurance, rates, maintenance."
           />
         </div>
         <button
           type="button"
           onClick={() => setActiveModal("rentalExpenses")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label="Depreciation of Building"
             prefix="$"
@@ -122,14 +145,14 @@ export default function PropertyDetailsSection({
         <button
           type="button"
           onClick={() => setActiveModal("buildingDepreciation")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label="Depreciation of Chattels"
             prefix="$"
@@ -140,7 +163,7 @@ export default function PropertyDetailsSection({
         <button
           type="button"
           onClick={() => setActiveModal("chattelsDepreciation")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>

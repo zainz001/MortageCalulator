@@ -18,16 +18,16 @@ export default function InvestorSection({
 
   // Dynamically change labels based on current Investor Type
   const isPerson = investorDetails === "Person(s)" || !investorDetails;
-  
+
   const incomeLabel = isPerson ? "Joint Work Income" : `${investorDetails} Income`;
   const deductionLabel = isPerson ? "Joint Work Deductions" : `${investorDetails} Deductions`;
   const taxableLabel = isPerson ? "Taxable Income (Single)" : `Taxable Income (${investorDetails})`;
 
   return (
     <CollapsibleSection title="3. Investor">
-      
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label="Investor Details"
             value={investorDetails}
@@ -38,14 +38,14 @@ export default function InvestorSection({
         <button
           type="button"
           onClick={() => setActiveModal("investorDetails")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label={incomeLabel}
             prefix="$"
@@ -56,14 +56,14 @@ export default function InvestorSection({
         <button
           type="button"
           onClick={() => setActiveModal("jointWorkIncome")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label={deductionLabel}
             prefix="$"
@@ -74,14 +74,14 @@ export default function InvestorSection({
         <button
           type="button"
           onClick={() => setActiveModal("jointWorkDeductions")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label="Principal Residence"
             prefix="$"
@@ -92,14 +92,14 @@ export default function InvestorSection({
         <button
           type="button"
           onClick={() => setActiveModal("principalResidence")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label="Amount Owing"
             prefix="$"
@@ -110,14 +110,14 @@ export default function InvestorSection({
         <button
           type="button"
           onClick={() => setActiveModal("amountOwing")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label="Home Loan Repayments"
             prefix="$"
@@ -128,14 +128,14 @@ export default function InvestorSection({
         <button
           type="button"
           onClick={() => setActiveModal("homeLoanRepayments")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label="Living Expenses"
             prefix="$"
@@ -146,14 +146,14 @@ export default function InvestorSection({
         <button
           type="button"
           onClick={() => setActiveModal("livingExpenses")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label="Portfolio Properties"
             value={portfolioProperties}
@@ -164,14 +164,14 @@ export default function InvestorSection({
         <button
           type="button"
           onClick={() => setActiveModal("portfolioProperties")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label="Portfolio Value"
             prefix="$"
@@ -182,14 +182,14 @@ export default function InvestorSection({
         <button
           type="button"
           onClick={() => setActiveModal("portfolioValue")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
       </div>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 w-full">
+        <div className="flex-1 min-w-0">
           <InputField
             label={taxableLabel}
             prefix="$"
@@ -200,7 +200,7 @@ export default function InvestorSection({
         <button
           type="button"
           onClick={() => setActiveModal("taxableIncomeSingle")}
-          className="mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
+          className="shrink-0 mb-1 text-[11px] px-2 py-1 border border-[#CBD5E1] rounded-[6px] text-[#64748B] hover:border-[#0052CC] hover:text-[#0052CC] transition-all whitespace-nowrap"
         >
           Edit ↗
         </button>
