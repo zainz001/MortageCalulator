@@ -12,7 +12,6 @@ const formatVal = (val) => Math.round(val).toLocaleString("en-NZ");
 export default function LoanInterestTypeModal({
   isOpen,
   onClose,
-  // 1. Accept the props passed from the parent
   loanA,
   setLoanA,
   loanB,
@@ -24,24 +23,22 @@ export default function LoanInterestTypeModal({
   const [capTaxDeductible, setCapTaxDeductible] = useState(false);
   const [isAnnualRatesOpen, setIsAnnualRatesOpen] = useState(false);
 
-  // 2. REMOVED local useState for loanA and loanB so we use the parent's state directly!
-
-  // 3. Update the useEffect to sync the master total when the modal opens
   useEffect(() => {
     if (isOpen && loanA && loanB) {
       const currentTotal = parseNum(loanA.amount) + parseNum(loanB.amount);
       setMasterTotal(currentTotal);
 
-      // Keep split rate toggled on if Loan B has a balance
       if (parseNum(loanB.amount) > 0) {
         setSplitRate(true);
       } else {
         setSplitRate(false);
       }
     }
-  }, [isOpen, loanA?.amount, loanB?.amount]);
+    // Only run on open so we don't overwrite masterTotal mid-edit
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
-  if (!isOpen || !loanA || !loanB) return null; // Safety check
+  if (!isOpen || !loanA || !loanB) return null;
 
   const calcTranche = (loan) => {
     const L = parseNum(loan.amount);
@@ -117,8 +114,13 @@ export default function LoanInterestTypeModal({
   const handleSplitRateToggle = (e) => {
     const isSplit = e.target.checked;
     setSplitRate(isSplit);
+    
+    // Sync the master total right as we toggle
+    const currentTotal = parseNum(loanA.amount) + parseNum(loanB.amount);
+    setMasterTotal(currentTotal);
+
     if (!isSplit) {
-      setLoanA(prev => ({ ...prev, amount: String(masterTotal) }));
+      setLoanA(prev => ({ ...prev, amount: String(currentTotal) }));
       setLoanB(prev => ({ ...prev, amount: "0" }));
     }
   };
@@ -147,8 +149,18 @@ export default function LoanInterestTypeModal({
       setter(prev => ({ ...prev, amount: cleanVal }));
 
       if (splitRate) {
-        const remaining = Math.max(0, masterTotal - numVal);
-        otherSetter(prev => ({ ...prev, amount: String(remaining) }));
+        const remaining = masterTotal - numVal;
+        
+        // If they enter an amount larger than the total, increase total and zero out the other
+        if (remaining < 0) {
+          otherSetter(prev => ({ ...prev, amount: "0" }));
+          setMasterTotal(numVal);
+        } else {
+          otherSetter(prev => ({ ...prev, amount: String(remaining) }));
+        }
+      } else if (isA) {
+        // If not split, editing Loan A just updates the master total outright
+        setMasterTotal(numVal);
       }
     }
     else if (field === "rate") {
@@ -169,7 +181,7 @@ export default function LoanInterestTypeModal({
     const isDisabled = tranche === "B" && !splitRate;
 
     return (
-      <div className={`flex flex-col items-center justify-start w-[85px] ${isDisabled ? "opacity-50 pointer-events-none" : ""}`}>
+      <div className={`flex flex-col items-center justify-start w-full md:w-[85px] ${isDisabled ? "opacity-50 pointer-events-none" : ""}`}>
         <label className="flex items-center gap-1.5 text-[11px] text-[#4A5568] font-medium cursor-pointer h-[32px] text-center leading-tight">
           <input
             type="radio"
@@ -209,41 +221,47 @@ export default function LoanInterestTypeModal({
     return (
       <div className={`relative border border-[#CBD5E1] rounded-[6px] p-3 pt-5 bg-white mb-4 shadow-sm transition-opacity ${isDisabled ? "opacity-70" : ""}`}>
         <span className="absolute -top-2.5 left-3 bg-white px-2 text-[12px] font-bold text-[#1E293B]">{splitRate ? `Rate ${tranche}` : title}</span>
-        <div className="flex gap-4 items-start">
+        
+        <div className="flex flex-col md:flex-row gap-4 items-start">
 
-          <div className="flex flex-col gap-1 w-[90px]">
-            <label className="text-[11px] font-bold text-[#4A5568] text-center h-[32px] flex items-end justify-center">Loan Amount</label>
-            <div className="h-[14px]"></div>
-            <input
-              type="text"
-              value={data.amount === "" ? "" : formatVal(parseNum(data.amount))}
-              onChange={(e) => handleLoanChange(tranche, "amount", e.target.value)}
-              disabled={isDisabled}
-              className={`w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1 text-[13px] text-right font-medium focus:outline-none focus:border-[#0052CC] ${isDisabled ? "bg-[#F1F5F9] text-[#64748B]" : "bg-white text-[#0052CC]"}`}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1 w-[70px]">
-            <label className="text-[11px] font-bold text-[#4A5568] text-center h-[32px] flex flex-col items-center justify-end leading-tight"><span>Interest Rate</span><span>(Average)</span></label>
-            <div className="h-[14px]"></div>
-            <div className="relative">
+          <div className="flex gap-4 w-full md:w-auto">
+            <div className="flex flex-col gap-1 w-1/2 md:w-[90px]">
+              <label className="text-[11px] font-bold text-[#4A5568] text-center h-[32px] flex items-end justify-center">Loan Amount</label>
+              <div className="hidden md:block h-[14px]"></div>
               <input
                 type="text"
-                value={data.rates[0]}
-                onChange={(e) => handleLoanChange(tranche, "rate", e.target.value)}
+                value={data.amount === "" ? "" : formatVal(parseNum(data.amount))}
+                onChange={(e) => handleLoanChange(tranche, "amount", e.target.value)}
                 disabled={isDisabled}
-                className={`w-full border border-[#CBD5E1] rounded-[4px] pl-2 pr-4 py-1 text-[13px] text-right focus:outline-none focus:border-[#0052CC] ${isDisabled ? "bg-[#F1F5F9] text-[#64748B]" : "bg-white text-[#1E293B]"}`}
+                className={`w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1 text-[13px] text-right font-medium focus:outline-none focus:border-[#0052CC] ${isDisabled ? "bg-[#F1F5F9] text-[#64748B]" : "bg-white text-[#0052CC]"}`}
               />
-              <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[11px] text-[#64748B]">%</span>
+            </div>
+
+            <div className="flex flex-col gap-1 w-1/2 md:w-[70px]">
+              <label className="text-[11px] font-bold text-[#4A5568] text-center h-[32px] flex flex-col items-center justify-end leading-tight"><span>Interest Rate</span><span>(Average)</span></label>
+              <div className="hidden md:block h-[14px]"></div>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={data.rates[0]}
+                  onChange={(e) => handleLoanChange(tranche, "rate", e.target.value)}
+                  disabled={isDisabled}
+                  className={`w-full border border-[#CBD5E1] rounded-[4px] pl-2 pr-4 py-1 text-[13px] text-right focus:outline-none focus:border-[#0052CC] ${isDisabled ? "bg-[#F1F5F9] text-[#64748B]" : "bg-white text-[#1E293B]"}`}
+                />
+                <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[11px] text-[#64748B]">%</span>
+              </div>
             </div>
           </div>
 
-          <div className="w-[1px] bg-[#E2E8F0] h-[70px] self-end mb-1"></div>
+          <div className="hidden md:block w-[1px] bg-[#E2E8F0] h-[70px] self-end mb-1"></div>
+          <div className="block md:hidden w-full h-[1px] bg-[#E2E8F0] my-1"></div>
 
-          <TypeColumn label="Interest Only" typeValue="IO" currentType={data.type} loanData={data} tranche={tranche} />
-          <TypeColumn label="Principal & Interest" typeValue="PI" currentType={data.type} loanData={data} tranche={tranche} />
-          <TypeColumn label="Capitalise Interest" typeValue="CAP" currentType={data.type} loanData={data} tranche={tranche} />
-          <TypeColumn label="Credit Line" typeValue="CL" currentType={data.type} loanData={data} tranche={tranche} />
+          <div className="grid grid-cols-2 md:flex gap-y-4 gap-x-2 md:gap-4 w-full md:w-auto">
+            <TypeColumn label="Interest Only" typeValue="IO" currentType={data.type} loanData={data} tranche={tranche} />
+            <TypeColumn label="Principal & Interest" typeValue="PI" currentType={data.type} loanData={data} tranche={tranche} />
+            <TypeColumn label="Capitalise Interest" typeValue="CAP" currentType={data.type} loanData={data} tranche={tranche} />
+            <TypeColumn label="Credit Line" typeValue="CL" currentType={data.type} loanData={data} tranche={tranche} />
+          </div>
 
         </div>
       </div>
@@ -251,20 +269,21 @@ export default function LoanInterestTypeModal({
   };
 
   return ReactDOM.createPortal(
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
-      <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[680px] flex flex-col border border-[#CBD5E1] overflow-hidden">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#0F172A]/40 backdrop-blur-sm">
+      <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-full max-w-[680px] max-h-[95vh] flex flex-col border border-[#CBD5E1] overflow-hidden">
 
-        <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0]">
+        <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0] shrink-0">
           <h2 className="text-[14px] font-bold text-[#1E293B]">Loan Interest & Type</h2>
           <button onClick={onClose} className="text-[#64748B] hover:text-[#0F172A] text-[18px]">&times;</button>
         </div>
 
-        <div className="p-4 pb-2">
+        <div className="p-4 pb-2 overflow-y-auto">
           <LoanPanel title="Loan A" data={loanA} tranche="A" />
           <LoanPanel title="Loan B" data={loanB} tranche="B" />
 
-          <div className="flex gap-4">
-            <div className="relative border border-[#CBD5E1] rounded-[6px] p-3 pt-4 bg-[#FAFAFA] flex-1">
+          <div className="flex flex-col md:flex-row gap-4">
+            
+            <div className="relative border border-[#CBD5E1] rounded-[6px] p-3 pt-4 bg-[#FAFAFA] flex-1 w-full">
               <span className="absolute -top-2.5 left-3 bg-[#FAFAFA] px-1 text-[11px] text-[#64748B]">Loan Summary (1st year)</span>
               <div className="flex justify-between items-center mb-1.5">
                 <span className="text-[12px] text-[#4A5568]">Total Loan:</span>
@@ -280,7 +299,7 @@ export default function LoanInterestTypeModal({
               </div>
             </div>
 
-            <div className="relative border border-[#CBD5E1] rounded-[6px] p-3 pt-5 bg-white w-[140px] flex flex-col justify-between">
+            <div className="relative border border-[#CBD5E1] rounded-[6px] p-3 pt-5 bg-white w-full md:w-[140px] flex flex-col justify-between">
               <span className="absolute -top-2.5 left-3 bg-white px-1 text-[11px] text-[#64748B]">Loan Type</span>
               <label className="flex items-center gap-2 text-[12px] text-[#1E293B] cursor-pointer">
                 <input type="checkbox" checked={splitRate} onChange={handleSplitRateToggle} className="rounded text-[#0052CC] focus:ring-[#0052CC]" />
@@ -294,7 +313,7 @@ export default function LoanInterestTypeModal({
               </button>
             </div>
 
-            <div className="relative border border-[#CBD5E1] rounded-[6px] p-3 pt-5 bg-white w-[200px]">
+            <div className="relative border border-[#CBD5E1] rounded-[6px] p-3 pt-5 bg-white w-full md:w-[200px]">
               <span className="absolute -top-2.5 left-3 bg-white px-1 text-[11px] text-[#64748B]">Capitalised Interest</span>
               <label className="flex items-start gap-2 text-[12px] text-[#1E293B] cursor-pointer leading-tight">
                 <input type="checkbox" checked={capTaxDeductible} onChange={(e) => setCapTaxDeductible(e.target.checked)} className="rounded text-[#0052CC] focus:ring-[#0052CC] mt-0.5" />
@@ -304,7 +323,7 @@ export default function LoanInterestTypeModal({
           </div>
         </div>
 
-        <div className="px-4 py-3 bg-[#F1F5F9] border-t border-[#E2E8F0] flex justify-end gap-2 rounded-b-[8px]">
+        <div className="px-4 py-3 bg-[#F1F5F9] border-t border-[#E2E8F0] flex flex-wrap justify-end gap-2 rounded-b-[8px] shrink-0">
           <button className="px-3 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] font-bold hover:bg-[#E2E8F0] shadow-sm">?</button>
           <button onClick={handleOk} className="px-8 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] font-bold hover:bg-[#E2E8F0] shadow-sm">OK</button>
           <button onClick={onClose} className="px-5 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] shadow-sm">Cancel</button>
@@ -312,7 +331,6 @@ export default function LoanInterestTypeModal({
 
       </div>
 
-      {/* Renders the secondary modal when the button is clicked */}
       <AnnualInterestRatesModal
         isOpen={isAnnualRatesOpen}
         onClose={() => setIsAnnualRatesOpen(false)}

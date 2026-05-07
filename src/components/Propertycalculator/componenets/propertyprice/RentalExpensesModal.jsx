@@ -1,82 +1,82 @@
 import React, { useState, useEffect, useRef } from "react";
 import InputField from "../../../inputField";
 import AnnualSpecialExpensesModal from "./AnnualSpecialExpensesModal";
+import RentalIncomeModal from "./RentalIncomeModal"; // <-- ADDED IMPORT
 import ReactDOM from "react-dom";
+import ExpenseRateModal from "./ExpenseRateModal";
 
-// 1. Move defaults outside so we can reference them easily
-const defaultExpenses = {
-  agentsCommission: "3010",
-  lettingFees: "700",
-  rates: "3750",
-  insurance: "1875",
-  maintenance: "1500",
-  bodyCorporate: "0",
-  cleaning: "0",
-  pestControl: "0",
-  mowing: "0",
-  otherExpenses: "0"
-};
+// 1. Default Expenses List
+const defaultExpensesList = [
+  { id: "1", name: "Agent's commission", amount: "3010" },
+  { id: "2", name: "Letting Fees", amount: "700" },
+  { id: "3", name: "Council Rates (Estimate)", amount: "3750" },
+  { id: "4", name: "Building Insurance", amount: "1875" },
+  { id: "5", name: "Residence Society", amount: "1500" },
+  { id: "6", name: "Body corporate", amount: "0" },
+  { id: "7", name: "Cleaning", amount: "0" }, 
+
+];
 
 export default function RentalExpensesModal({
   isOpen,
   onClose,
   grossRentWeekly,
+  setGrossRentWeekly, // <-- ADDED PROP
   propertyValue,
-  rentalExpensesPercent, 
+  rentalExpensesPercent,
   setRentalExpensesPercent,
+  inflationRate, // <-- ADDED PROP
+  rentTimeline, // <-- ADDED PROP
+  setRentTimeline // <-- ADDED PROP
 }) {
-  const [expenses, setExpenses] = useState(defaultExpenses);
+  const [expenses, setExpenses] = useState(defaultExpensesList);
   
   const [isAnnualSpecialModalOpen, setIsAnnualSpecialModalOpen] = useState(false);
+  const [isRentalIncomeModalOpen, setIsRentalIncomeModalOpen] = useState(false); // <-- ADDED STATE
+  const [rateModalConfig, setRateModalConfig] = useState({ isOpen: false, rowId: null, currentAmount: "0", rowName: "" });
 
   const prevPercentRef = useRef(rentalExpensesPercent);
   const prevRentRef = useRef(grossRentWeekly);
-
-  // 2. NEW: We store the 'baseline' distribution in a ref. 
-  // This completely stops keystrokes (like typing backspace) from mangling the ratios.
-  const referenceExpensesRef = useRef(defaultExpenses);
+  const referenceExpensesRef = useRef(defaultExpensesList);
 
   useEffect(() => {
     if (prevPercentRef.current !== rentalExpensesPercent || prevRentRef.current !== grossRentWeekly) {
       const potentialAnnualRent = (parseFloat(grossRentWeekly) || 0) * 52;
       const targetTotalExpenses = potentialAnnualRent * (parseFloat(rentalExpensesPercent) || 0) / 100;
       
-      // 3. HARD BYPASS: If we are at the exact default state, force the exact default numbers.
       if (Math.abs(parseFloat(rentalExpensesPercent) - 29.77) < 0.001 && Math.abs(potentialAnnualRent - 36400) < 1) {
-          setExpenses(defaultExpenses);
-          referenceExpensesRef.current = defaultExpenses;
+          setExpenses(defaultExpensesList);
+          referenceExpensesRef.current = defaultExpensesList;
       } 
-      // 4. SCALING LOGIC: Scale based on the uncorrupted reference distribution
       else {
-          const refTotal = Object.values(referenceExpensesRef.current).reduce((acc, val) => {
-            return acc + (parseFloat(String(val).replace(/,/g, '')) || 0);
+          const refTotal = referenceExpensesRef.current.reduce((acc, item) => {
+            return acc + (parseFloat(String(item.amount).replace(/,/g, '')) || 0);
           }, 0);
 
           if (refTotal > 0) {
             setExpenses(prev => {
-              const scaled = {};
+              let scaled = [...referenceExpensesRef.current];
               let sumOfRoundedParts = 0;
-              let largestKey = "otherExpenses";
+              let largestIdx = 0;
               let largestVal = -1;
 
-              // Scale each item relative to the untouched REFERENCE baseline
-              for (let key in referenceExpensesRef.current) {
-                const num = parseFloat(String(referenceExpensesRef.current[key]).replace(/,/g, '')) || 0;
+              scaled = scaled.map((item, index) => {
+                const num = parseFloat(String(item.amount).replace(/,/g, '')) || 0;
                 const newRounded = Math.round(targetTotalExpenses * (num / refTotal));
-                scaled[key] = newRounded.toString();
                 sumOfRoundedParts += newRounded;
 
                 if (newRounded > largestVal) {
                   largestVal = newRounded;
-                  largestKey = key;
+                  largestIdx = index;
                 }
-              }
 
-              // Apply the $1 remainder drift correction to the largest item
+                return { ...item, amount: newRounded.toString() };
+              });
+
               const exactRoundedTarget = Math.round(targetTotalExpenses);
               const driftDiff = exactRoundedTarget - sumOfRoundedParts;
-              if (driftDiff !== 0) {
-                  scaled[largestKey] = (parseInt(scaled[largestKey]) + driftDiff).toString();
+              if (driftDiff !== 0 && scaled[largestIdx]) {
+                  scaled[largestIdx].amount = (parseInt(scaled[largestIdx].amount) + driftDiff).toString();
               }
 
               return scaled;
@@ -93,11 +93,10 @@ export default function RentalExpensesModal({
   const actualAnnualRent = potentialAnnualRent * 0.98; // Assuming standard 2% vacancy
   const propVal = parseFloat(propertyValue) || 0;
 
-  // Calculate Total Expenses
-  const totalExpenses = Object.values(expenses).reduce((acc, val) => {
-    const cleanVal = String(val).replace(/,/g, '');
+  const totalExpenses = Array.isArray(expenses) ? expenses.reduce((acc, item) => {
+    const cleanVal = String(item.amount).replace(/,/g, '');
     return acc + (parseFloat(cleanVal) || 0);
-  }, 0);
+  }, 0) : 0;
 
   if (!isOpen) return null;
 
@@ -105,11 +104,31 @@ export default function RentalExpensesModal({
   const netRent = actualAnnualRent - totalExpenses;
   const netYield = propVal > 0 ? (netRent / propVal) * 100 : 0;
 
-  const handleChange = (field, val) => {
+  // --- Handlers ---
+  const handleChange = (id, field, val) => {
     setExpenses(prev => {
-        const next = { ...prev, [field]: val };
-        // Update the baseline whenever the user manually edits a specific category inside the modal
+        const next = prev.map((item) => (item.id === id ? { ...item, [field]: val } : item));
         referenceExpensesRef.current = next; 
+        return next;
+    });
+  };
+
+  const handleRateModalSave = (id, newAmount) => {
+    handleChange(id, "amount", newAmount);
+  };
+
+  const handleAddCost = () => {
+    setExpenses(prev => {
+        const next = [...prev, { id: Date.now().toString(), name: "", amount: "" }];
+        referenceExpensesRef.current = next;
+        return next;
+    });
+  };
+
+  const handleRemoveCost = (id) => {
+    setExpenses(prev => {
+        const next = prev.filter(item => item.id !== id);
+        referenceExpensesRef.current = next;
         return next;
     });
   };
@@ -120,114 +139,164 @@ export default function RentalExpensesModal({
   };
 
   return ReactDOM.createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
-      <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[600px] flex flex-col border border-[#CBD5E1] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm p-4">
+      <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-full max-w-[700px] flex flex-col border border-[#CBD5E1] overflow-hidden max-h-[90vh]">
 
         <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0]">
           <h2 className="text-[14px] font-bold text-[#1E293B]">Rental Expenses</h2>
           <button onClick={onClose} className="text-[#64748B] hover:text-[#0F172A] text-[18px]">&times;</button>
         </div>
 
-        <div className="p-4">
-          <div className="flex gap-4">
+        <div className="p-4 overflow-y-auto flex flex-col md:flex-row gap-4">
 
-            {/* Left Panel: Normal Expenses Grid */}
-            <div className="flex-1 border border-[#CBD5E1] rounded-[6px] p-4 pt-6 bg-white relative">
-              <span className="absolute -top-2.5 left-3 bg-white px-1 text-[12px] font-bold text-[#64748B]">Normal Expenses (1st Year)</span>
+          {/* Left Panel: Normal Expenses Growable List */}
+          <div className="flex-1  border-[#CBD5E1] rounded-[6px] p-4 pt-6 bg-white relative">
+            <span className="absolute -top-2.5 left-3 bg-white px-1 text-[12px] font-bold text-[#64748B]">Normal Expenses (1st Year)</span>
 
-              <div className="flex flex-col gap-2.5">
-                {[
-                  { label: "Agent's commission", key: "agentsCommission" },
-                  { label: "Letting fees", key: "lettingFees" },
-                  { label: "Rates", key: "rates" },
-                  { label: "Insurance", key: "insurance" },
-                  { label: "Maintenance", key: "maintenance" },
-                  { label: "Body corporate", key: "bodyCorporate" },
-                  { label: "Cleaning", key: "cleaning" },
-                  { label: "Pest control", key: "pestControl" },
-                  { label: "Mowing", key: "mowing" },
-                  { label: "Other expenses", key: "otherExpenses" }
-                ].map((item) => (
-                  <div key={item.key} className="flex items-center justify-between">
-                    <span className="text-[13px] text-[#64748B] w-[140px] text-right pr-3">{item.label}</span>
-                    <div className="w-[100px]">
-                      <InputField
-                        value={expenses[item.key]}
-                        onChange={(val) => handleChange(item.key, val)}
+            <div className="flex justify-end mb-3">
+              <button 
+                onClick={handleAddCost}
+                className="text-[12px] text-[#0052CC] font-bold hover:underline"
+              >
+                + Add Item
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-2.5">
+              {expenses.map((item) => (
+                <div key={item.id} className="flex items-center justify-between gap-2">
+                  
+                  <div className="flex-1 flex justify-end pr-2">
+                    {item.id === "1" ? (
+                      <button
+                        onClick={() => setRateModalConfig({ isOpen: true, rowId: item.id, currentAmount: item.amount, rowName: item.name })}
+                        className="w-full max-w-[180px] h-[35px] px-3 bg-[#F1F5F9] border border-[#CBD5E1] rounded-[4px] shadow-sm text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] active:bg-[#CBD5E1] transition-colors flex items-center justify-end font-medium"
+                      >
+                        {item.name}
+                      </button>
+                    ) : (
+                      <input
+                        type="text"
+                        placeholder="Description"
+                        value={item.name}
+                        onChange={(e) => handleChange(item.id, "name", e.target.value)}
+                        className="w-full max-w-[180px] h-[50px] px-3 border border-[#CBD5E1] rounded-[4px] text-[13px] text-[#1E293B] focus:outline-none focus:border-[#0052CC] transition-colors text-right"
                       />
-                    </div>
+                    )}
                   </div>
-                ))}
 
-                {/* Total Row */}
-                <div className="flex items-center justify-between mt-2 pt-3 border-t border-[#F1F5F9]">
-                  <span className="text-[13px] font-bold text-[#1E293B] w-[140px] text-right pr-3">Total</span>
-                  <div className="w-[100px] text-right px-2 font-bold text-[#1E293B] text-[14px]">
-                    {Math.round(totalExpenses).toLocaleString("en-NZ")}
+                  <div className="w-[100px]">
+                    <InputField
+                      placeholder="0"
+                      value={item.amount}
+                      onChange={(val) => handleChange(item.id, "amount", val)}
+                    />
                   </div>
+
+                  <button
+                    onClick={() => handleRemoveCost(item.id)}
+                    className="text-[#EF4444] font-bold text-[16px] w-[24px] h-[24px] flex items-center justify-center hover:bg-[#FEF2F2] rounded-[4px] transition-colors shrink-0"
+                    title="Remove"
+                  >
+                    &times;
+                  </button>
+                </div>
+              ))}
+              {expenses.length === 0 && (
+                <span className="text-[12px] text-[#94A3B8] italic text-center py-2">No expenses added.</span>
+              )}
+
+              {/* Total Row */}
+              <div className="flex items-center justify-between mt-2 pt-3 border-t border-[#F1F5F9]">
+                <span className="text-[13px] font-bold text-[#1E293B] w-[140px] text-right pr-3 flex-1">Total</span>
+                <div className="w-[100px] text-right px-2 font-bold text-[#1E293B] text-[14px] pr-[34px]">
+                  {Math.round(totalExpenses).toLocaleString("en-NZ")}
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Right Panel: Indicators & Extra Buttons */}
-            <div className="w-[180px] flex flex-col gap-4">
+          {/* Right Panel: Indicators & Extra Buttons */}
+          <div className="w-full md:w-[220px] flex flex-col gap-4">
 
-              {/* Indicators Box */}
-              <div className="border border-[#CBD5E1] rounded-[6px] p-4 pt-5 bg-white relative">
-                <span className="absolute -top-2.5 left-3 bg-white px-1 text-[12px] font-bold text-[#64748B]">Indicators</span>
+            {/* Indicators Box */}
+            <div className="border border-[#CBD5E1] rounded-[6px] p-4 pt-5 bg-white relative">
+              <span className="absolute -top-2.5 left-3 bg-white px-1 text-[12px] font-bold text-[#64748B]">Indicators</span>
 
-                <div className="flex flex-col gap-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[13px] text-[#64748B]">Annual Rent</span>
-                    <span className="text-[13px] text-[#1E293B] font-medium">{Math.round(actualAnnualRent).toLocaleString("en-NZ")}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[13px] text-[#64748B]">Expenses/rent</span>
-                    <span className="text-[13px] text-[#1E293B] font-medium">{expensesPercent.toFixed(2)}%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[13px] text-[#64748B]">Net rent</span>
-                    <span className="text-[13px] text-[#1E293B] font-medium">{Math.round(netRent).toLocaleString("en-NZ")}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[13px] text-[#64748B]">Net yield</span>
-                    <span className="text-[13px] text-[#1E293B] font-medium">{netYield.toFixed(2)}%</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col gap-2 mt-auto">
-                <button className="w-full py-1.5 border border-[#CBD5E1] bg-[#F8FAFC] rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">
-                  Advanced
-                </button>
-                <button
-                  onClick={() => setIsAnnualSpecialModalOpen(true)}
-                  className="w-full py-1.5 border border-[#CBD5E1] bg-[#F8FAFC] rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm"
+              <div className="flex flex-col gap-3">
+                {/* THE FIX: Now opens local state, keeping this modal open behind it */}
+                <div 
+                  className="flex justify-between items-center group cursor-pointer" 
+                  onClick={() => setIsRentalIncomeModalOpen(true)}
+                  title="Click to edit Rental Income"
                 >
-                  Annual & Special Expenses
-                </button>
-              </div>
+                  <span className="text-[13px] text-[#0052CC] font-bold underline decoration-dashed group-hover:text-[#003d99]">Annual Rent</span>
+                  <span className="text-[13px] text-[#1E293B] font-medium">{Math.round(potentialAnnualRent).toLocaleString("en-NZ")}</span>
+                </div>
 
+                <div className="flex justify-between items-center">
+                  <span className="text-[13px] text-[#64748B]">Expenses/rent</span>
+                  <span className="text-[13px] text-[#1E293B] font-medium">{expensesPercent.toFixed(2)}%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[13px] text-[#64748B]">Net rent</span>
+                  <span className="text-[13px] text-[#1E293B] font-medium">{Math.round(netRent).toLocaleString("en-NZ")}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[13px] text-[#64748B]">Net yield</span>
+                  <span className="text-[13px] text-[#1E293B] font-medium">{netYield.toFixed(2)}%</span>
+                </div>
+              </div>
             </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-2 mt-auto">
+           
+              <button
+                onClick={() => setIsAnnualSpecialModalOpen(true)}
+                className="w-full py-1.5 border border-[#CBD5E1] bg-[#F8FAFC] rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm font-medium"
+              >
+                Annual & Special Expenses
+              </button>
+            </div>
+
           </div>
         </div>
 
         {/* Footer */}
         <div className="px-4 py-3 bg-[#F1F5F9] border-t border-[#E2E8F0] flex justify-between items-center rounded-b-[8px]">
-          <div className=" text-[13px] text-[#1E293B] font-bold hover:bg-[#E2E8F0] transition-colors shadow-sm"></div>
+          <button className="px-3 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors font-bold shadow-sm">?</button>
           <div className="flex gap-2">
-            <button onClick={handleOk} className="px-6 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] font-bold hover:bg-[#E2E8F0] transition-colors shadow-sm">OK</button>
+            <button onClick={handleOk} className="px-6 py-1.5 border border-[#CBD5E1] bg-[#0052CC] rounded-[4px] text-[13px] text-white font-bold hover:bg-[#003d99] transition-colors shadow-sm">OK</button>
             <button onClick={onClose} className="px-4 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">Cancel</button>
           </div>
         </div>
 
       </div>
+      
       <AnnualSpecialExpensesModal
         isOpen={isAnnualSpecialModalOpen}
         onClose={() => setIsAnnualSpecialModalOpen(false)}
         baseNormalExpense={totalExpenses}
         inflationRate="3.00"
+      />
+
+      <ExpenseRateModal
+        isOpen={rateModalConfig.isOpen}
+        onClose={() => setRateModalConfig({ ...rateModalConfig, isOpen: false })}
+        annualRent={potentialAnnualRent}
+        config={rateModalConfig}
+        onSave={handleRateModalSave}
+      />
+
+      <RentalIncomeModal 
+        isOpen={isRentalIncomeModalOpen} 
+        onClose={() => setIsRentalIncomeModalOpen(false)} 
+        grossRentWeekly={grossRentWeekly} 
+        setGrossRentWeekly={setGrossRentWeekly} 
+        inflationRate={inflationRate} 
+        rentTimeline={rentTimeline} 
+        setRentTimeline={setRentTimeline} 
       />
     </div>,
     document.body

@@ -5,7 +5,7 @@ import PropertyValueModal from "./componenets/propertyprice/PropertyPriceModal";
 import PurchaseCostsModal from "./componenets/propertyprice/PurchaseCostsModal";
 import PropertyDetailsSection from "./sections/property/PropertyDetailsSection";
 import FinancingInputsSection from "./sections/finance/FinancingInputsSection";
-import InvestorSection from "./sections/Investor/InvestorSection";
+// import InvestorSection from "./sections/Investor/InvestorSection";
 import WhatIfSection from "./sections/whatif/WhatIfSection";
 import RentalIncomeModal from "./componenets/propertyprice/RentalIncomeModal";
 import RentalExpensesModal from "./componenets/propertyprice/RentalExpensesModal";
@@ -223,11 +223,7 @@ export default function PropertyInvestmentCalculator() {
 
     const calcLoan = pValue + (pCostsRaw !== "" ? parseNum(purchaseCosts) : pValue * 0.005) + (lCostsRaw !== "" ? parseNum(loanCosts) : 0) + aLoan + rCosts + fCosts + hCosts - cInvest - eInvest;
 
-    if (calcLoan > pValue && pValue > 0) {
-      setLoanError("Loan amount cannot exceed property value");
-    } else {
-      setLoanError("");
-    }
+    setLoanError("");
 
     if (pValue === 0) return;
 
@@ -364,19 +360,6 @@ export default function PropertyInvestmentCalculator() {
                 renovationCosts={renovationCosts}
               />
 
-              <InvestorSection
-                investorDetails={investorDetails} setInvestorDetails={setInvestorDetails}
-                jointWorkIncome={jointWorkIncome} setJointWorkIncome={setJointWorkIncome}
-                jointWorkDeductions={jointWorkDeductions} setJointWorkDeductions={setJointWorkDeductions}
-                principalResidence={principalResidence} setPrincipalResidence={setPrincipalResidence}
-                amountOwing={amountOwing} setAmountOwing={setAmountOwing}
-                homeLoanRepayments={homeLoanRepayments} setHomeLoanRepayments={setHomeLoanRepayments}
-                livingExpenses={livingExpenses} setLivingExpenses={setLivingExpenses}
-                portfolioProperties={portfolioProperties} setPortfolioProperties={setPortfolioProperties}
-                portfolioValue={portfolioValue} setPortfolioValue={setPortfolioValue}
-                taxableIncomeSingle={taxableIncomeSingle} setTaxableIncomeSingle={setTaxableIncomeSingle}
-                setActiveModal={setActiveModal}
-              />
 
               <WhatIfSection
                 inflationRate={inflationRate} setInflationRate={setInflationRate}
@@ -484,7 +467,15 @@ export default function PropertyInvestmentCalculator() {
       <PropertyValueModal isOpen={activeModal === "propertyValue"} onClose={() => setActiveModal(null)} propertyValue={propertyValue} setPropertyValue={setPropertyValue} holdingCosts={holdingCosts} setHoldingCosts={setHoldingCosts} furnitureCosts={furnitureCosts} setFurnitureCosts={setFurnitureCosts} propertyAddress={propertyAddress} setPropertyAddress={setPropertyAddress} propertyDescription={propertyDescription} setPropertyDescription={setPropertyDescription} renovationTimeline={renovationTimeline} setRenovationTimeline={setRenovationTimeline} furnitureTimeline={furnitureTimeline} setFurnitureTimeline={setFurnitureTimeline} linkValueFittings={linkValueFittings} setLinkValueFittings={setLinkValueFittings} linkConstructionCost={linkConstructionCost} setLinkConstructionCost={setLinkConstructionCost} projections={result?.projections || []} renovationCosts={renovationCosts} setRenovationCosts={setRenovationCosts} />
       <PurchaseCostsModal isOpen={activeModal === "purchaseCosts"} onClose={() => setActiveModal(null)} purchaseCosts={purchaseCosts} setPurchaseCosts={setPurchaseCosts} propertyValue={propertyValue} />
       <RentalIncomeModal isOpen={activeModal === "rentalIncome"} onClose={() => setActiveModal(null)} grossRentWeekly={grossRentWeekly} setGrossRentWeekly={setGrossRentWeekly} inflationRate={inflationRate} rentTimeline={rentTimeline} setRentTimeline={setRentTimeline} />
-      <RentalExpensesModal isOpen={activeModal === "rentalExpenses"} onClose={() => setActiveModal(null)} grossRentWeekly={grossRentWeekly} propertyValue={propertyValue} rentalExpensesPercent={rentalExpensesPercent} setRentalExpensesPercent={setRentalExpensesPercent} />
+      <RentalExpensesModal 
+        isOpen={activeModal === "rentalExpenses"} 
+        onClose={() => setActiveModal(null)} 
+        grossRentWeekly={grossRentWeekly} 
+        propertyValue={propertyValue} 
+        rentalExpensesPercent={rentalExpensesPercent} 
+        setRentalExpensesPercent={setRentalExpensesPercent} 
+        setActiveModal={setActiveModal} 
+      />
       <BuildingDepreciationModal isOpen={activeModal === "buildingDepreciation"} onClose={() => setActiveModal(null)} propertyValue={propertyValue} renovationCosts={renovationCosts} buildingDepreciation={buildingDepreciation} setBuildingDepreciation={setBuildingDepreciation} />
       <ChattelsDepreciationModal isOpen={activeModal === "chattelsDepreciation"} chattelsDepreciation={chattelsDepreciation} onClose={() => setActiveModal(null)} propertyValue={propertyValue} setChattelsDepreciation={setChattelsDepreciation} />
 
@@ -596,7 +587,7 @@ export default function PropertyInvestmentCalculator() {
         capitalGrowthMode={capitalGrowthMode}
         setCapitalGrowthMode={setCapitalGrowthMode}
         propertyValue={propertyValue}
-        setPropertyValue={setPropertyValue} // <--- CRITICAL: allows the modal to back-calculate the base property cost
+        setPropertyValue={setPropertyValue} 
         renovationCosts={renovationCosts}
         grossRentWeekly={grossRentWeekly}
         rentalExpensesPercent={rentalExpensesPercent}

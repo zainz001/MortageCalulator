@@ -113,111 +113,116 @@ export default function ChattelsDepreciationModal({
   };
 
   return ReactDOM.createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
-      <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[850px] flex flex-col border border-[#CBD5E1] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm p-4">
+      {/* THE FIX: Changed w-[850px] to w-full max-w-[850px] and added max-h-[95vh] */}
+      <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-full max-w-[850px] flex flex-col border border-[#CBD5E1] overflow-hidden max-h-[95vh]">
 
         {/* Title Bar */}
-        <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0]">
+        <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0] shrink-0">
           <h2 className="text-[14px] font-bold text-[#1E293B]">Depreciation of Chattels</h2>
           <button onClick={onClose} className="text-[#64748B] hover:text-[#0F172A] text-[18px]">&times;</button>
         </div>
 
-        {/* Content Body */}
-        <div className="p-4 flex flex-col gap-4">
+        {/* Content Body - Added overflow-y-auto so the modal content can scroll on short screens */}
+        <div className="p-4 flex flex-col gap-4 overflow-y-auto">
 
           {/* Top: Itemised Schedule */}
-          <div className="border border-[#CBD5E1] rounded-[6px] p-4 pt-6 bg-white relative">
+          {/* THE FIX: Added overflow-x-auto to the container so the table swipes on phones instead of crushing */}
+          <div className="border border-[#CBD5E1] rounded-[6px] p-4 pt-6 bg-white relative overflow-x-auto">
             <span className="absolute -top-2.5 left-3 bg-white px-1 text-[12px] font-bold text-[#64748B]">Itemised Depreciation Schedule</span>
 
-            {/* Header Row */}
-            <div className="flex items-center mb-2 pb-2 border-b border-[#E2E8F0]">
-              <div className="w-[150px] text-[12px] font-bold text-[#1E293B]">Items</div>
-              <div className="w-[80px] text-[12px] font-bold text-[#1E293B] text-right pr-2">Value</div>
-              <div className="w-[70px] text-[12px] font-bold text-[#1E293B] text-center">Rate</div>
-              <div className="flex-1 flex gap-2 ml-4">
-                {[1, 2, 3, 4, 5].map(y => (
-                  <div key={y} className="flex-1 text-center text-[12px] text-[#64748B] font-bold">
-                    {startIndex + y}yr
+            {/* THE FIX: Added min-w-[700px] to ensure the columns never drop below a readable width */}
+            <div className="min-w-[700px]">
+              {/* Header Row */}
+              <div className="flex items-center mb-2 pb-2 border-b border-[#E2E8F0]">
+                <div className="w-[150px] text-[12px] font-bold text-[#1E293B]">Items</div>
+                <div className="w-[80px] text-[12px] font-bold text-[#1E293B] text-right pr-2">Value</div>
+                <div className="w-[70px] text-[12px] font-bold text-[#1E293B] text-center">Rate</div>
+                <div className="flex-1 flex gap-2 ml-4">
+                  {[1, 2, 3, 4, 5].map(y => (
+                    <div key={y} className="flex-1 text-center text-[12px] text-[#64748B] font-bold">
+                      {startIndex + y}yr
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Data Rows */}
+              <div className="flex flex-col gap-1.5">
+                {items.map((item, idx) => (
+                  <div key={item.id} className="flex items-center">
+                    <div className="w-[150px] pr-2">
+                      <input
+                        type="text"
+                        value={item.name}
+                        onChange={(e) => handleItemChange(idx, 'name', e.target.value)}
+                        className="w-full border border-[#CBD5E1] rounded-[4px] px-1.5 py-1 text-[13px] text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC]"
+                      />
+                    </div>
+                    <div className="w-[80px] pr-2">
+                      <input
+                        type="text"
+                        value={item.value}
+                        onChange={(e) => {
+                          handleItemChange(idx, 'value', e.target.value.replace(/,/g, ''));
+                          // Auto-unlink if the user manually types in the General Chattels field
+                          if (idx === 1 && isLinked) {
+                            setIsLinked(false);
+                          }
+                        }}
+                        className={`w-full border border-[#CBD5E1] rounded-[4px] px-1.5 py-1 text-[13px] text-right text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC] ${isLinked && idx === 1 ? 'bg-[#F1F5F9] font-bold text-[#0052CC]' : 'bg-white'}`}
+                      />
+                    </div>
+                    <div className="w-[70px]">
+                      <input
+                        type="text"
+                        value={item.rate}
+                        onChange={(e) => handleItemChange(idx, 'rate', e.target.value.replace(/%/g, ''))}
+                        className="w-full border border-[#CBD5E1] rounded-[4px] px-1.5 py-1 text-[13px] text-center text-[#1E293B] bg-white shadow-sm focus:outline-none focus:border-[#0052CC]"
+                      />
+                    </div>
+                    <div className="flex-1 flex gap-2 ml-4">
+                      {[0, 1, 2, 3, 4].map(y => {
+                        const val = projections[idx][startIndex + y];
+                        return (
+                          <div key={y} className="flex-1 text-center text-[13px] text-[#1E293B] py-1">
+                            {val > 0 ? formatVal(val) : ""}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 ))}
               </div>
-            </div>
 
-            {/* Data Rows */}
-            <div className="flex flex-col gap-1.5">
-              {items.map((item, idx) => (
-                <div key={item.id} className="flex items-center">
-                  <div className="w-[150px] pr-2">
-                    <input
-                      type="text"
-                      value={item.name}
-                      onChange={(e) => handleItemChange(idx, 'name', e.target.value)}
-                      className="w-full border border-[#CBD5E1] rounded-[4px] px-1.5 py-1 text-[13px] text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC]"
-                    />
-                  </div>
-                  <div className="w-[80px] pr-2">
-                    <input
-                      type="text"
-                      value={item.value}
-                      onChange={(e) => {
-                        handleItemChange(idx, 'value', e.target.value.replace(/,/g, ''));
-                        // Auto-unlink if the user manually types in the General Chattels field
-                        if (idx === 1 && isLinked) {
-                          setIsLinked(false);
-                        }
-                      }}
-                      className={`w-full border border-[#CBD5E1] rounded-[4px] px-1.5 py-1 text-[13px] text-right text-[#1E293B] shadow-sm focus:outline-none focus:border-[#0052CC] ${isLinked && idx === 1 ? 'bg-[#F1F5F9] font-bold text-[#0052CC]' : 'bg-white'}`}
-                    />
-                  </div>
-                  <div className="w-[70px]">
-                    <input
-                      type="text"
-                      value={item.rate}
-                      onChange={(e) => handleItemChange(idx, 'rate', e.target.value.replace(/%/g, ''))}
-                      className="w-full border border-[#CBD5E1] rounded-[4px] px-1.5 py-1 text-[13px] text-center text-[#1E293B] bg-white shadow-sm focus:outline-none focus:border-[#0052CC]"
-                    />
-                  </div>
-                  <div className="flex-1 flex gap-2 ml-4">
-                    {[0, 1, 2, 3, 4].map(y => {
-                      const val = projections[idx][startIndex + y];
-                      return (
-                        <div key={y} className="flex-1 text-center text-[13px] text-[#1E293B] py-1">
-                          {val > 0 ? formatVal(val) : ""}
-                        </div>
-                      );
-                    })}
+              {/* Total Row */}
+              <div className="flex items-center mt-3 pt-3 border-t border-[#CBD5E1]">
+                <div className="w-[150px] text-[13px] font-bold text-[#1E293B]">Total</div>
+                <div className="w-[80px] pr-2 text-right">
+                  <div className="w-full border border-[#CBD5E1] bg-white rounded-[4px] px-1.5 py-1 text-[13px] font-bold text-[#1E293B] shadow-sm">
+                    {formatVal(totalValue)}
                   </div>
                 </div>
-              ))}
-            </div>
-
-            {/* Total Row */}
-            <div className="flex items-center mt-3 pt-3 border-t border-[#CBD5E1]">
-              <div className="w-[150px] text-[13px] font-bold text-[#1E293B]">Total</div>
-              <div className="w-[80px] pr-2 text-right">
-                <div className="w-full border border-[#CBD5E1] bg-white rounded-[4px] px-1.5 py-1 text-[13px] font-bold text-[#1E293B] shadow-sm">
-                  {formatVal(totalValue)}
+                <div className="w-[70px]"></div>
+                <div className="flex-1 flex gap-2 ml-4">
+                  {[0, 1, 2, 3, 4].map(y => {
+                    const val = totalProjections[startIndex + y];
+                    return (
+                      <div key={y} className="flex-1 text-center text-[13px] font-bold text-[#1E293B] border border-[#CBD5E1] bg-white rounded-[4px] py-1 shadow-sm">
+                        {val > 0 ? formatVal(val) : ""}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-              <div className="w-[70px]"></div>
-              <div className="flex-1 flex gap-2 ml-4">
-                {[0, 1, 2, 3, 4].map(y => {
-                  const val = totalProjections[startIndex + y];
-                  return (
-                    <div key={y} className="flex-1 text-center text-[13px] font-bold text-[#1E293B] border border-[#CBD5E1] bg-white rounded-[4px] py-1 shadow-sm">
-                      {val > 0 ? formatVal(val) : ""}
-                    </div>
-                  );
-                })}
-              </div>
             </div>
-
           </div>
 
           {/* Bottom: Preferences & Navigation */}
-          <div className="flex gap-4">
+          {/* THE FIX: Changed to flex-col lg:flex-row so the layout stacks nicely on phones and tablets */}
+          <div className="flex flex-col lg:flex-row gap-4 shrink-0">
 
-            <div className="flex-1 border border-[#CBD5E1] rounded-[6px] p-4 pt-5 bg-white relative flex gap-6">
+            <div className="flex-1 border border-[#CBD5E1] rounded-[6px] p-4 pt-5 bg-white relative flex flex-col sm:flex-row gap-4 sm:gap-6">
               <span className="absolute -top-2.5 left-3 bg-white px-1 text-[12px] font-bold text-[#64748B]">Depreciation Preferences</span>
 
               <div className="flex-1 border border-[#E2E8F0] rounded-[6px] p-3 relative">
@@ -238,11 +243,11 @@ export default function ChattelsDepreciationModal({
               <div className="flex-1 border border-[#E2E8F0] rounded-[6px] p-3 relative flex flex-col justify-center">
                 <span className="absolute -top-2.5 left-2 bg-white px-1 text-[11px] font-bold text-[#64748B]">General</span>
                 <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 text-[13px] text-[#1E293B] cursor-pointer">
+                  <label className="flex items-center gap-2 text-[13px] text-[#1E293B] cursor-pointer leading-tight max-w-[130px]">
                     <input type="checkbox" checked={isLinked} onChange={(e) => setIsLinked(e.target.checked)} className="rounded" />
                     Link value to property price
                   </label>
-                  <div className="w-[60px]">
+                  <div className="w-[60px] shrink-0">
                     <InputField value={linkRate} onChange={setLinkRate} suffix="%" />
                   </div>
                 </div>
@@ -250,8 +255,8 @@ export default function ChattelsDepreciationModal({
 
             </div>
 
-            {/* Pagination Controls */}
-            <div className="flex flex-col justify-between">
+            {/* Pagination Controls - Changed to flex-row justify-between lg:flex-col lg:justify-between for mobile */}
+            <div className="flex flex-row lg:flex-col justify-between items-center gap-4 lg:gap-0">
               <div className="flex items-center gap-1">
                 <button onClick={handleStart} className="w-10 h-8 flex items-center justify-center border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#64748B] font-bold hover:bg-[#E2E8F0] shadow-sm">&lt;&lt;</button>
                 <button onClick={handlePrev} className="w-10 h-8 flex items-center justify-center border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#64748B] font-bold hover:bg-[#E2E8F0] shadow-sm">&lt;</button>
@@ -259,9 +264,9 @@ export default function ChattelsDepreciationModal({
                 <button onClick={handleEnd} className="w-10 h-8 flex items-center justify-center border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#64748B] font-bold hover:bg-[#E2E8F0] shadow-sm">&gt;&gt;</button>
               </div>
 
-              <div className="flex gap-2">
-                <button onClick={handleOk} className="flex-1 px-4 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] font-bold hover:bg-[#E2E8F0] transition-colors shadow-sm">OK</button>
-                <button onClick={onClose} className="flex-1 px-4 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">Cancel</button>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <button onClick={handleOk} className="flex-1 sm:flex-none px-6 py-1.5 border border-[#CBD5E1] bg-[#0052CC] text-white rounded-[4px] text-[13px] font-bold hover:bg-[#003d99] transition-colors shadow-sm">OK</button>
+                <button onClick={onClose} className="flex-1 sm:flex-none px-4 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">Cancel</button>
               </div>
             </div>
 

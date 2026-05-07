@@ -5,7 +5,6 @@ export default function InflationRateModal({
   isOpen,
   onClose,
   activeModalType,
-  // Props from parent calculator
   inflationRate, setInflationRate,
   rentalIncomeRate, setRentalIncomeRate,
   rentalExpenseRate, setRentalExpenseRate,
@@ -13,11 +12,7 @@ export default function InflationRateModal({
   livingExpensesRate, setLivingExpensesRate
 }) {
   const [startYear, setStartYear] = useState(1);
-
-  // Local state for the modal's complex UI
   const [cpiAverage, setCpiAverage] = useState("3.00");
-
-  // FIX 1: Store 30 years of data instead of just 5 so pagination works
   const [cpiYears, setCpiYears] = useState(Array(30).fill("3.00"));
 
   const [indexedVars, setIndexedVars] = useState({
@@ -34,13 +29,12 @@ export default function InflationRateModal({
     livingExpenses: "Living expenses"
   };
 
-  // Sync parent state into modal when opened
   useEffect(() => {
     if (isOpen) {
       setStartYear(1);
       const initialAvg = inflationRate || "3.00";
       setCpiAverage(initialAvg);
-      setCpiYears(Array(30).fill(initialAvg)); // Fill all 30 years with the incoming average
+      setCpiYears(Array(30).fill(initialAvg));
 
       setIndexedVars({
         rentalIncome: { indexed: true, fromYear: "1", avgRate: rentalIncomeRate || "3.00", linked: true },
@@ -53,7 +47,6 @@ export default function InflationRateModal({
 
   if (!isOpen) return null;
 
-  // Handlers
   const handleNextYear = () => setStartYear((prev) => Math.min(prev + 1, 26));
   const handlePrevYear = () => setStartYear((prev) => Math.max(prev - 1, 1));
   const handleFastForward = () => setStartYear((prev) => Math.min(prev + 5, 26));
@@ -62,26 +55,18 @@ export default function InflationRateModal({
   const handleVarChange = (key, field, value) => {
     setIndexedVars(prev => {
       const updated = { ...prev, [key]: { ...prev[key], [field]: value } };
-
-      // If "Linked to CPI" is checked, force the avgRate to match CPI
-      if (field === 'linked' && value === true) {
-        updated[key].avgRate = cpiAverage;
-      }
+      if (field === 'linked' && value === true) updated[key].avgRate = cpiAverage;
       return updated;
     });
   };
 
-  // FIX 2: When Average changes, update ALL 30 years to match
   const handleCpiAverageChange = (val) => {
     setCpiAverage(val);
-    setCpiYears(Array(30).fill(val)); // Auto-fill the entire timeline
-
+    setCpiYears(Array(30).fill(val));
     setIndexedVars(prev => {
       const nextVars = { ...prev };
       Object.keys(nextVars).forEach(key => {
-        if (nextVars[key].linked) {
-          nextVars[key].avgRate = val;
-        }
+        if (nextVars[key].linked) nextVars[key].avgRate = val;
       });
       return nextVars;
     });
@@ -102,7 +87,6 @@ export default function InflationRateModal({
     onClose();
   };
 
-  // Dynamic Title based on which button was clicked
   const modalTitles = {
     inflationRate: "Inflation Rate",
     rentalIncomeRate: "Rental Income Indexed Rate",
@@ -112,140 +96,154 @@ export default function InflationRateModal({
   };
 
   return ReactDOM.createPortal(
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
-      <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[600px] flex flex-col border border-[#CBD5E1] overflow-hidden font-sans">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm p-4">
+      <div className="bg-[#F8FAFC] rounded-[12px] shadow-2xl w-full max-w-[620px] flex flex-col border border-[#CBD5E1] overflow-hidden max-h-[95vh] font-sans">
 
-        <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0]">
+        {/* Title Bar */}
+        <div className="flex justify-between items-center px-4 py-3 bg-white border-b border-[#E2E8F0] shrink-0">
           <h2 className="text-[14px] font-bold text-[#1E293B]">
             {modalTitles[activeModalType] || "Inflation Rate"}
           </h2>
-          <button onClick={onClose} className="text-[#64748B] hover:text-[#0F172A] text-[18px]">&times;</button>
+          <button onClick={onClose} className="text-[#64748B] hover:text-[#0F172A] text-[20px] font-bold transition-colors">&times;</button>
         </div>
 
-        <div className="p-6 bg-white flex flex-col">
+        {/* Scrollable Content Body */}
+        <div className="p-4 sm:p-5 overflow-y-auto space-y-6">
 
-          {/* Top Section: CPI Rate Timeline */}
-          <div className="flex flex-col gap-3">
-            <div className="flex gap-3 items-center text-[13px] text-[#1E293B]">
-              <div className="w-[80px] font-bold">Year</div>
-              <div className="w-[80px] text-center font-bold text-[#64748B]">Average</div>
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex-1 text-center font-bold text-[#64748B]">{startYear + i}yr</div>
-              ))}
-            </div>
-
-            <div className="flex gap-3 items-center text-[13px] text-[#1E293B]">
-              <div className="w-[80px]">CPI Rate:</div>
-              <div className="w-[80px] relative">
-                <input
-                  type="text"
-                  value={cpiAverage}
-                  onChange={(e) => handleCpiAverageChange(e.target.value.replace(/[^0-9.]/g, ''))}
-                  className="w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-right shadow-sm focus:outline-none focus:border-[#0052CC] font-medium"
-                />
-                <span className="absolute right-1.5 top-1.5 text-[12px] text-gray-500">%</span>
-              </div>
-
-              {/* Renders exactly 5 inputs based on the startYear offset */}
-              {[...Array(5)].map((_, i) => {
-                const actualIndex = startYear - 1 + i;
-                return (
-                  <div key={actualIndex} className="flex-1 relative">
-                    <input
-                      type="text"
-                      value={cpiYears[actualIndex] || ""}
-                      onChange={(e) => handleCpiYearChange(actualIndex, e.target.value.replace(/[^0-9.]/g, ''))}
-                      className={`w-full border rounded-[4px] px-2 py-1.5 text-right shadow-sm focus:outline-none focus:border-[#0052CC] ${actualIndex === 0 ? 'border-[#0052CC] bg-[#EBF4FF]' : 'border-[#CBD5E1]'}`}
-                    />
-                    <span className="absolute right-1.5 top-1.5 text-[12px] text-gray-500">%</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Bottom Section: Indexed Variables */}
-          <fieldset className="border border-[#CBD5E1] rounded-[6px] px-5 pb-5 pt-2 mt-6 relative">
-            <legend className="px-2 text-[13px] font-bold text-[#1E293B]">Indexed Variables</legend>
-
-            <div className="grid grid-cols-[120px_70px_80px_100px_90px] gap-4 items-end mt-2 text-[12px] font-bold text-[#64748B] text-center mb-3">
-              <div className="text-left"></div>
-              <div>Indexed</div>
-              <div>From<br/>Year</div>
-              <div>Average<br/>Rate</div>
-              <div>Linked<br/>to CPI</div>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              {Object.keys(indexedVars).map((key) => (
-                <div key={key} className="grid grid-cols-[120px_70px_80px_100px_90px] gap-4 items-center text-[13px] text-[#1E293B]">
-                  <div className="text-left">{VAR_LABELS[key]}</div>
-
-                  <div className="flex justify-center">
-                    <input
-                      type="checkbox"
-                      checked={indexedVars[key].indexed}
-                      onChange={(e) => handleVarChange(key, 'indexed', e.target.checked)}
-                      className="w-3.5 h-3.5 accent-[#0052CC] rounded-[2px]"
-                    />
-                  </div>
-
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={indexedVars[key].fromYear}
-                      onChange={(e) => handleVarChange(key, 'fromYear', e.target.value.replace(/[^0-9]/g, ''))}
-                      className="w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1 text-center shadow-sm focus:outline-none focus:border-[#0052CC] disabled:bg-gray-100 disabled:text-gray-400"
-                      disabled={!indexedVars[key].indexed}
-                    />
-                    <span className="absolute right-1.5 top-1 text-[12px] text-gray-500">yr</span>
-                  </div>
-
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={indexedVars[key].avgRate}
-                      onChange={(e) => handleVarChange(key, 'avgRate', e.target.value.replace(/[^0-9.]/g, ''))}
-                      className="w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1 text-right shadow-sm focus:outline-none focus:border-[#0052CC] disabled:bg-gray-100 disabled:text-gray-400"
-                      disabled={!indexedVars[key].indexed || indexedVars[key].linked}
-                    />
-                    <span className="absolute right-1.5 top-1 text-[12px] text-gray-500">%</span>
-                  </div>
-
-                  <div className="flex justify-center">
-                    <input
-                      type="checkbox"
-                      checked={indexedVars[key].linked}
-                      onChange={(e) => handleVarChange(key, 'linked', e.target.checked)}
-                      className="w-3.5 h-3.5 accent-[#0052CC] rounded-[2px]"
-                      disabled={!indexedVars[key].indexed}
-                    />
-                  </div>
+          {/* TOP SECTION: CPI Rate Timeline (Now using fieldset to match bottom section) */}
+          <fieldset className="border border-[#CBD5E1] rounded-[8px] bg-white relative">
+            <legend className="px-2 text-[12px] font-bold text-[#64748B] ml-3 uppercase tracking-tight">CPI Rate Timeline</legend>
+            
+            <div className="overflow-x-auto p-4 pt-2">
+              {/* THE FIX: min-w matches the bottom table so they scroll exactly together */}
+              <div className="min-w-[520px]">
+                <div className="grid grid-cols-[90px_85px_repeat(5,1fr)] gap-2 items-center text-[12px] font-bold text-[#64748B] mb-2 border-b border-slate-50 pb-2">
+                  <div className="text-left text-[#1E293B]">Category</div>
+                  <div className="text-center">Average</div>
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="text-center">{startYear + i}yr</div>
+                  ))}
                 </div>
-              ))}
+
+                <div className="grid grid-cols-[90px_85px_repeat(5,1fr)] gap-2 items-center">
+                  <div className="text-[13px] font-medium text-[#1E293B]">CPI Rate:</div>
+                  
+                  {/* Average Input */}
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={cpiAverage}
+                      onChange={(e) => handleCpiAverageChange(e.target.value.replace(/[^0-9.]/g, ''))}
+                      className="w-full border border-[#0052CC] bg-[#EBF4FF] rounded-[4px] px-1.5 py-1.5 text-right font-bold text-[#0052CC] text-[13px] outline-none"
+                    />
+                    <span className="absolute right-1 top-2 text-[9px] text-blue-400">%</span>
+                  </div>
+
+                  {/* 5 Year Timeline */}
+                  {[...Array(5)].map((_, i) => {
+                    const actualIndex = startYear - 1 + i;
+                    return (
+                      <div key={actualIndex} className="relative">
+                        <input
+                          type="text"
+                          value={cpiYears[actualIndex] || ""}
+                          onChange={(e) => handleCpiYearChange(actualIndex, e.target.value.replace(/[^0-9.]/g, ''))}
+                          className="w-full border border-[#CBD5E1] rounded-[4px] px-1.5 py-1.5 text-right text-[13px] text-[#1E293B] outline-none focus:border-[#0052CC] bg-white"
+                        />
+                        <span className="absolute right-1 top-2 text-[9px] text-gray-400">%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </fieldset>
 
+          {/* BOTTOM SECTION: Indexed Variables */}
+          <fieldset className="border border-[#CBD5E1] rounded-[8px] bg-white relative">
+            <legend className="px-2 text-[12px] font-bold text-[#64748B] ml-3 uppercase tracking-tight">Indexed Variables</legend>
+
+            <div className="overflow-x-auto p-4 pt-2">
+              {/* THE FIX: Same min-w as above ensures visual alignment */}
+              <div className="min-w-[520px]">
+                <div className="grid grid-cols-[140px_70px_85px_100px_70px] gap-3 items-end text-[11px] font-bold text-[#64748B] text-center mb-3 border-b border-slate-50 pb-2">
+                  <div className="text-left">VARIABLE</div>
+                  <div>INDEXED</div>
+                  <div>FROM YR</div>
+                  <div>AVG RATE</div>
+                  <div>LINKED</div>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  {Object.keys(indexedVars).map((key) => (
+                    <div key={key} className="grid grid-cols-[140px_70px_85px_100px_70px] gap-3 items-center text-[13px] text-[#1E293B]">
+                      <div className="text-left font-medium">{VAR_LABELS[key]}</div>
+
+                      <div className="flex justify-center">
+                        <input
+                          type="checkbox"
+                          checked={indexedVars[key].indexed}
+                          onChange={(e) => handleVarChange(key, 'indexed', e.target.checked)}
+                          className="w-4 h-4 accent-[#0052CC] cursor-pointer"
+                        />
+                      </div>
+
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={indexedVars[key].fromYear}
+                          onChange={(e) => handleVarChange(key, 'fromYear', e.target.value.replace(/[^0-9]/g, ''))}
+                          className="w-full border border-[#CBD5E1] rounded-[4px] px-1 py-1.5 text-center text-[13px] focus:border-[#0052CC] outline-none disabled:bg-gray-50 disabled:text-gray-400"
+                          disabled={!indexedVars[key].indexed}
+                        />
+                        <span className="absolute right-1 top-1.5 text-[9px] text-gray-400">yr</span>
+                      </div>
+
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={indexedVars[key].avgRate}
+                          onChange={(e) => handleVarChange(key, 'avgRate', e.target.value.replace(/[^0-9.]/g, ''))}
+                          className="w-full border border-[#CBD5E1] rounded-[4px] px-1 py-1.5 text-right text-[13px] focus:border-[#0052CC] outline-none disabled:bg-gray-50 disabled:text-gray-400"
+                          disabled={!indexedVars[key].indexed || indexedVars[key].linked}
+                        />
+                        <span className="absolute right-1 top-1.5 text-[9px] text-gray-400">%</span>
+                      </div>
+
+                      <div className="flex justify-center">
+                        <input
+                          type="checkbox"
+                          checked={indexedVars[key].linked}
+                          onChange={(e) => handleVarChange(key, 'linked', e.target.checked)}
+                          className="w-4 h-4 accent-[#0052CC] cursor-pointer"
+                          disabled={!indexedVars[key].indexed}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </fieldset>
         </div>
 
-        {/* Footer Controls */}
-        <div className="px-4 py-3 bg-[#F1F5F9] border-t border-[#E2E8F0] flex justify-between items-center rounded-b-[8px]">
-          <div className="flex items-center">
-            <button className="py-1.5 px-3 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm font-bold">
-              ?
-            </button>
+        {/* Footer Panel */}
+        <div className="px-4 py-4 bg-[#F1F5F9] border-t border-[#E2E8F0] flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0">
+          
+          <div className="flex items-center w-full sm:w-auto justify-between sm:justify-start gap-4">
+            <button className="h-9 px-3 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] font-bold text-[#1E293B] shadow-sm hover:bg-slate-50">?</button>
 
-            <div className="flex items-center gap-1.5 ml-6">
-              <button onClick={handleFastRewind} disabled={startYear === 1} className="w-8 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[11px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm disabled:opacity-50">&lt;&lt;</button>
-              <button onClick={handlePrevYear} disabled={startYear === 1} className="w-8 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[11px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm disabled:opacity-50">&lt;</button>
-              <button onClick={handleNextYear} disabled={startYear >= 26} className="w-8 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[11px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm disabled:opacity-50">&gt;</button>
-              <button onClick={handleFastForward} disabled={startYear >= 26} className="w-8 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[11px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm disabled:opacity-50">&gt;&gt;</button>
+            <div className="flex items-center gap-1">
+              <button onClick={handleFastRewind} disabled={startYear === 1} className="w-8 h-8 flex items-center justify-center border border-[#CBD5E1] bg-white rounded-[4px] text-[11px] font-bold disabled:opacity-30 hover:bg-slate-50 transition-colors">&lt;&lt;</button>
+              <button onClick={handlePrevYear} disabled={startYear === 1} className="w-8 h-8 flex items-center justify-center border border-[#CBD5E1] bg-white rounded-[4px] text-[11px] font-bold disabled:opacity-30 hover:bg-slate-50 transition-colors">&lt;</button>
+              <button onClick={handleNextYear} disabled={startYear >= 26} className="w-8 h-8 flex items-center justify-center border border-[#CBD5E1] bg-white rounded-[4px] text-[11px] font-bold disabled:opacity-30 hover:bg-slate-50 transition-colors">&gt;</button>
+              <button onClick={handleFastForward} disabled={startYear >= 26} className="w-8 h-8 flex items-center justify-center border border-[#CBD5E1] bg-white rounded-[4px] text-[11px] font-bold disabled:opacity-30 hover:bg-slate-50 transition-colors">&gt;&gt;</button>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button onClick={handleSave} className="w-[80px] py-1.5 border border-[#CBD5E1] bg-[#0052CC] text-white rounded-[4px] text-[13px] font-bold hover:bg-[#0047B3] transition-colors shadow-sm">OK</button>
-            <button onClick={onClose} className="w-[80px] py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">Cancel</button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button onClick={handleSave} className="flex-1 sm:w-[100px] py-2 bg-[#0052CC] text-white rounded-[4px] text-[13px] font-bold hover:bg-[#003d99] shadow-md transition-all">OK</button>
+            <button onClick={onClose} className="flex-1 sm:w-[100px] py-2 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-gray-50 transition-all">Cancel</button>
           </div>
         </div>
 

@@ -40,7 +40,7 @@ export default function CapitalGrowthModal({
     }
   }, [isOpen, capitalGrowthMode, capitalGrowthRate, capitalizationRate]);
 
-  // Pre-calculate 30 years of Net Rent to properly derive Cap Rates and Property Values
+  // Pre-calculate 30 years of Net Rent
   const netRents = useMemo(() => {
     const baseGrossRent = parseNum(grossRentWeekly) * 52;
     const expenseRate = parseNum(rentalExpensesPercent) / 100;
@@ -49,13 +49,12 @@ export default function CapitalGrowthModal({
 
     const rents = [];
     for (let i = 0; i <= 30; i++) {
-      // i=0 is Initial (Year 0), i=1 is Year 1
       rents.push(initialNetRent * Math.pow(1 + rentGrowth, i - 1));
     }
     return rents;
   }, [grossRentWeekly, rentalExpensesPercent, rentalIncomeRate]);
 
-  // Dynamically calculate Arrays based on which row is active
+  // Dynamically calculate Arrays
   const pvArr = new Array(31).fill(0);
   const growthArr = new Array(31).fill(0);
   const capArr = new Array(31).fill(0);
@@ -70,10 +69,10 @@ export default function CapitalGrowthModal({
       pvArr[i] = pvArr[i - 1] * (1 + g / 100);
       capArr[i] = pvArr[i] > 0 ? (netRents[i] / pvArr[i]) * 100 : 0;
     }
-  } else { // activeRow === "capitalization"
-    const cap0 = parseFloat(rates[0]) || 0.0001; // Avoid divide by zero
+  } else { 
+    const cap0 = parseFloat(rates[0]) || 0.0001;
     capArr[0] = cap0;
-    pvArr[0] = netRents[0] / (cap0 / 100); // Back-calculates the Initial Property Value
+    pvArr[0] = netRents[0] / (cap0 / 100);
 
     for (let i = 1; i <= 30; i++) {
       const c = parseFloat(rates[i - 1]) || 0.0001;
@@ -130,7 +129,6 @@ export default function CapitalGrowthModal({
     } else {
       setCapitalGrowthRate(growthArr[1].toFixed(2));
       if (setCapitalizationRate) setCapitalizationRate(averageRate);
-      // Update the main calculator's Property Value!
       if (setPropertyValue) setPropertyValue(Math.round(pvArr[0]).toString());
     }
     if (setCapitalGrowthMode) setCapitalGrowthMode(activeRow);
@@ -143,156 +141,168 @@ export default function CapitalGrowthModal({
   const isCap = activeRow === "capitalization";
 
   return ReactDOM.createPortal(
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm">
-      <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-[720px] flex flex-col border border-[#CBD5E1] overflow-hidden transition-all font-sans">
+    /* THE FIX: Added p-4 to prevent the modal from touching the edges of the screen on mobile */
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm p-4">
+      
+      {/* THE FIX: Changed w-[720px] to w-full max-w-[720px] and added max-h-[95vh] */}
+      <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-full max-w-[720px] flex flex-col border border-[#CBD5E1] overflow-hidden max-h-[95vh] font-sans">
 
         {/* Header */}
-        <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0]">
+        <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0] shrink-0">
           <h2 className="text-[14px] font-bold text-[#1E293B]">Investment Property Growth</h2>
           <button onClick={onClose} className="text-[#64748B] hover:text-[#0F172A] text-[18px]">&times;</button>
         </div>
 
-        {/* Content */}
-        <div className="p-8 bg-[#F8FAFC] flex flex-col">
+        {/* Content - Added overflow-y-auto so the body scrolls vertically if needed */}
+        <div className="p-4 sm:p-8 bg-[#F8FAFC] flex flex-col overflow-y-auto">
           
-          {/* Top Section: Static Text Grid */}
-          <div className="grid grid-cols-[160px_repeat(6,1fr)] gap-3 items-center text-[13px] text-[#1E293B] mb-8">
-            <div className="text-right pr-2 font-medium">End of year:</div>
-            <div className="text-center font-medium">{startYear === 1 ? "Initial" : `${startYear - 1}yr`}</div>
-            {[0, 1, 2, 3, 4].map((offset) => (
-              <div key={offset} className="text-center font-medium">
-                {startYear + offset}yr
-              </div>
-            ))}
+          {/* THE FIX: Wrapped the grids in an overflow-x-auto container so they swipe on phones */}
+          <div className="overflow-x-auto mb-6">
+            
+            {/* THE FIX: Added min-w-[650px] to keep the columns aligned and readable */}
+            <div className="min-w-[650px]">
+              
+              {/* Top Section: Static Text Grid */}
+              <div className="grid grid-cols-[160px_repeat(6,1fr)] gap-3 items-center text-[13px] text-[#1E293B] mb-8">
+                <div className="text-right pr-2 font-medium">End of year:</div>
+                <div className="text-center font-medium bg-slate-100 rounded py-1">{startYear === 1 ? "Initial" : `${startYear - 1}yr`}</div>
+                {[0, 1, 2, 3, 4].map((offset) => (
+                  <div key={offset} className="text-center font-medium">
+                    {startYear + offset}yr
+                  </div>
+                ))}
 
-            <div className="text-right pr-2 font-medium mt-2">Property value:</div>
-            <div className="text-center mt-2">{formatGrowthVal(pvArr[startYear - 1])}</div>
-            {[0, 1, 2, 3, 4].map((offset) => {
-              const yearIndex = startYear + offset;
-              return (
-                <div key={`val-${yearIndex}`} className="text-center mt-2">
-                  {formatGrowthVal(pvArr[yearIndex])}
+                <div className="text-right pr-2 font-medium mt-2">Property value:</div>
+                <div className="text-center mt-2 font-bold">{formatGrowthVal(pvArr[startYear - 1])}</div>
+                {[0, 1, 2, 3, 4].map((offset) => {
+                  const yearIndex = startYear + offset;
+                  return (
+                    <div key={`val-${yearIndex}`} className="text-center mt-2">
+                      {formatGrowthVal(pvArr[yearIndex])}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Middle Section: Display in Spreadsheet Fieldset */}
+              <fieldset className="border border-[#CBD5E1] p-4 rounded-[6px] relative">
+                <legend className="text-[12px] text-[#64748B] font-bold px-2 bg-[#F8FAFC] ml-2">
+                  Display in Spreadsheet
+                </legend>
+
+                <div className="grid grid-cols-[160px_repeat(6,1fr)] gap-x-3 gap-y-4 items-center">
+                  <div></div>
+                  <div className="text-center text-[12px] font-bold text-[#64748B]">Average</div>
+                  <div className="col-span-5"></div>
+
+                  {/* Capital Growth Rates Row */}
+                  <div 
+                    className="flex items-center gap-2 justify-end pr-2 cursor-pointer"
+                    onClick={() => handleSwitchRow("growth")}
+                  >
+                    <input 
+                      type="radio" 
+                      checked={isGrowth} 
+                      onChange={() => handleSwitchRow("growth")} 
+                      className="accent-[#0052CC] w-3.5 h-3.5 cursor-pointer" 
+                    />
+                    <span className="text-[12px] text-[#1E293B] font-medium whitespace-nowrap">Capital growth rates:</span>
+                  </div>
+
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={isGrowth ? averageRate : (growthArr[1]?.toFixed(2) || "0.00")}
+                      onChange={isGrowth ? handleAverageRateChange : undefined}
+                      onBlur={isGrowth ? handleAvgRateBlur : undefined}
+                      readOnly={!isGrowth}
+                      className={`w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[12px] text-right pr-5 shadow-sm focus:outline-none ${isGrowth ? "bg-white text-[#0052CC] font-bold focus:border-[#0052CC]" : "bg-gray-100 text-gray-400"}`}
+                    />
+                    <span className="absolute right-1.5 top-1.5 text-[11px] text-gray-400">%</span>
+                  </div>
+
+                  {[0, 1, 2, 3, 4].map((offset) => {
+                    const yearIndex = startYear + offset;
+                    const val = isGrowth ? rates[yearIndex - 1] : growthArr[yearIndex]?.toFixed(2);
+                    return (
+                      <div key={`rate-${yearIndex}`} className="relative">
+                        <input
+                          type="text"
+                          value={val || ""}
+                          onChange={isGrowth ? (e) => handleIndividualRateChange(yearIndex - 1, e.target.value) : undefined}
+                          onBlur={isGrowth ? () => handleRateBlur(yearIndex - 1) : undefined}
+                          readOnly={!isGrowth}
+                          className={`w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[12px] text-right pr-5 shadow-sm focus:outline-none ${isGrowth ? "bg-white text-[#1E293B] focus:border-[#0052CC]" : "bg-gray-100 text-gray-400"}`}
+                        />
+                        <span className="absolute right-1.5 top-1.5 text-[11px] text-gray-400">%</span>
+                      </div>
+                    );
+                  })}
+
+                  {/* Capitalization Rates Row */}
+                  <div 
+                    className="flex items-center gap-2 justify-end pr-2 cursor-pointer"
+                    onClick={() => handleSwitchRow("capitalization")}
+                  >
+                    <input 
+                      type="radio" 
+                      checked={isCap} 
+                      onChange={() => handleSwitchRow("capitalization")} 
+                      className="accent-[#0052CC] w-3.5 h-3.5 cursor-pointer" 
+                    />
+                    <span className="text-[12px] text-[#1E293B] font-medium whitespace-nowrap">Capitalization rates:</span>
+                  </div>
+                  
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={isCap ? averageRate : (capArr[1]?.toFixed(2) || "0.00")}
+                      onChange={isCap ? handleAverageRateChange : undefined}
+                      onBlur={isCap ? handleAvgRateBlur : undefined}
+                      readOnly={!isCap}
+                      className={`w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[12px] text-right pr-5 shadow-sm focus:outline-none ${isCap ? "bg-white text-[#0052CC] font-bold focus:border-[#0052CC]" : "bg-gray-100 text-gray-400"}`}
+                    />
+                    <span className="absolute right-1.5 top-1.5 text-[11px] text-gray-400">%</span>
+                  </div>
+
+                  {[0, 1, 2, 3, 4].map((offset) => {
+                    const yearIndex = startYear + offset;
+                    const val = isCap ? rates[yearIndex - 1] : capArr[yearIndex]?.toFixed(2);
+                    return (
+                      <div key={`caprate-${yearIndex}`} className="relative">
+                        <input
+                          type="text"
+                          value={val || ""}
+                          onChange={isCap ? (e) => handleIndividualRateChange(yearIndex - 1, e.target.value) : undefined}
+                          onBlur={isCap ? () => handleRateBlur(yearIndex - 1) : undefined}
+                          readOnly={!isCap}
+                          className={`w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[12px] text-right pr-5 shadow-sm focus:outline-none ${isCap ? "bg-white text-[#1E293B] focus:border-[#0052CC]" : "bg-gray-100 text-gray-400"}`}
+                        />
+                        <span className="absolute right-1.5 top-1.5 text-[11px] text-gray-400">%</span>
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
+              </fieldset>
+            </div>
           </div>
 
-          {/* Middle Section: Display in Spreadsheet Fieldset */}
-          <fieldset className="border border-[#CBD5E1] p-4 rounded-[6px] relative">
-            <legend className="text-[13px] text-[#1E293B] font-medium px-2 bg-[#F8FAFC] ml-2">
-              Display in Spreadsheet
-            </legend>
-
-            <div className="grid grid-cols-[160px_repeat(6,1fr)] gap-x-3 gap-y-4 items-center">
-              
-              {/* Header Row */}
-              <div></div>
-              <div className="text-center text-[13px] font-medium text-[#1E293B]">Average</div>
-              <div className="col-span-5"></div>
-
-              {/* Capital Growth Rates Row */}
-              <div 
-                className="flex items-center gap-2 justify-end pr-2 cursor-pointer"
-                onClick={() => handleSwitchRow("growth")}
-              >
-                <input 
-                  type="radio" 
-                  checked={isGrowth} 
-                  onChange={() => handleSwitchRow("growth")} 
-                  className="accent-[#0052CC] w-3.5 h-3.5 cursor-pointer" 
-                />
-                <span className="text-[13px] text-[#1E293B] whitespace-nowrap">Capital growth rates:</span>
-              </div>
-
-              <div className="relative">
-                <input
-                  type="text"
-                  value={isGrowth ? averageRate : (growthArr[1]?.toFixed(2) || "0.00")}
-                  onChange={isGrowth ? handleAverageRateChange : undefined}
-                  onBlur={isGrowth ? handleAvgRateBlur : undefined}
-                  readOnly={!isGrowth}
-                  className={`w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right pr-5 shadow-sm focus:outline-none ${isGrowth ? "bg-white text-[#1E293B] focus:border-[#0052CC]" : "bg-gray-100 text-gray-500"}`}
-                />
-                <span className="absolute right-1.5 top-1.5 text-[12px] text-gray-500">%</span>
-              </div>
-
-              {[0, 1, 2, 3, 4].map((offset) => {
-                const yearIndex = startYear + offset;
-                const val = isGrowth ? rates[yearIndex - 1] : growthArr[yearIndex]?.toFixed(2);
-                return (
-                  <div key={`rate-${yearIndex}`} className="relative">
-                    <input
-                      type="text"
-                      value={val || ""}
-                      onChange={isGrowth ? (e) => handleIndividualRateChange(yearIndex - 1, e.target.value) : undefined}
-                      onBlur={isGrowth ? () => handleRateBlur(yearIndex - 1) : undefined}
-                      readOnly={!isGrowth}
-                      className={`w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right pr-5 shadow-sm focus:outline-none ${isGrowth ? "bg-white text-[#1E293B] focus:border-[#0052CC]" : "bg-gray-100 text-gray-500"}`}
-                    />
-                    <span className="absolute right-1.5 top-1.5 text-[12px] text-gray-500">%</span>
-                  </div>
-                );
-              })}
-
-              {/* Capitalization Rates Row */}
-              <div 
-                className="flex items-center gap-2 justify-end pr-2 cursor-pointer"
-                onClick={() => handleSwitchRow("capitalization")}
-              >
-                <input 
-                  type="radio" 
-                  checked={isCap} 
-                  onChange={() => handleSwitchRow("capitalization")} 
-                  className="accent-[#0052CC] w-3.5 h-3.5 cursor-pointer" 
-                />
-                <span className="text-[13px] text-[#1E293B] whitespace-nowrap">Capitalization rates:</span>
-              </div>
-              
-              <div className="relative">
-                <input
-                  type="text"
-                  value={isCap ? averageRate : (capArr[1]?.toFixed(2) || "0.00")}
-                  onChange={isCap ? handleAverageRateChange : undefined}
-                  onBlur={isCap ? handleAvgRateBlur : undefined}
-                  readOnly={!isCap}
-                  className={`w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right pr-5 shadow-sm focus:outline-none ${isCap ? "bg-white text-[#1E293B] focus:border-[#0052CC]" : "bg-gray-100 text-gray-500"}`}
-                />
-                <span className="absolute right-1.5 top-1.5 text-[12px] text-gray-500">%</span>
-              </div>
-
-              {[0, 1, 2, 3, 4].map((offset) => {
-                const yearIndex = startYear + offset;
-                const val = isCap ? rates[yearIndex - 1] : capArr[yearIndex]?.toFixed(2);
-                return (
-                  <div key={`caprate-${yearIndex}`} className="relative">
-                    <input
-                      type="text"
-                      value={val || ""}
-                      onChange={isCap ? (e) => handleIndividualRateChange(yearIndex - 1, e.target.value) : undefined}
-                      onBlur={isCap ? () => handleRateBlur(yearIndex - 1) : undefined}
-                      readOnly={!isCap}
-                      className={`w-full border border-[#CBD5E1] rounded-[4px] px-2 py-1.5 text-[13px] text-right pr-5 shadow-sm focus:outline-none ${isCap ? "bg-white text-[#1E293B] focus:border-[#0052CC]" : "bg-gray-100 text-gray-500"}`}
-                    />
-                    <span className="absolute right-1.5 top-1.5 text-[12px] text-gray-500">%</span>
-                  </div>
-                );
-              })}
-
-            </div>
-          </fieldset>
-
-          {/* Footer Controls */}
-          <div className="flex justify-center items-center gap-2 mt-8">
-            <button className="px-3 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] font-medium hover:bg-[#E2E8F0] shadow-sm">?</button>
-            <button onClick={navPrev5} disabled={startYear === 1} className="px-3 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] font-medium hover:bg-[#E2E8F0] shadow-sm disabled:opacity-50">&lt;&lt;</button>
-            <button onClick={navPrev1} disabled={startYear === 1} className="px-3 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] font-medium hover:bg-[#E2E8F0] shadow-sm disabled:opacity-50">&lt;</button>
-            <button onClick={navNext1} disabled={startYear >= 26} className="px-3 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] font-medium hover:bg-[#E2E8F0] shadow-sm disabled:opacity-50">&gt;</button>
-            <button onClick={navNext5} disabled={startYear >= 26} className="px-3 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] font-medium hover:bg-[#E2E8F0] shadow-sm disabled:opacity-50">&gt;&gt;</button>
+          {/* Footer Controls - THE FIX: flex-col sm:flex-row to stack nicely on mobile */}
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-4 shrink-0">
             
-            <div className="w-4"></div>
+            <div className="flex items-center gap-1">
+              <button className="px-3 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] font-bold hover:bg-[#E2E8F0] shadow-sm">?</button>
+              <button onClick={navPrev5} disabled={startYear === 1} className="px-3 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#64748B] font-bold hover:bg-[#E2E8F0] shadow-sm disabled:opacity-30 transition-colors">&lt;&lt;</button>
+              <button onClick={navPrev1} disabled={startYear === 1} className="px-3 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#64748B] font-bold hover:bg-[#E2E8F0] shadow-sm disabled:opacity-30 transition-colors">&lt;</button>
+              <button onClick={navNext1} disabled={startYear >= 26} className="px-3 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#64748B] font-bold hover:bg-[#E2E8F0] shadow-sm disabled:opacity-30 transition-colors">&gt;</button>
+              <button onClick={navNext5} disabled={startYear >= 26} className="px-3 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#64748B] font-bold hover:bg-[#E2E8F0] shadow-sm disabled:opacity-30 transition-colors">&gt;&gt;</button>
+            </div>
 
-            <button onClick={handleSave} className="w-[80px] py-1.5 border border-[#0052CC] bg-[#0052CC] text-white rounded-[4px] text-[13px] font-bold hover:bg-[#0047B3] transition-colors shadow-sm">OK</button>
-            <button onClick={onClose} className="w-[80px] py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm">Cancel</button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <button onClick={handleSave} className="flex-1 sm:w-[80px] py-1.5 border border-[#0052CC] bg-[#0052CC] text-white rounded-[4px] text-[13px] font-bold hover:bg-[#0047B3] transition-colors shadow-sm">OK</button>
+              <button onClick={onClose} className="flex-1 sm:w-[80px] py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-slate-50 transition-colors shadow-sm">Cancel</button>
+            </div>
+
           </div>
 
         </div>

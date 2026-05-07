@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
+import PreTaxEquivalentModal from "../components/Propertycalculator/componenets/taxesmodal/PreTaxEquivalentModal";
+import InternalRateOfReturnModal from "../components/Propertycalculator/componenets/taxesmodal/InternalRateOfReturnModal";
+import AfterTaxCashFlowModal from "../components/Propertycalculator/componenets/taxesmodal/AfterTaxCashFlowModal"; // <-- 1. New Import
 
 const fmtCur = (val) => {
   if (val === null || val === undefined || isNaN(val)) return "—";
@@ -26,6 +29,9 @@ const cashflowColour = (val, isNegativeRed) => {
 export default function ProjectionsGridModal({ isOpen, onClose, projections, metrics, inputs, onOpenModal }) {
   const [startYear, setStartYear] = useState(1);
   const COLUMNS_TO_SHOW = 5;
+  const [isPreTaxEqOpen, setIsPreTaxEqOpen] = useState(false);
+  const [isIrrOpen, setIsIrrOpen] = useState(false);
+  const [isAfterTaxOpen, setIsAfterTaxOpen] = useState(false); // <-- 2. New State
 
   useEffect(() => {
     if (isOpen) setStartYear(1);
@@ -51,7 +57,6 @@ export default function ProjectionsGridModal({ isOpen, onClose, projections, met
     ? horizonProjection.preTaxEquivalentIRR
     : metrics?.preTaxEquivalentIRR;
 
-  // ALL LABELS MAPPED TO THEIR RESPECTIVE MODALS
   const SECTIONS = [
     {
       title: null,
@@ -87,39 +92,38 @@ export default function ProjectionsGridModal({ isOpen, onClose, projections, met
       title: "Summary",
       rows: [
         { label: "Tax credit (single)", modalKey: "taxableIncomeSingle", inputVal: inVal("investorIncome"), inputFormat: fmtCur, yearFn: (p) => p.taxCredit, format: fmtCur },
-        { label: "After-tax cash flow", inputVal: inVal("afterTaxCashFlow"), inputFormat: fmtCur, yearFn: (p) => p.afterTaxCashFlow, format: fmtCur, isBold: true, isNegativeRed: true },
-        { label: "Rate of return (IRR)", inputVal: displayIrr, inputFormat: fmtPct, yearFn: null, inputOnly: true, isBold: true },
-        { label: "Pre-tax equivalent", inputVal: displayPreTaxIrr, inputFormat: fmtPct, yearFn: null, inputOnly: true, isBold: false },
+        // <-- 3. Linked to afterTaxCashFlow key
+        { label: "After-tax cash flow", modalKey: "afterTaxCashFlow", inputVal: inVal("afterTaxCashFlow"), inputFormat: fmtCur, yearFn: (p) => p.afterTaxCashFlow, format: fmtCur, isBold: true, isNegativeRed: true },
+        { label: "Rate of return (IRR)", modalKey: "irr", inputVal: displayIrr, inputFormat: fmtPct, yearFn: null, inputOnly: true, isBold: true },
+        { label: "Pre-tax equivalent", modalKey: "preTaxEquivalent", inputVal: displayPreTaxIrr, inputFormat: fmtPct, yearFn: null, inputOnly: true, isBold: false },
         { label: "Your cost /(income) per week", inputVal: null, yearFn: (p) => p.costPerWeek, format: fmtPlainNum, isBold: true },
       ],
     },
   ];
 
   return ReactDOM.createPortal(
-    // Notice z-[50] so the grid stays cleanly BEHIND the edit modals
-    <div className="fixed inset-0 z-[50] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-[10px] shadow-2xl w-[1050px] max-w-full max-h-[90vh] flex flex-col overflow-hidden font-sans border border-slate-200">
+    <div className="fixed inset-0 z-[50] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-2 sm:p-4">
+      <div className="bg-white rounded-[10px] shadow-2xl w-full max-w-[1050px] max-h-[95vh] flex flex-col overflow-hidden font-sans border border-slate-200">
 
-        {/* Header */}
-        <div className="flex justify-between items-center px-6 py-4 bg-white border-b border-slate-200">
-          <h2 className="text-[16px] font-bold text-slate-800">Property Projections</h2>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-4 py-3 sm:px-6 sm:py-4 bg-white border-b border-slate-200 gap-3 sm:gap-0 shrink-0">
+          <h2 className="text-[15px] sm:text-[16px] font-bold text-slate-800">Property Projections</h2>
 
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <span className="text-[13px] font-medium text-slate-500 mr-2">
-                Showing Years {displayYears[0]} - {displayYears[displayYears.length - 1]}
+          <div className="flex items-center justify-between w-full sm:w-auto gap-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="text-[12px] sm:text-[13px] font-medium text-slate-500 mr-1 sm:mr-2">
+                Years {displayYears[0]}-{displayYears[displayYears.length - 1]}
               </span>
               <button
                 onClick={handlePrev}
                 disabled={startYear === 1}
-                className="w-8 h-8 flex items-center justify-center border border-slate-300 bg-white rounded-[6px] text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-40"
+                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center border border-slate-300 bg-white rounded-[6px] text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-40"
               >
                 &lt;
               </button>
               <button
                 onClick={handleNext}
                 disabled={startYear + COLUMNS_TO_SHOW > maxYears}
-                className="w-8 h-8 flex items-center justify-center border border-slate-300 bg-white rounded-[6px] text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-40"
+                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center border border-slate-300 bg-white rounded-[6px] text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-40"
               >
                 &gt;
               </button>
@@ -132,14 +136,14 @@ export default function ProjectionsGridModal({ isOpen, onClose, projections, met
           <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead className="sticky top-0 bg-slate-50 z-30 shadow-[0_1px_0_0_#e2e8f0]">
               <tr>
-                <th className="sticky left-0 bg-slate-50 z-40 px-5 py-3 text-[13px] font-bold text-slate-700 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0] min-w-[220px]">
+                <th className="sticky left-0 bg-slate-50 z-40 px-3 py-2 sm:px-5 sm:py-3 text-[12px] sm:text-[13px] font-bold text-slate-700 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0] min-w-[160px] sm:min-w-[220px]">
                   Metric
                 </th>
-                <th className="px-5 py-3 text-[13px] font-bold text-[#0052CC] border-r border-slate-200 text-center min-w-[110px]">
+                <th className="px-3 py-2 sm:px-5 sm:py-3 text-[12px] sm:text-[13px] font-bold text-[#0052CC] border-r border-slate-200 text-center min-w-[90px] sm:min-w-[110px]">
                   Input
                 </th>
                 {displayYears.map((yr) => (
-                  <th key={yr} className="px-5 py-3 text-[13px] font-bold text-slate-700 text-right min-w-[100px]">
+                  <th key={yr} className="px-3 py-2 sm:px-5 sm:py-3 text-[12px] sm:text-[13px] font-bold text-slate-700 text-right min-w-[80px] sm:min-w-[100px]">
                     {yr}yr
                   </th>
                 ))}
@@ -151,7 +155,7 @@ export default function ProjectionsGridModal({ isOpen, onClose, projections, met
                 <React.Fragment key={sIdx}>
                   {section.title && (
                     <tr className="bg-slate-100">
-                      <td colSpan={2 + displayYears.length} className="sticky left-0 z-20 px-5 py-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider shadow-[1px_0_0_0_#e2e8f0] bg-slate-100 border-y border-slate-200">
+                      <td colSpan={2 + displayYears.length} className="sticky left-0 z-20 px-3 py-1.5 sm:px-5 sm:py-2 text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider shadow-[1px_0_0_0_#e2e8f0] bg-slate-100 border-y border-slate-200">
                         {section.title}
                       </td>
                     </tr>
@@ -164,38 +168,44 @@ export default function ProjectionsGridModal({ isOpen, onClose, projections, met
 
                     return (
                       <tr key={rIdx} className="group hover:bg-blue-50/40 transition-colors border-b border-slate-100 last:border-b-0">
-                        
-                        {/* Clickable Label Column */}
-                        <td 
+
+                        <td
                           onClick={() => {
-                            if (row.modalKey && onOpenModal) {
+                            // <-- 4. Intercept the click for the new modal
+                            if (row.modalKey === "preTaxEquivalent") {
+                              setIsPreTaxEqOpen(true);
+                            } else if (row.modalKey === "irr") {
+                              setIsIrrOpen(true);
+                            } else if (row.modalKey === "afterTaxCashFlow") {
+                              setIsAfterTaxOpen(true);
+                            } else if (row.modalKey && onOpenModal) {
                               onOpenModal(row.modalKey);
                             }
                           }}
                           className={`
-                            sticky left-0 z-20 px-5 py-2.5 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0] text-[13px] transition-colors
+                            sticky left-0 z-20 px-3 py-2 sm:px-5 sm:py-2.5 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0] text-[12px] sm:text-[13px] transition-colors
                             ${row.isBold ? "font-bold text-slate-900 bg-slate-50" : "font-medium text-slate-600 bg-white"}
                             group-hover:bg-[#f8fafc]
                             ${row.modalKey ? "cursor-pointer hover:text-[#0052CC]" : ""}
                           `}
                         >
                           <div className="flex items-center justify-between">
-                            <span className={row.modalKey ? "underline decoration-dashed underline-offset-2 decoration-slate-300 hover:decoration-[#0052CC]" : ""}>
+                            <span className={`truncate ${row.modalKey ? "underline decoration-dashed underline-offset-2 decoration-slate-300 hover:decoration-[#0052CC]" : ""}`}>
                               {row.label}
                             </span>
                             {row.modalKey && (
-                              <span className="text-[10px] text-slate-400 group-hover:text-[#0052CC] ml-2">↗</span>
+                              <span className="text-[9px] sm:text-[10px] text-slate-400 group-hover:text-[#0052CC] ml-1 sm:ml-2">↗</span>
                             )}
                           </div>
                         </td>
 
-                        <td className={`px-5 py-2.5 border-r border-slate-200 text-[13px] text-center ${row.isBold ? "font-bold" : "font-medium"} ${inputColor}`}>
+                        <td className={`px-3 py-2 sm:px-5 sm:py-2.5 border-r border-slate-200 text-[12px] sm:text-[13px] text-center ${row.isBold ? "font-bold" : "font-medium"} ${inputColor}`}>
                           {row.inputVal !== null && row.inputVal !== undefined ? (row.inputFormat ? row.inputFormat(row.inputVal) : row.format(row.inputVal)) : "—"}
                         </td>
 
                         {displayYears.map((yrIdx) => {
                           if (row.inputOnly) {
-                            return <td key={yrIdx} className="px-5 py-2.5 text-right text-slate-300 text-[13px]">—</td>;
+                            return <td key={yrIdx} className="px-3 py-2 sm:px-5 sm:py-2.5 text-right text-slate-300 text-[12px] sm:text-[13px]">—</td>;
                           }
 
                           const projection = projections.find((p) => p.index === yrIdx);
@@ -203,7 +213,7 @@ export default function ProjectionsGridModal({ isOpen, onClose, projections, met
                           const colourClass = cashflowColour(val, row.isNegativeRed);
 
                           return (
-                            <td key={yrIdx} className={`px-5 py-2.5 text-right text-[13px] ${row.isBold ? "font-bold" : "font-medium"} ${colourClass}`}>
+                            <td key={yrIdx} className={`px-3 py-2 sm:px-5 sm:py-2.5 text-right text-[12px] sm:text-[13px] ${row.isBold ? "font-bold" : "font-medium"} ${colourClass}`}>
                               {val !== null ? row.format(val) : "—"}
                             </td>
                           );
@@ -217,6 +227,28 @@ export default function ProjectionsGridModal({ isOpen, onClose, projections, met
           </table>
         </div>
       </div>
+
+      {/* 5. Render Modals */}
+      <PreTaxEquivalentModal
+        isOpen={isPreTaxEqOpen}
+        onClose={() => setIsPreTaxEqOpen(false)}
+        projections={projections}
+        metrics={metrics}
+        inputs={inputs}
+      />
+      <InternalRateOfReturnModal 
+        isOpen={isIrrOpen} 
+        onClose={() => setIsIrrOpen(false)}
+        projections={projections}
+        metrics={metrics}
+        inputs={inputs}
+      />
+      <AfterTaxCashFlowModal
+        isOpen={isAfterTaxOpen} 
+        onClose={() => setIsAfterTaxOpen(false)}
+        projections={projections}
+        inputs={inputs}
+      />
     </div>,
     document.body
   );
