@@ -1,309 +1,19 @@
-import React, { useState, useEffect, useCallback } from "react";
-import ProjectionsGridModal from "..//ProjectionsGrid";
-import { calculatePIA } from "../../helpers/propertyHelpers";
-import PropertyValueModal from "./componenets/propertyprice/PropertyPriceModal";
-import PurchaseCostsModal from "./componenets/propertyprice/PurchaseCostsModal";
+import React from "react";
+import { fmt, fmtPct } from "../../utils/calculatorUtils";
+import { useCalculator } from "../../hooks/useCalculator";
+import { useModalManager } from "../../hooks/useModalManager";
+import CalculatorModals from "./CalculatorModals";
+
 import PropertyDetailsSection from "./sections/property/PropertyDetailsSection";
 import FinancingInputsSection from "./sections/finance/FinancingInputsSection";
-// import InvestorSection from "./sections/Investor/InvestorSection";
 import WhatIfSection from "./sections/whatif/WhatIfSection";
-import RentalIncomeModal from "./componenets/propertyprice/RentalIncomeModal";
-import RentalExpensesModal from "./componenets/propertyprice/RentalExpensesModal";
-import BuildingDepreciationModal from "./componenets/propertyprice/BuildingDepreciationModal";
-import ChattelsDepreciationModal from "./componenets/propertyprice/ChattelsDepreciationModal";
-import LoanAmountModal from "./componenets/financemodals/LoanAmountModal";
-import LoanInterestTypeModal from "./componenets/financemodals/LoanInterestTypeModal";
-import LoanCostsModal from "./componenets/financemodals/LoanCostsModal";
-import InvestorDetailsModal from "./componenets/investormodals/InvestorDetailsModal";
-import HomeLoanDetailsModal from "./componenets/investormodals/HomeLoanDetailsModal";
-import TaxCreditsModal from "./componenets/investormodals/TaxCreditsModal";
-import InflationRateModal from "./componenets/whatifmodals/InflationRateModal";
-import CapitalGrowthModal from "./componenets/whatifmodals/CapitalGrowthModal";
-
-const parseNum = (val) => {
-  if (val === undefined || val === null || val === "") return 0;
-  return parseFloat(String(val).replace(/,/g, "")) || 0;
-};
-
-const DEFAULTS = {
-  propertyAddress: "",
-  propertyDescription: "",
-  propertyValue: "750000",
-  purchaseCosts: "3840",
-  grossRentWeekly: "700",
-  rentalExpensesPercent: "29.77",
-  cashInvested: "75000",
-  loanCosts: "7224",
-  equityInvested: "0",
-  interestRate: "6.50",
-  loanType: "Interest only",
-  additionalLoan: "0",
-  renovationCosts: "0",
-  furnitureCosts: "0",
-  holdingCosts: "0",
-  capitalGrowthRate: "5.00",
-  capitalizationRate: "3.00", // New Default
-  inflationRate: "3.00",
-  chattelsValue: "45000",
-  depreciationMethod: "DV",
-  chattelsDepreciationRate: "25",
-  buildingDepreciationRate: "0",
-  investorTaxRate: "33",
-  investorType: "Individual",
-  interestDeductibility: "100",
-  isNewBuild: false,
-  ringFencing: true,
-  taxWriteOffPeriod: "1",
-  investorDetails: "Person(s)",
-  jointWorkIncome: "170,000",
-  jointWorkDeductions: "0",
-  principalResidence: "900,000",
-  amountOwing: "630,000",
-  homeLoanRepayments: "58,338",
-  livingExpenses: "45,000",
-  portfolioProperties: "0",
-  portfolioValue: "0",
-  taxableIncomeSingle: "120,000",
-  rentalIncomeRate: "3.00",
-  rentalExpenseRate: "3.00",
-  taxableIncomeRate: "3.00",
-  livingExpensesRate: "3.00",
-};
-
-const fmt = (val) => val !== null && val !== undefined ? "$" + Math.round(val).toLocaleString("en-NZ") : "—";
-const fmtPct = (val) => val !== null && val !== undefined ? val.toFixed(2) + "%" : "—";
 
 export default function PropertyInvestmentCalculator() {
-  const [propertyAddress, setPropertyAddress] = useState(DEFAULTS.propertyAddress);
-  const [propertyDescription, setPropertyDescription] = useState(DEFAULTS.propertyDescription);
-  const [propertyValue, setPropertyValue] = useState(DEFAULTS.propertyValue);
-  const [purchaseCosts, setPurchaseCosts] = useState(DEFAULTS.purchaseCosts);
-  const [grossRentWeekly, setGrossRentWeekly] = useState(DEFAULTS.grossRentWeekly);
-  const [rentalExpensesPercent, setRentalExpensesPercent] = useState(DEFAULTS.rentalExpensesPercent);
-  const [rentTimeline, setRentTimeline] = useState([]);
-  const [renovationTimeline, setRenovationTimeline] = useState([]);
-  const [furnitureTimeline, setFurnitureTimeline] = useState([]);
-  const [linkValueFittings, setLinkValueFittings] = useState(true);
-  const [linkConstructionCost, setLinkConstructionCost] = useState(true);
-  const [isProjectionsModalOpen, setIsProjectionsModalOpen] = useState(false);
-  const [cashInvested, setCashInvested] = useState(DEFAULTS.cashInvested);
-  const [taxWriteOffPeriod, setTaxWriteOffPeriod] = useState(DEFAULTS.taxWriteOffPeriod);
-  const [equityInvested, setEquityInvested] = useState(DEFAULTS.equityInvested);
-  const [loanCosts, setLoanCosts] = useState(DEFAULTS.loanCosts);
-  const [interestRate, setInterestRate] = useState(DEFAULTS.interestRate);
-  const [loanType, setLoanType] = useState(DEFAULTS.loanType);
-  const [additionalLoan, setAdditionalLoan] = useState(DEFAULTS.additionalLoan);
-  const [renovationCosts, setRenovationCosts] = useState(DEFAULTS.renovationCosts);
-  const [furnitureCosts, setFurnitureCosts] = useState(DEFAULTS.furnitureCosts);
-  const [holdingCosts, setHoldingCosts] = useState(DEFAULTS.holdingCosts);
-
-  // Growth & WhatIf States
-  const [capitalGrowthRate, setCapitalGrowthRate] = useState(DEFAULTS.capitalGrowthRate);
-  const [capitalizationRate, setCapitalizationRate] = useState(DEFAULTS.capitalizationRate);
-  const [capitalGrowthMode, setCapitalGrowthMode] = useState("growth");
-  const [inflationRate, setInflationRate] = useState(DEFAULTS.inflationRate);
-  const [rentalIncomeRate, setRentalIncomeRate] = useState(DEFAULTS.rentalIncomeRate);
-  const [rentalExpenseRate, setRentalExpenseRate] = useState(DEFAULTS.rentalExpenseRate);
-  const [taxableIncomeRate, setTaxableIncomeRate] = useState(DEFAULTS.taxableIncomeRate);
-  const [livingExpensesRate, setLivingExpensesRate] = useState(DEFAULTS.livingExpensesRate);
-
-  const [chattelsValue, setChattelsValue] = useState(DEFAULTS.chattelsValue);
-  const [depreciationMethod, setDepreciationMethod] = useState(DEFAULTS.depreciationMethod);
-  const [chattelsDepreciationRate, setChattelsDepreciationRate] = useState(DEFAULTS.chattelsDepreciationRate);
-  const [buildingDepreciationRate, setBuildingDepreciationRate] = useState(DEFAULTS.buildingDepreciationRate);
-
-  const [investorTaxRate, setInvestorTaxRate] = useState(DEFAULTS.investorTaxRate);
-  const [investorType, setInvestorType] = useState(DEFAULTS.investorType);
-  const [interestDeductibility, setInterestDeductibility] = useState(DEFAULTS.interestDeductibility);
-  const [isNewBuild, setIsNewBuild] = useState(DEFAULTS.isNewBuild);
-  const [ringFencing, setRingFencing] = useState(DEFAULTS.ringFencing);
-  const [buildingDepreciation, setBuildingDepreciation] = useState("0");
-  const [chattelsDepreciation, setChattelsDepreciation] = useState("11250");
-  const [result, setResult] = useState(null);
-  const [loanError, setLoanError] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeModal, setActiveModal] = useState(null);
-
-  const [investorDetails, setInvestorDetails] = useState(DEFAULTS.investorDetails);
-  const [jointWorkIncome, setJointWorkIncome] = useState(DEFAULTS.jointWorkIncome);
-  const [jointWorkDeductions, setJointWorkDeductions] = useState(DEFAULTS.jointWorkDeductions);
-  const [principalResidence, setPrincipalResidence] = useState(DEFAULTS.principalResidence);
-  const [amountOwing, setAmountOwing] = useState(DEFAULTS.amountOwing);
-  const [homeLoanRepayments, setHomeLoanRepayments] = useState(DEFAULTS.homeLoanRepayments);
-  const [livingExpenses, setLivingExpenses] = useState(DEFAULTS.livingExpenses);
-  const [portfolioProperties, setPortfolioProperties] = useState(DEFAULTS.portfolioProperties);
-  const [portfolioValue, setPortfolioValue] = useState(DEFAULTS.portfolioValue);
-  const [taxableIncomeSingle, setTaxableIncomeSingle] = useState(DEFAULTS.taxableIncomeSingle);
-
-  const [loanA, setLoanA] = useState({
-    amount: "0", rates: Array(5).fill(DEFAULTS.interestRate), type: "IO",
-    ioFrom: "1", ioTo: "40", piFrom: "1", piTo: "25", capFrom: "1", capTo: "40", clFrom: "1", clTo: "40"
-  });
-
-  const [loanB, setLoanB] = useState({
-    amount: "0", rates: Array(5).fill("0.00"), type: "IO",
-    ioFrom: "1", ioTo: "40", piFrom: "1", piTo: "25", capFrom: "1", capTo: "40", clFrom: "1", clTo: "40"
-  });
-
-  useEffect(() => {
-    if (result?.loanAmount && parseNum(loanB.amount) === 0) {
-      setLoanA(prev => ({
-        ...prev,
-        amount: String(Math.round(result.loanAmount)),
-        rates: Array(5).fill(String(interestRate))
-      }));
-    }
-  }, [result?.loanAmount, interestRate, loanB.amount]);
-
-  const handleReset = useCallback(() => {
-    setPropertyAddress(DEFAULTS.propertyAddress);
-    setPropertyDescription(DEFAULTS.propertyDescription);
-    setPropertyValue(DEFAULTS.propertyValue);
-    setPurchaseCosts(DEFAULTS.purchaseCosts);
-    setGrossRentWeekly(DEFAULTS.grossRentWeekly);
-    setRentalExpensesPercent(DEFAULTS.rentalExpensesPercent);
-    setCashInvested(DEFAULTS.cashInvested);
-    setEquityInvested(DEFAULTS.equityInvested);
-    setLoanCosts(DEFAULTS.loanCosts);
-    setInterestRate(DEFAULTS.interestRate);
-    setLoanType(DEFAULTS.loanType);
-    setAdditionalLoan(DEFAULTS.additionalLoan);
-    setRenovationCosts(DEFAULTS.renovationCosts);
-    setFurnitureCosts(DEFAULTS.furnitureCosts);
-    setHoldingCosts(DEFAULTS.holdingCosts);
-    setCapitalGrowthRate(DEFAULTS.capitalGrowthRate);
-    setCapitalizationRate(DEFAULTS.capitalizationRate);
-    setCapitalGrowthMode("growth");
-    setInflationRate(DEFAULTS.inflationRate);
-    setRentalIncomeRate(DEFAULTS.rentalIncomeRate);
-    setRentalExpenseRate(DEFAULTS.rentalExpenseRate);
-    setTaxableIncomeRate(DEFAULTS.taxableIncomeRate);
-    setLivingExpensesRate(DEFAULTS.livingExpensesRate);
-    setChattelsValue(DEFAULTS.chattelsValue);
-    setDepreciationMethod(DEFAULTS.depreciationMethod);
-    setChattelsDepreciationRate(DEFAULTS.chattelsDepreciationRate);
-    setBuildingDepreciationRate(DEFAULTS.buildingDepreciationRate);
-    setInvestorTaxRate(DEFAULTS.investorTaxRate);
-    setInvestorType(DEFAULTS.investorType);
-    setInterestDeductibility(DEFAULTS.interestDeductibility);
-    setIsNewBuild(DEFAULTS.isNewBuild);
-    setRingFencing(DEFAULTS.ringFencing);
-
-    setInvestorDetails(DEFAULTS.investorDetails);
-    setJointWorkIncome(DEFAULTS.jointWorkIncome);
-    setJointWorkDeductions(DEFAULTS.jointWorkDeductions);
-    setPrincipalResidence(DEFAULTS.principalResidence);
-    setAmountOwing(DEFAULTS.amountOwing);
-    setHomeLoanRepayments(DEFAULTS.homeLoanRepayments);
-    setLivingExpenses(DEFAULTS.livingExpenses);
-    setPortfolioProperties(DEFAULTS.portfolioProperties);
-    setPortfolioValue(DEFAULTS.portfolioValue);
-    setTaxableIncomeSingle(DEFAULTS.taxableIncomeSingle);
-
-    setResult(null);
-    setLoanError("");
-    setLoanB(prev => ({ ...prev, amount: "0", rates: Array(5).fill("0.00") }));
-  }, []);
-
-  const handleNewBuildToggle = useCallback((val) => {
-    setIsNewBuild(val);
-    if (val) setInterestDeductibility("100");
-  }, []);
-
-  const performCalculation = useCallback(() => {
-    const pValue = parseNum(propertyValue);
-    const cInvest = parseNum(cashInvested);
-    const eInvest = parseNum(equityInvested);
-    const lCostsRaw = String(loanCosts).trim();
-    const aLoan = parseNum(additionalLoan);
-    const rCosts = parseNum(renovationCosts);
-    const fCosts = parseNum(furnitureCosts);
-    const hCosts = parseNum(holdingCosts);
-    const pCostsRaw = String(purchaseCosts).trim();
-
-    const calcLoan = pValue + (pCostsRaw !== "" ? parseNum(purchaseCosts) : pValue * 0.005) + (lCostsRaw !== "" ? parseNum(loanCosts) : 0) + aLoan + rCosts + fCosts + hCosts - cInvest - eInvest;
-
-    setLoanError("");
-
-    if (pValue === 0) return;
-
-    const res = calculatePIA({
-      propertyValue: pValue,
-      purchaseCostsManual: pCostsRaw !== "" ? parseNum(purchaseCosts) : null,
-      grossRentWeekly: parseNum(grossRentWeekly),
-      rentalExpensesPercent: parseNum(rentalExpensesPercent),
-      cashInvested: cInvest,
-      equityInvested: eInvest,
-      loanCostsManual: lCostsRaw !== "" ? parseNum(loanCosts) : null,
-      interestRate: parseNum(interestRate),
-      loanType,
-      additionalLoan: aLoan,
-      renovationCosts: rCosts,
-      furnitureCosts: fCosts,
-      holdingCosts: hCosts,
-      capitalGrowthRate: parseNum(capitalGrowthRate),
-      capitalizationRate: parseNum(capitalizationRate),
-      inflationRate: parseNum(inflationRate),
-      rentalIncomeRate: parseNum(rentalIncomeRate),
-      rentalExpenseRate: parseNum(rentalExpenseRate),
-      chattelsValue: parseNum(chattelsValue) || 45000,
-      depreciationMethod,
-      chattelsDepreciationRate: parseNum(chattelsDepreciationRate) || 25,
-      buildingDepreciationRate: parseNum(buildingDepreciationRate),
-      investorTaxRate: parseNum(investorTaxRate),
-      interestDeductibility: parseNum(interestDeductibility),
-      isNewBuild,
-      ringFencing,
-      renovationTimeline,
-      furnitureTimeline,
-      loanA,
-      loanB
-    });
-
-    const yr1p = res.projections[0];
-
-    res.originalInputs = {
-      propertyValue: pValue + rCosts,
-      purchaseCosts: res.purchaseCosts,
-      investments: cInvest + eInvest,
-      loanAmount: res.loanAmount,
-      equity: res.startingEquity,
-      capitalGrowthRate: parseNum(capitalGrowthRate),
-      inflationRate: parseNum(inflationRate),
-      grossRentWeekly: parseNum(grossRentWeekly),
-      interestRate: parseNum(interestRate),
-      rentalExpensesPercent: parseNum(rentalExpensesPercent),
-      preTaxCashFlow: -(cInvest + eInvest),
-      chattelsValue: parseNum(chattelsValue) || 45000,
-      buildingDepreciationRate: parseNum(buildingDepreciationRate),
-      loanCosts: res.loanCosts,
-      totalDeductions: yr1p?.deductions ?? 0,
-      investorIncome: parseNum(taxableIncomeSingle) || 120000,
-      taxCredit: yr1p?.taxCredit ?? 0,
-      afterTaxCashFlow: -(cInvest + eInvest),
-    };
-
-    setResult(res);
-  }, [
-    propertyValue, purchaseCosts, grossRentWeekly, rentalExpensesPercent,
-    cashInvested, equityInvested, loanCosts, interestRate, loanType, additionalLoan,
-    renovationCosts, furnitureCosts, holdingCosts,
-    capitalGrowthRate, capitalizationRate, inflationRate,
-    chattelsValue, depreciationMethod, chattelsDepreciationRate, buildingDepreciationRate,
-    investorTaxRate, investorType, interestDeductibility, isNewBuild, ringFencing,
-    renovationTimeline, furnitureTimeline, loanA, loanB,
-    jointWorkIncome,
-    taxableIncomeSingle,
-    rentalIncomeRate,
-    rentalExpenseRate
-  ]);
-
-  useEffect(() => {
-    const timer = setTimeout(performCalculation, 300);
-    return () => clearTimeout(timer);
-  }, [performCalculation]);
-
-  const m = result?.metrics;
+  const calc = useCalculator();
+  const modals = useModalManager();
+  
+  const m = calc.result?.metrics;
+  const { inputs, updateInput } = calc;
 
   return (
     <div className="min-h-screen bg-white flex justify-center p-4 md:p-8 font-sans">
@@ -312,7 +22,7 @@ export default function PropertyInvestmentCalculator() {
         <div className="mb-6 flex justify-between items-end">
           <h2 className="text-[24px] font-bold text-[#0052CC]"></h2>
           <button
-            onClick={handleReset}
+            onClick={calc.handleReset}
             className="text-[#64748B] text-[13px] font-bold hover:text-[#0052CC] transition-colors underline"
           >
             Reset to Defaults
@@ -327,54 +37,50 @@ export default function PropertyInvestmentCalculator() {
 
             <div className="flex-1 overflow-y-auto pr-1">
               <PropertyDetailsSection
-                propertyAddress={propertyAddress} setPropertyAddress={setPropertyAddress}
-                propertyDescription={propertyDescription} setPropertyDescription={setPropertyDescription}
-                propertyValue={propertyValue} setPropertyValue={setPropertyValue}
-                purchaseCosts={purchaseCosts} setPurchaseCosts={setPurchaseCosts}
-                grossRentWeekly={grossRentWeekly} setGrossRentWeekly={setGrossRentWeekly}
-                rentalExpensesPercent={rentalExpensesPercent} setRentalExpensesPercent={setRentalExpensesPercent}
-                setActiveModal={setActiveModal}
-                renovationCosts={renovationCosts}
-                renovationTimeline={renovationTimeline}
-                buildingDepreciation={buildingDepreciation}
-                setBuildingDepreciation={setBuildingDepreciation}
-                chattelsDepreciation={chattelsDepreciation}
-                setChattelsDepreciation={setChattelsDepreciation}
+                propertyAddress={inputs.propertyAddress} setPropertyAddress={(v) => updateInput("propertyAddress", v)}
+                propertyDescription={inputs.propertyDescription} setPropertyDescription={(v) => updateInput("propertyDescription", v)}
+                propertyValue={inputs.propertyValue} setPropertyValue={(v) => updateInput("propertyValue", v)}
+                purchaseCosts={inputs.purchaseCosts} setPurchaseCosts={(v) => updateInput("purchaseCosts", v)}
+                grossRentWeekly={inputs.grossRentWeekly} setGrossRentWeekly={(v) => updateInput("grossRentWeekly", v)}
+                rentalExpensesPercent={inputs.rentalExpensesPercent} setRentalExpensesPercent={(v) => updateInput("rentalExpensesPercent", v)}
+                setActiveModal={modals.setActiveModal}
+                renovationCosts={inputs.renovationCosts}
+                renovationTimeline={inputs.renovationTimeline}
+                buildingDepreciation={inputs.buildingDepreciation} setBuildingDepreciation={(v) => updateInput("buildingDepreciation", v)}
+                chattelsDepreciation={inputs.chattelsDepreciation} setChattelsDepreciation={(v) => updateInput("chattelsDepreciation", v)}
               />
 
               <FinancingInputsSection
-                cashInvested={cashInvested} setCashInvested={setCashInvested}
-                equityInvested={equityInvested} setEquityInvested={setEquityInvested}
-                loanCosts={loanCosts} setLoanCosts={setLoanCosts}
-                interestRate={interestRate} setInterestRate={setInterestRate}
-                loanType={loanType} setLoanType={setLoanType}
-                additionalLoan={additionalLoan} setAdditionalLoan={setAdditionalLoan}
-                taxWriteOffPeriod={taxWriteOffPeriod} setTaxWriteOffPeriod={setTaxWriteOffPeriod}
-                loanError={loanError}
-                loanA={loanA}
-                loanB={loanB}
-                setLoanA={setLoanA}
-                setIsModalOpen={setIsModalOpen}
-                propertyValue={propertyValue}
-                purchaseCosts={purchaseCosts}
-                renovationCosts={renovationCosts}
+                cashInvested={inputs.cashInvested} setCashInvested={(v) => updateInput("cashInvested", v)}
+                equityInvested={inputs.equityInvested} setEquityInvested={(v) => updateInput("equityInvested", v)}
+                loanCosts={inputs.loanCosts} setLoanCosts={(v) => updateInput("loanCosts", v)}
+                interestRate={inputs.interestRate} setInterestRate={(v) => updateInput("interestRate", v)}
+                loanType={inputs.loanType} setLoanType={(v) => updateInput("loanType", v)}
+                additionalLoan={inputs.additionalLoan} setAdditionalLoan={(v) => updateInput("additionalLoan", v)}
+                taxWriteOffPeriod={inputs.taxWriteOffPeriod} setTaxWriteOffPeriod={(v) => updateInput("taxWriteOffPeriod", v)}
+                loanError={calc.loanError}
+                loanA={calc.loanA}
+                loanB={calc.loanB}
+                setLoanA={calc.setLoanA}
+                setIsModalOpen={modals.setIsModalOpen}
+                propertyValue={inputs.propertyValue}
+                purchaseCosts={inputs.purchaseCosts}
+                renovationCosts={inputs.renovationCosts}
               />
-
 
               <WhatIfSection
-                inflationRate={inflationRate} setInflationRate={setInflationRate}
-                rentalIncomeRate={rentalIncomeRate} setRentalIncomeRate={setRentalIncomeRate}
-                rentalExpenseRate={rentalExpenseRate} setRentalExpenseRate={setRentalExpenseRate}
-                taxableIncomeRate={taxableIncomeRate} setTaxableIncomeRate={setTaxableIncomeRate}
-                livingExpensesRate={livingExpensesRate} setLivingExpensesRate={setLivingExpensesRate}
-                capitalGrowthRate={capitalGrowthRate} setCapitalGrowthRate={setCapitalGrowthRate}
-                setActiveModal={setActiveModal}
+                inflationRate={inputs.inflationRate} setInflationRate={(v) => updateInput("inflationRate", v)}
+                rentalIncomeRate={inputs.rentalIncomeRate} setRentalIncomeRate={(v) => updateInput("rentalIncomeRate", v)}
+                rentalExpenseRate={inputs.rentalExpenseRate} setRentalExpenseRate={(v) => updateInput("rentalExpenseRate", v)}
+                taxableIncomeRate={inputs.taxableIncomeRate} setTaxableIncomeRate={(v) => updateInput("taxableIncomeRate", v)}
+                livingExpensesRate={inputs.livingExpensesRate} setLivingExpensesRate={(v) => updateInput("livingExpensesRate", v)}
+                capitalGrowthRate={inputs.capitalGrowthRate} setCapitalGrowthRate={(v) => updateInput("capitalGrowthRate", v)}
+                setActiveModal={modals.setActiveModal}
               />
-
             </div>
 
             <button
-              onClick={performCalculation}
+              onClick={calc.performCalculation}
               className="mt-6 w-full bg-[#39a859] hover:bg-[#32994f] text-white font-bold py-3.5 rounded-[8px] transition-colors shadow-sm"
             >
               CALCULATE
@@ -386,9 +92,9 @@ export default function PropertyInvestmentCalculator() {
               <h3 className="text-[#23303B] font-bold text-[15px] mb-4">Property Details</h3>
               <div className="grid grid-cols-2 gap-x-8 gap-y-2">
                 {[
-                  ["Property cost", fmt((parseFloat(propertyValue) || 0) + (parseFloat(renovationCosts) || 0))],
-                  ["Total cost", fmt(result?.totalCost)],
-                  ["Gross rent (yr 1)", fmt(result?.projections?.[0]?.annualGrossRent)],
+                  ["Property cost", fmt((parseFloat(inputs.propertyValue) || 0) + (parseFloat(inputs.renovationCosts) || 0))],
+                  ["Total cost", fmt(calc.result?.totalCost)],
+                  ["Gross rent (yr 1)", fmt(calc.result?.projections?.[0]?.annualGrossRent)],
                   ["Gross yield (yr 1)", fmtPct(m?.grossYieldYr1)],
                   ["Net rent (yr 1)", fmt(m?.netRentYr1)],
                   ["Net yield (yr 1)", fmtPct(m?.netYieldYr1)],
@@ -408,7 +114,7 @@ export default function PropertyInvestmentCalculator() {
               <div className="bg-[#0052CC] rounded-[8px] py-4 px-5 flex justify-between items-center mb-5">
                 <span className="text-white font-medium text-[14px]">Total equity in 10 years</span>
                 <span className="text-white font-bold text-[18px]">
-                  {result ? fmt(m.totalEquityIn10Years) : "—"}
+                  {calc.result ? fmt(m.totalEquityIn10Years) : "—"}
                 </span>
               </div>
               {[
@@ -439,10 +145,10 @@ export default function PropertyInvestmentCalculator() {
           </div>
         </div>
 
-        {result && (
+        {calc.result && (
           <div className="mt-8 mb-8 flex justify-center">
             <button
-              onClick={() => setIsProjectionsModalOpen(true)}
+              onClick={() => modals.setIsProjectionsModalOpen(true)}
               className="bg-white border-2 border-[#0052CC] text-[#0052CC] font-bold py-3 px-8 rounded-[8px] hover:bg-[#F1F5F9] transition-colors shadow-sm"
             >
               View Detailed Data Grid
@@ -450,149 +156,9 @@ export default function PropertyInvestmentCalculator() {
           </div>
         )}
       </div>
-      <ProjectionsGridModal
-        isOpen={isProjectionsModalOpen}
-        onClose={() => setIsProjectionsModalOpen(false)}
-        projections={result?.projections || []}
-        metrics={result?.metrics}
-        inputs={result?.originalInputs}
-        onOpenModal={(modalKey) => {
-          if (["loanAmount", "interestRate", "loanCosts"].includes(modalKey)) {
-            setIsModalOpen(modalKey);
-          } else {
-            setActiveModal(modalKey);
-          }
-        }}
-      />
-      <PropertyValueModal isOpen={activeModal === "propertyValue"} onClose={() => setActiveModal(null)} propertyValue={propertyValue} setPropertyValue={setPropertyValue} holdingCosts={holdingCosts} setHoldingCosts={setHoldingCosts} furnitureCosts={furnitureCosts} setFurnitureCosts={setFurnitureCosts} propertyAddress={propertyAddress} setPropertyAddress={setPropertyAddress} propertyDescription={propertyDescription} setPropertyDescription={setPropertyDescription} renovationTimeline={renovationTimeline} setRenovationTimeline={setRenovationTimeline} furnitureTimeline={furnitureTimeline} setFurnitureTimeline={setFurnitureTimeline} linkValueFittings={linkValueFittings} setLinkValueFittings={setLinkValueFittings} linkConstructionCost={linkConstructionCost} setLinkConstructionCost={setLinkConstructionCost} projections={result?.projections || []} renovationCosts={renovationCosts} setRenovationCosts={setRenovationCosts} />
-      <PurchaseCostsModal isOpen={activeModal === "purchaseCosts"} onClose={() => setActiveModal(null)} purchaseCosts={purchaseCosts} setPurchaseCosts={setPurchaseCosts} propertyValue={propertyValue} />
-      <RentalIncomeModal isOpen={activeModal === "rentalIncome"} onClose={() => setActiveModal(null)} grossRentWeekly={grossRentWeekly} setGrossRentWeekly={setGrossRentWeekly} inflationRate={inflationRate} rentTimeline={rentTimeline} setRentTimeline={setRentTimeline} />
-      <RentalExpensesModal 
-        isOpen={activeModal === "rentalExpenses"} 
-        onClose={() => setActiveModal(null)} 
-        grossRentWeekly={grossRentWeekly} 
-        propertyValue={propertyValue} 
-        rentalExpensesPercent={rentalExpensesPercent} 
-        setRentalExpensesPercent={setRentalExpensesPercent} 
-        setActiveModal={setActiveModal} 
-      />
-      <BuildingDepreciationModal isOpen={activeModal === "buildingDepreciation"} onClose={() => setActiveModal(null)} propertyValue={propertyValue} renovationCosts={renovationCosts} buildingDepreciation={buildingDepreciation} setBuildingDepreciation={setBuildingDepreciation} />
-      <ChattelsDepreciationModal isOpen={activeModal === "chattelsDepreciation"} chattelsDepreciation={chattelsDepreciation} onClose={() => setActiveModal(null)} propertyValue={propertyValue} setChattelsDepreciation={setChattelsDepreciation} />
 
-      <LoanAmountModal
-        isOpen={isModalOpen === "loanAmount" || isModalOpen === true || activeModal === "loanAmount"}
-        onClose={() => { setIsModalOpen(false); setActiveModal(null); }}
-        propertyCost={parseNum(propertyValue)}
-        renovationCosts={parseNum(renovationCosts)}
-        purchaseCosts={purchaseCosts && String(purchaseCosts).trim() !== "" ? parseNum(purchaseCosts) : parseNum(propertyValue) * 0.005}
-        furnitureCosts={parseNum(furnitureCosts)}
-        holdingCosts={parseNum(holdingCosts)}
-        loanCosts={(!loanCosts || String(loanCosts).trim() === "")
-          ? (((parseNum(propertyValue) + (purchaseCosts ? parseNum(purchaseCosts) : parseNum(propertyValue) * 0.005) + parseNum(renovationCosts) + 363 + parseNum(additionalLoan) - parseNum(cashInvested) - parseNum(equityInvested)) / 0.99) * 0.01) + 363
-          : parseNum(loanCosts)
-        }
-        initialCashInvested={parseNum(cashInvested)}
-        initialEquityInvested={parseNum(equityInvested)}
-        initialAdditionalLoan={parseNum(additionalLoan)}
-        setCashInvested={setCashInvested}
-        setEquityInvested={setEquityInvested}
-        setAdditionalLoan={setAdditionalLoan}
-        setLoanCosts={setLoanCosts}
-      />
-      <LoanInterestTypeModal
-        isOpen={isModalOpen === "interestRate" || activeModal === "interestRate"}
-        onClose={() => setIsModalOpen(false)}
-
-        loanA={loanA}
-        setLoanA={setLoanA}
-        loanB={loanB}
-        setLoanB={setLoanB}
-
-        setInterestRate={setInterestRate}
-      />
-      <LoanCostsModal
-        isOpen={isModalOpen === "loanCosts" || activeModal === "loanCosts"}
-        onClose={() => setIsModalOpen(false)}
-        baseLoanRequired={
-          parseNum(propertyValue) +
-          (purchaseCosts && String(purchaseCosts).trim() !== "" ? parseNum(purchaseCosts) : parseNum(propertyValue) * 0.005) +
-          parseNum(renovationCosts) +
-          parseNum(additionalLoan) -
-          parseNum(cashInvested) -
-          parseNum(equityInvested)
-        }
-        setLoanCosts={setLoanCosts}
-      />
-      <InvestorDetailsModal
-        isOpen={[
-          "investorDetails",
-          "jointWorkIncome",
-          "jointWorkDeductions",
-
-        ].includes(activeModal)}
-
-        onClose={() => setActiveModal(null)}
-        investorDetails={investorDetails}
-        setInvestorDetails={setInvestorDetails}
-        jointWorkIncome={jointWorkIncome}
-        setJointWorkIncome={setJointWorkIncome}
-        jointWorkDeductions={jointWorkDeductions}
-        setJointWorkDeductions={setJointWorkDeductions}
-        taxableIncomeSingle={taxableIncomeSingle}
-        setTaxableIncomeSingle={setTaxableIncomeSingle}
-      />
-      <HomeLoanDetailsModal
-        isOpen={["principalResidence", "amountOwing", "homeLoanRepayments"].includes(activeModal)}
-        onClose={() => setActiveModal(null)}
-        principalResidence={principalResidence}
-        setPrincipalResidence={setPrincipalResidence}
-        amountOwing={amountOwing}
-        setAmountOwing={setAmountOwing}
-        homeLoanRepayments={homeLoanRepayments}
-        setHomeLoanRepayments={setHomeLoanRepayments}
-      />
-      <TaxCreditsModal
-        isOpen={["taxableIncomeSingle"].includes(activeModal)}
-        onClose={() => setActiveModal(null)}
-        investorIncome={taxableIncomeSingle}
-        partnerIncome={jointWorkIncome}
-        projections={result?.projections || []}
-        onSave={(newTotal) => setTaxableIncomeSingle(newTotal)}
-      />
-      <InflationRateModal
-        isOpen={[
-          "inflationRate",
-          "rentalIncomeRate",
-          "rentalExpenseRate",
-          "taxableIncomeRate",
-          "livingExpensesRate"
-        ].includes(activeModal)}
-        onClose={() => setActiveModal(null)}
-        activeModalType={activeModal}
-        inflationRate={inflationRate} setInflationRate={setInflationRate}
-        rentalIncomeRate={rentalIncomeRate} setRentalIncomeRate={setRentalIncomeRate}
-        rentalExpenseRate={rentalExpenseRate} setRentalExpenseRate={setRentalExpenseRate}
-        taxableIncomeRate={taxableIncomeRate} setTaxableIncomeRate={setTaxableIncomeRate}
-        livingExpensesRate={livingExpensesRate} setLivingExpensesRate={setLivingExpensesRate}
-      />
-
-
-      <CapitalGrowthModal
-        isOpen={activeModal === "capitalGrowthRate"}
-        onClose={() => setActiveModal(null)}
-        capitalGrowthRate={capitalGrowthRate}
-        setCapitalGrowthRate={setCapitalGrowthRate}
-        capitalizationRate={capitalizationRate}
-        setCapitalizationRate={setCapitalizationRate}
-        capitalGrowthMode={capitalGrowthMode}
-        setCapitalGrowthMode={setCapitalGrowthMode}
-        propertyValue={propertyValue}
-        setPropertyValue={setPropertyValue} 
-        renovationCosts={renovationCosts}
-        grossRentWeekly={grossRentWeekly}
-        rentalExpensesPercent={rentalExpensesPercent}
-        rentalIncomeRate={rentalIncomeRate}
-      />
+      <CalculatorModals calc={calc} modals={modals} />
+      
     </div>
   );
 }

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import PreTaxEquivalentModal from "../components/Propertycalculator/componenets/taxesmodal/PreTaxEquivalentModal";
 import InternalRateOfReturnModal from "../components/Propertycalculator/componenets/taxesmodal/InternalRateOfReturnModal";
-import AfterTaxCashFlowModal from "../components/Propertycalculator/componenets/taxesmodal/AfterTaxCashFlowModal"; // <-- 1. New Import
+import AfterTaxCashFlowModal from "../components/Propertycalculator/componenets/taxesmodal/AfterTaxCashFlowModal"; 
+import PreTaxCashFlowModal from "../components/Propertycalculator/componenets/taxesmodal/PreTaxCashFlowModal"; // <-- NEW IMPORT
 
 const fmtCur = (val) => {
   if (val === null || val === undefined || isNaN(val)) return "—";
@@ -31,7 +32,8 @@ export default function ProjectionsGridModal({ isOpen, onClose, projections, met
   const COLUMNS_TO_SHOW = 5;
   const [isPreTaxEqOpen, setIsPreTaxEqOpen] = useState(false);
   const [isIrrOpen, setIsIrrOpen] = useState(false);
-  const [isAfterTaxOpen, setIsAfterTaxOpen] = useState(false); // <-- 2. New State
+  const [isAfterTaxOpen, setIsAfterTaxOpen] = useState(false); 
+  const [isPreTaxCashFlowOpen, setIsPreTaxCashFlowOpen] = useState(false); // <-- NEW STATE
 
   useEffect(() => {
     if (isOpen) setStartYear(1);
@@ -76,7 +78,8 @@ export default function ProjectionsGridModal({ isOpen, onClose, projections, met
       rows: [
         { label: "Interest", modalKey: "interestRate", inputVal: inVal("interestRate"), inputFormat: fmtPct, yearFn: (p) => p.annualInterest, format: fmtCur },
         { label: "Rental expenses", modalKey: "rentalExpenses", inputVal: inVal("rentalExpensesPercent"), inputFormat: fmtPct, yearFn: (p) => p.annualRentalExpenses, format: fmtCur },
-        { label: "Pre-tax cash flow", inputVal: inVal("preTaxCashFlow"), inputFormat: fmtCur, yearFn: (p) => p.preTaxCashFlow, format: fmtCur, isBold: true, isNegativeRed: true },
+        // <-- ADDED modalKey to this row so it becomes clickable
+        { label: "Pre-tax cash flow", modalKey: "preTaxCashFlow", inputVal: inVal("preTaxCashFlow"), inputFormat: fmtCur, yearFn: (p) => p.preTaxCashFlow, format: fmtCur, isBold: true, isNegativeRed: true },
       ],
     },
     {
@@ -92,7 +95,6 @@ export default function ProjectionsGridModal({ isOpen, onClose, projections, met
       title: "Summary",
       rows: [
         { label: "Tax credit (single)", modalKey: "taxableIncomeSingle", inputVal: inVal("investorIncome"), inputFormat: fmtCur, yearFn: (p) => p.taxCredit, format: fmtCur },
-        // <-- 3. Linked to afterTaxCashFlow key
         { label: "After-tax cash flow", modalKey: "afterTaxCashFlow", inputVal: inVal("afterTaxCashFlow"), inputFormat: fmtCur, yearFn: (p) => p.afterTaxCashFlow, format: fmtCur, isBold: true, isNegativeRed: true },
         { label: "Rate of return (IRR)", modalKey: "irr", inputVal: displayIrr, inputFormat: fmtPct, yearFn: null, inputOnly: true, isBold: true },
         { label: "Pre-tax equivalent", modalKey: "preTaxEquivalent", inputVal: displayPreTaxIrr, inputFormat: fmtPct, yearFn: null, inputOnly: true, isBold: false },
@@ -171,13 +173,14 @@ export default function ProjectionsGridModal({ isOpen, onClose, projections, met
 
                         <td
                           onClick={() => {
-                            // <-- 4. Intercept the click for the new modal
                             if (row.modalKey === "preTaxEquivalent") {
                               setIsPreTaxEqOpen(true);
                             } else if (row.modalKey === "irr") {
                               setIsIrrOpen(true);
                             } else if (row.modalKey === "afterTaxCashFlow") {
                               setIsAfterTaxOpen(true);
+                            } else if (row.modalKey === "preTaxCashFlow") { // <-- ADDED HANDLER
+                              setIsPreTaxCashFlowOpen(true);
                             } else if (row.modalKey && onOpenModal) {
                               onOpenModal(row.modalKey);
                             }
@@ -228,7 +231,6 @@ export default function ProjectionsGridModal({ isOpen, onClose, projections, met
         </div>
       </div>
 
-      {/* 5. Render Modals */}
       <PreTaxEquivalentModal
         isOpen={isPreTaxEqOpen}
         onClose={() => setIsPreTaxEqOpen(false)}
@@ -246,6 +248,13 @@ export default function ProjectionsGridModal({ isOpen, onClose, projections, met
       <AfterTaxCashFlowModal
         isOpen={isAfterTaxOpen} 
         onClose={() => setIsAfterTaxOpen(false)}
+        projections={projections}
+        inputs={inputs}
+      />
+      {/* <-- NEW MODAL COMPONENT --> */}
+      <PreTaxCashFlowModal
+        isOpen={isPreTaxCashFlowOpen} 
+        onClose={() => setIsPreTaxCashFlowOpen(false)}
         projections={projections}
         inputs={inputs}
       />

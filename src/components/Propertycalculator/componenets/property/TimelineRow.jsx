@@ -37,7 +37,6 @@ export default function TimelineRow({
     const raw = val.replace(/,/g, "");
     if (raw !== "" && !/^-?\d*\.?\d*$/.test(raw)) return;
 
-    // Dynamically expand array if user scrolls infinitely into the future
     let newArr = [...timelineValues];
     while (newArr.length <= startIndex + idx) {
       newArr.push("0");
@@ -47,18 +46,16 @@ export default function TimelineRow({
     onTimelineChange(newArr);
   };
 
- const displayBaseValue = focusedBase ? baseValue : formatVal(baseValue);
+  const displayBaseValue = focusedBase ? baseValue : formatVal(baseValue);
 
   return (
-    <div className="flex items-center mb-2 w-full">
-      {/* Label */}
+    <div className="flex items-center w-full mb-3">
       <div className="w-[130px] text-right pr-4 text-[13px] text-[#64748B] font-bold flex-shrink-0">
         {label}:
       </div>
 
-      {/* Base Input (Time 0) */}
-      <div className="w-[100px] flex-shrink-0">
-        {baseValue !== undefined && (
+      {baseValue !== undefined && (
+        <div className="w-[100px] flex-shrink-0">
           <input
             type="text"
             inputMode="decimal"
@@ -73,18 +70,16 @@ export default function TimelineRow({
                 : "border-[#CBD5E1] text-[#1E293B] focus:border-[#0052CC] bg-white shadow-sm"
             }`}
           />
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Timeline Grid (Sliding Window) */}
       <div className="flex-1 flex gap-2 ml-4">
-        {[0, 1, 2, 3, 4].map(idx => {
+        {[0, 1, 2, 3, 4].map((idx) => {
           if (isBaseOnly) return <div key={idx} className="flex-1"></div>;
 
           const rawVal = timelineValues[startIndex + idx] || (isReadOnly ? 0 : "");
           const isFocused = focusedTimelineIdx === idx;
 
-          // Format large numbers with "m" perfectly matching the old software for ReadOnly
           let displayVal = rawVal;
           if (isReadOnly) {
             const num = Number(rawVal) || 0;
@@ -109,7 +104,7 @@ export default function TimelineRow({
                 readOnly={isReadOnly}
                 className={`w-full border rounded-[4px] px-1 py-1.5 text-[13px] text-center transition-colors focus:outline-none ${
                   isReadOnly
-                    ? "bg-transparent border-transparent text-[#1E293B] font-medium"
+                    ? "bg-transparent border-transparent text-[#1E293B] font-bold"
                     : "border-[#CBD5E1] text-[#1E293B] focus:border-[#0052CC] bg-white shadow-sm"
                 }`}
               />

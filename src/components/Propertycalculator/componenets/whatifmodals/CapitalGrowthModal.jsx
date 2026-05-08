@@ -24,11 +24,10 @@ export default function CapitalGrowthModal({
   rentalIncomeRate,
 }) {
   const [startYear, setStartYear] = useState(1);
-  const [activeRow, setActiveRow] = useState("growth"); 
+  const [activeRow, setActiveRow] = useState("growth");
   const [averageRate, setAverageRate] = useState("5.00");
   const [rates, setRates] = useState(Array(30).fill("5.00"));
 
-  // Sync state when modal opens
   useEffect(() => {
     if (isOpen) {
       setStartYear(1);
@@ -62,14 +61,14 @@ export default function CapitalGrowthModal({
   if (activeRow === "growth") {
     pvArr[0] = parseNum(propertyValue);
     capArr[0] = pvArr[0] > 0 ? (netRents[0] / pvArr[0]) * 100 : 0;
-    
+
     for (let i = 1; i <= 30; i++) {
       const g = parseFloat(rates[i - 1]) || 0;
       growthArr[i] = g;
       pvArr[i] = pvArr[i - 1] * (1 + g / 100);
       capArr[i] = pvArr[i] > 0 ? (netRents[i] / pvArr[i]) * 100 : 0;
     }
-  } else { 
+  } else {
     const cap0 = parseFloat(rates[0]) || 0.0001;
     capArr[0] = cap0;
     pvArr[0] = netRents[0] / (cap0 / 100);
@@ -141,28 +140,21 @@ export default function CapitalGrowthModal({
   const isCap = activeRow === "capitalization";
 
   return ReactDOM.createPortal(
-    /* THE FIX: Added p-4 to prevent the modal from touching the edges of the screen on mobile */
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm p-4">
-      
-      {/* THE FIX: Changed w-[720px] to w-full max-w-[720px] and added max-h-[95vh] */}
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm p-4">
+    
       <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-full max-w-[720px] flex flex-col border border-[#CBD5E1] overflow-hidden max-h-[95vh] font-sans">
 
-        {/* Header */}
         <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0] shrink-0">
           <h2 className="text-[14px] font-bold text-[#1E293B]">Investment Property Growth</h2>
           <button onClick={onClose} className="text-[#64748B] hover:text-[#0F172A] text-[18px]">&times;</button>
         </div>
 
-        {/* Content - Added overflow-y-auto so the body scrolls vertically if needed */}
         <div className="p-4 sm:p-8 bg-[#F8FAFC] flex flex-col overflow-y-auto">
-          
-          {/* THE FIX: Wrapped the grids in an overflow-x-auto container so they swipe on phones */}
+
           <div className="overflow-x-auto mb-6">
-            
-            {/* THE FIX: Added min-w-[650px] to keep the columns aligned and readable */}
+
             <div className="min-w-[650px]">
-              
-              {/* Top Section: Static Text Grid */}
+
               <div className="grid grid-cols-[160px_repeat(6,1fr)] gap-3 items-center text-[13px] text-[#1E293B] mb-8">
                 <div className="text-right pr-2 font-medium">End of year:</div>
                 <div className="text-center font-medium bg-slate-100 rounded py-1">{startYear === 1 ? "Initial" : `${startYear - 1}yr`}</div>
@@ -184,7 +176,6 @@ export default function CapitalGrowthModal({
                 })}
               </div>
 
-              {/* Middle Section: Display in Spreadsheet Fieldset */}
               <fieldset className="border border-[#CBD5E1] p-4 rounded-[6px] relative">
                 <legend className="text-[12px] text-[#64748B] font-bold px-2 bg-[#F8FAFC] ml-2">
                   Display in Spreadsheet
@@ -196,15 +187,15 @@ export default function CapitalGrowthModal({
                   <div className="col-span-5"></div>
 
                   {/* Capital Growth Rates Row */}
-                  <div 
+                  <div
                     className="flex items-center gap-2 justify-end pr-2 cursor-pointer"
                     onClick={() => handleSwitchRow("growth")}
                   >
-                    <input 
-                      type="radio" 
-                      checked={isGrowth} 
-                      onChange={() => handleSwitchRow("growth")} 
-                      className="accent-[#0052CC] w-3.5 h-3.5 cursor-pointer" 
+                    <input
+                      type="radio"
+                      checked={isGrowth}
+                      onChange={() => handleSwitchRow("growth")}
+                      className="accent-[#0052CC] w-3.5 h-3.5 cursor-pointer"
                     />
                     <span className="text-[12px] text-[#1E293B] font-medium whitespace-nowrap">Capital growth rates:</span>
                   </div>
@@ -240,19 +231,19 @@ export default function CapitalGrowthModal({
                   })}
 
                   {/* Capitalization Rates Row */}
-                  <div 
+                  <div
                     className="flex items-center gap-2 justify-end pr-2 cursor-pointer"
                     onClick={() => handleSwitchRow("capitalization")}
                   >
-                    <input 
-                      type="radio" 
-                      checked={isCap} 
-                      onChange={() => handleSwitchRow("capitalization")} 
-                      className="accent-[#0052CC] w-3.5 h-3.5 cursor-pointer" 
+                    <input
+                      type="radio"
+                      checked={isCap}
+                      onChange={() => handleSwitchRow("capitalization")}
+                      className="accent-[#0052CC] w-3.5 h-3.5 cursor-pointer"
                     />
                     <span className="text-[12px] text-[#1E293B] font-medium whitespace-nowrap">Capitalization rates:</span>
                   </div>
-                  
+
                   <div className="relative">
                     <input
                       type="text"
@@ -286,10 +277,8 @@ export default function CapitalGrowthModal({
               </fieldset>
             </div>
           </div>
-
-          {/* Footer Controls - THE FIX: flex-col sm:flex-row to stack nicely on mobile */}
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-4 shrink-0">
-            
+
             <div className="flex items-center gap-1">
               <button className="px-3 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] font-bold hover:bg-[#E2E8F0] shadow-sm">?</button>
               <button onClick={navPrev5} disabled={startYear === 1} className="px-3 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#64748B] font-bold hover:bg-[#E2E8F0] shadow-sm disabled:opacity-30 transition-colors">&lt;&lt;</button>

@@ -292,7 +292,7 @@ export default function FinancingInputsSection({
           Edit ↗
         </button>
       </div>
-      
+
       <div className="flex items-end gap-2 w-full">
         <div className="flex-1 min-w-0">
           <InputField
@@ -310,7 +310,7 @@ export default function FinancingInputsSection({
           Edit ↗
         </button>
       </div>
-      
+
     </CollapsibleSection>
   );
 }

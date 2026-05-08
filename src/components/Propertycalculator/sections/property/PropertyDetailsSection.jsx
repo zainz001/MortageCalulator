@@ -34,7 +34,7 @@ export default function PropertyDetailsSection({
 
   // --- FIX: The Default Value Bypass ---
   const annualRent = (parseFloat(grossRentWeekly) || 0) * 52;
-  
+
   let rentalExpensesTotalDollar = 0;
   if (annualRent > 0) {
     // If it's the exact default state, force it to match the modal's $10,835 sum

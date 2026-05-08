@@ -5,7 +5,7 @@ import ReactDOM from "react-dom";
 export default function AnnualRentalIncomeModal({
   isOpen,
   onClose,
-  actualAnnualRent, // The 35672 string passed from the parent
+  actualAnnualRent, 
   inflationRate,
   rentTimeline,
   setRentTimeline
@@ -44,8 +44,6 @@ export default function AnnualRentalIncomeModal({
       const startYear = parseInt(inflationStartYear) || 1;
 
       let newProjections = [];
-
-      // THE FIX: Loop now calculates a full 30 years
       for (let i = 1; i <= 30; i++) {
         if (!useInflation || i < startYear) {
           newProjections.push(Math.round(baseActualRent).toString());

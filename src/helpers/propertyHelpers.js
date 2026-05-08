@@ -21,12 +21,12 @@ function calculateMonthlyIRR(cashflowsCents, guess = 0.01) {
       npv += cf[t] / discount;
       if (t > 0) dNpv -= (t * cf[t]) / (discount * (1 + irr));
     }
-    if (dNpv === 0) return null; 
+    if (dNpv === 0) return null;
     const newIrr = irr - npv / dNpv;
-    if (Math.abs(newIrr - irr) < tol) return newIrr; 
+    if (Math.abs(newIrr - irr) < tol) return newIrr;
     irr = newIrr;
   }
-  return null; 
+  return null;
 }
 
 function findCashPositiveYear(params) {
@@ -66,24 +66,24 @@ function findCashPositiveYear(params) {
     const afterTax = preTax + taxCredit;
     if (afterTax > 0) return (currentYear + yr - 1).toString();
   }
-  return "30yr+"; 
+  return "30yr+";
 }
 
 export function calculatePIA({
   propertyValue, purchaseCostsManual, grossRentWeekly, rentalExpensesPercent,
-  cashInvested, equityInvested, loanCostsManual, loanA, loanB, loanType,            
+  cashInvested, equityInvested, loanCostsManual, loanA, loanB, loanType,
   additionalLoan, renovationCosts = 0, furnitureCosts = 0, holdingCosts = 0,
   capitalGrowthRate, inflationRate, chattelsValue, depreciationMethod,
   chattelsDepreciationRate, buildingDepreciationRate, investorTaxRate,
   interestDeductibility, isNewBuild, ringFencing, renovationTimeline = [],
-  furnitureTimeline = [], rentTimeline = [], vacancyRate = 2 
+  furnitureTimeline = [], rentTimeline = [], vacancyRate = 2
 }) {
-  
+
   const pvC = toCents(parseNum(propertyValue));
   const purchCostsC = purchaseCostsManual && String(purchaseCostsManual).trim() !== ""
     ? toCents(parseNum(purchaseCostsManual))
-    : toCents(parseNum(propertyValue) * 0.005);        
-    
+    : toCents(parseNum(propertyValue) * 0.005);
+
   const cashC = toCents(parseNum(cashInvested));
   const equityC = toCents(parseNum(equityInvested));
   const addLoanC = toCents(parseNum(additionalLoan));
@@ -92,7 +92,7 @@ export function calculatePIA({
   const holdC = toCents(parseNum(holdingCosts));
   const chattelsC = toCents(parseNum(chattelsValue));
   const grossRentWkC = toCents(parseNum(grossRentWeekly));
-  
+
   const investorTaxRateP = parseNum(investorTaxRate);
   const capitalGrowthRateP = parseNum(capitalGrowthRate);
   const inflationRateP = parseNum(inflationRate);
@@ -150,18 +150,18 @@ export function calculatePIA({
       const interest = state.balance * R;
       return { interest: toCents(interest), principal: 0 };
     }
-    
+
     if (state.type === "CAP") {
       const interest = state.balance * (Math.pow(1 + R / 12, 12) - 1);
       state.balance += interest; // Balance grows
       // Debt service is 0 because cash isn't spent; principal cleanly offsets interest here
       return { interest: toCents(interest), principal: toCents(-interest) };
     }
-    
+
     if (state.type === "PI") {
       if (R === 0) return { interest: 0, principal: 0 };
       const M = R / 12;
-      const n = 25 * 12; 
+      const n = 25 * 12;
       const monthlyPmt = (state.originalAmount * M) / (1 - Math.pow(1 + M, -n));
 
       let yrInt = 0;
@@ -177,7 +177,7 @@ export function calculatePIA({
       }
       return { interest: toCents(yrInt), principal: toCents(yrPrin) };
     }
-    
+
     if (state.type === "CL") {
       if (R === 0) return { interest: 0, principal: 0 };
       const annualPmt = state.originalAmount * (R + 0.0219676);
@@ -197,7 +197,7 @@ export function calculatePIA({
       }
       return { interest: toCents(yrInt), principal: toCents(yrPrin) };
     }
-    
+
     return { interest: 0, principal: 0 };
   };
 
@@ -208,16 +208,16 @@ export function calculatePIA({
 
   const currentYear = new Date().getFullYear();
   const initialInvestmentC = -(cashC + equityC);
-  const historicalAfterTaxCents = []; 
+  const historicalAfterTaxCents = [];
 
   const maxProjectedYears = 30;
-  let lastMarketValueC = pvC + renoCostsC; 
+  let lastMarketValueC = pvC + renoCostsC;
   const vacancyRateP = parseNum(vacancyRate);
-  
+
   const baseAnnualRentYr1Float = fromCents(grossRentWkC) * 52;
   let baseExpenseYr1Float = baseAnnualRentYr1Float * (rentalExpensesPercentP / 100);
   if (rentalExpensesPercentP === 29.77 && baseAnnualRentYr1Float === 36400) {
-      baseExpenseYr1Float = 10835.00; 
+      baseExpenseYr1Float = 10835.00;
   }
 
   for (let yr = 1; yr <= maxProjectedYears; yr++) {
@@ -225,7 +225,7 @@ export function calculatePIA({
     const propValueC = toCents(fromCents(lastMarketValueC) * (1 + capitalGrowthRateP / 100)) + renoYrC;
     lastMarketValueC = propValueC;
 
-    let baseAnnualRentC; 
+    let baseAnnualRentC;
     let rentalExpensesC;
 
     if (rentTimeline && rentTimeline[yr - 1]) {
@@ -234,13 +234,13 @@ export function calculatePIA({
     } else {
       const exactRentForYear = baseAnnualRentYr1Float * Math.pow(1 + inflationRateP / 100, yr - 1);
       const exactExpenseForYear = baseExpenseYr1Float * Math.pow(1 + inflationRateP / 100, yr - 1);
-      
+
       baseAnnualRentC = toCents(exactRentForYear);
       rentalExpensesC = toCents(exactExpenseForYear);
     }
-    
+
     const annualGrossRentC = toCents(fromCents(baseAnnualRentC) * (1 - (vacancyRateP / 100)));
-    
+
     // Process states and retrieve debt service chunks
     const resA = processLoanYear(loanStateA, yr);
     const resB = processLoanYear(loanStateB, yr);
@@ -267,7 +267,7 @@ export function calculatePIA({
     const buildingDepC = toCents(fromCents(propValueC) * (buildingDepreciationRateP / 100));
 
     let deductionsC = deductibleInterestC + rentalExpensesC + chattelsDepC + buildingDepC;
-    if (yr === 1) deductionsC += loanCostsC; 
+    if (yr === 1) deductionsC += loanCostsC;
 
     const netTaxableIncomeC = annualGrossRentC - deductionsC;
     let taxCreditC = 0;
@@ -286,13 +286,13 @@ export function calculatePIA({
 
     const afterTaxCashFlowC = preTaxCashFlowC + taxCreditC;
     const costPerWeekC = Math.round((-preTaxCashFlowC) / 52);
-    
+
     // FIXED: Equity calculation deducts the dynamic global loan balance, cleanly offsetting auto-calculations
     currentLoanBalanceC -= annualPrincipalC;
     const equityC_yr = propValueC - currentLoanBalanceC;
 
     historicalAfterTaxCents.push(afterTaxCashFlowC);
-    
+
     const monthlyCFs = [initialInvestmentC];
     for (let i = 0; i < yr; i++) {
       const monthlyC = Math.round(historicalAfterTaxCents[i] / 12);
@@ -303,7 +303,7 @@ export function calculatePIA({
     monthlyCFs[monthlyCFs.length - 1] += equityC_yr;
 
     const monthlyIRRDecimal = calculateMonthlyIRR(monthlyCFs, 0.01);
-    
+
     let calculatedIRR = null;
     let preTaxEquivalentIRR = null;
 
@@ -329,10 +329,10 @@ export function calculatePIA({
       taxCredit: fromCents(taxCreditC),
       afterTaxCashFlow: fromCents(afterTaxCashFlowC),
       costPerWeek: fromCents(costPerWeekC),
-      accumulatedLoss: fromCents(accumulatedLossC), 
+      accumulatedLoss: fromCents(accumulatedLossC),
       loanAmount: fromCents(currentLoanBalanceC), // Passes out correct amortized balances
-      irr: calculatedIRR, 
-      preTaxEquivalentIRR: preTaxEquivalentIRR, 
+      irr: calculatedIRR,
+      preTaxEquivalentIRR: preTaxEquivalentIRR,
     });
   }
 
@@ -353,17 +353,17 @@ export function calculatePIA({
   // Return relative "yr" format for your React array mapping
   const cashPositiveYear = (() => {
     const found = projections.find((p) => p.afterTaxCashFlow > 0);
-    if (found) return `${found.index}yr`; 
-    
+    if (found) return `${found.index}yr`;
+
     const futureYearStr = findCashPositiveYear({
       loanAmount: fromCents(loanAmountC),
       grossRentWeekly: parseNum(grossRentWeekly),
       inflationRate: inflationRateP,
-      annualInterest: toCents(fromCents(loanAmountC) * (fallbackRate / 100)), 
+      annualInterest: toCents(fromCents(loanAmountC) * (fallbackRate / 100)),
       rentalExpensesPercent: rentalExpensesPercentP,
       taxRate,
       ringFencing,
-      deductibleInterestFn: () => toCents(fromCents(loanAmountC) * (fallbackRate / 100)), 
+      deductibleInterestFn: () => toCents(fromCents(loanAmountC) * (fallbackRate / 100)),
       chattelsValueCents: chattelsC,
       chattelsDepreciationRate: chattelsDepreciationRateP,
       currentYear,

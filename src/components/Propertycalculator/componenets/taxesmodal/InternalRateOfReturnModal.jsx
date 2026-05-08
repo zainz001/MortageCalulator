@@ -1,7 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-// Formatting helpers tailored to match the screenshot exactly
 const fmtNum = (val) => {
   if (val === null || val === undefined || isNaN(val)) return "";
   return Math.round(val).toLocaleString("en-NZ");
@@ -21,136 +20,156 @@ const fmtPct = (val) => {
 export default function InternalRateOfReturnModal({ isOpen, onClose, projections, metrics, inputs }) {
   if (!isOpen) return null;
 
-  // Helpers to extract data safely (fallback to screenshot values if data is missing)
+  const inflationRate = inputs?.inflationRate !== undefined ? parseFloat(inputs.inflationRate) : 3.00;
+  const irr = metrics?.irr || 0;
+
   const getCF = (yr) => {
-    if (yr === 'Initial') return -75000;
-    const fallbacks = { 1: -19757, 2: -19012, 3: -18244, 5: -16640, 10: -12187 };
+    if (yr === 'Initial') return -(inputs?.investments || inputs?.equity || 0);
     const p = projections?.find((proj) => proj.index === yr);
-    return p?.preTaxCashFlow || fallbacks[yr] || 0;
+    return p?.preTaxCashFlow || 0;
   };
 
   const getPV = (yr) => {
-    if (yr === 'Initial') return -75000;
-    const fallbacks = { 1: -19465, 2: -18185, 3: -16943, 5: -14566, 10: -9202 };
-    // FIXED: Actually define 'p' before trying to use it!
-    const p = projections?.find((proj) => proj.index === yr);
-    return p?.presentValue || fallbacks[yr] || 0;
+    const cf = getCF(yr);
+    if (yr === 'Initial') return cf;
+    return cf / Math.pow(1 + inflationRate / 100, yr);
   };
 
-  // Summary Metrics (Fallbacks to match screenshot)
-  const totalInvestmentPV = metrics?.totalInvestmentPV || 216317;
-  const equityAtEnd = metrics?.equityAtEnd || 535607;
-  const equityAtEndPV = metrics?.equityAtEndPV || 398542;
-  const netPresentValue = metrics?.netPresentValue || 182225;
-  const irr = metrics?.irr || 11.62;
-  const inflationRate = inputs?.inflationRate || 3.00;
-  const realReturn = metrics?.realReturn || 8.36;
-  
-  // If Sold...
-  const afterSaleEquity = metrics?.afterSaleEquity || 500423;
-  const afterSaleEquityPV = metrics?.afterSaleEquityPV || 372362;
-  const afterSaleIrr = metrics?.afterSaleIrr || 10.66;
+  let dynamicTotalInvestmentPV = 0;
+  let dynamicNPV = 0;
+
+  const initialCF = getCF('Initial');
+  dynamicTotalInvestmentPV += Math.abs(initialCF); 
+  dynamicNPV += initialCF;
+
+  // Add yearly cash flows to totals
+  projections?.forEach((p) => {
+    const pv = p.preTaxCashFlow / Math.pow(1 + inflationRate / 100, p.index);
+    if (pv < 0) {
+      dynamicTotalInvestmentPV += Math.abs(pv); // Sum of all negative outlays
+    }
+    dynamicNPV += pv;
+  });
+
+  const lastProj = projections && projections.length > 0 ? projections[projections.length - 1] : null;
+  const lastYr = lastProj?.index || 10;
+  const equityAtEnd = lastProj?.equity || 0;
+  const equityAtEndPV = equityAtEnd / Math.pow(1 + inflationRate / 100, lastYr);
+
+  dynamicNPV += equityAtEndPV;
+
+  const realReturn = metrics?.realReturn || (((1 + irr / 100) / (1 + inflationRate / 100) - 1) * 100);
+
+  const totalInvestmentPV = metrics?.totalInvestmentPV || dynamicTotalInvestmentPV;
+  const netPresentValue = metrics?.netPresentValue || dynamicNPV;
+  const afterSaleEquity = metrics?.afterSaleEquity || equityAtEnd;
+  const afterSaleEquityPV = metrics?.afterSaleEquityPV || equityAtEndPV;
+  const afterSaleIrr = metrics?.afterSaleIrr || irr;
 
   return ReactDOM.createPortal(
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/30 backdrop-blur-sm p-4">
-      <div className="bg-[#F0F4F8] rounded-[6px] shadow-2xl w-full max-w-[480px] max-h-[95vh] flex flex-col border border-slate-300 text-[13px] text-slate-800 font-sans overflow-hidden">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm p-4">
+      <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-full max-w-[500px] flex flex-col border border-[#CBD5E1] overflow-hidden max-h-[95vh] font-sans">
         
         {/* Header */}
-        <div className="flex justify-between items-center px-4 py-2 bg-white border-b border-slate-200 rounded-t-[6px] shrink-0">
-          <span className="font-normal text-slate-700">Internal Rate of Return</span>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-800 text-[20px] leading-none">&times;</button>
+        <div className="flex justify-between items-center px-5 py-3 bg-white border-b border-[#E2E8F0] shrink-0">
+          <h2 className="text-[15px] font-bold text-[#1E293B]">Internal Rate of Return</h2>
+          <button onClick={onClose} className="text-[#64748B] hover:text-[#0F172A] text-[18px]">&times;</button>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto">
-          <table className="w-full text-right border-collapse">
-            <thead>
-              <tr>
-                <th className="font-normal text-slate-700 pb-2 w-[40%]">Year</th>
-                <th className="font-normal text-slate-700 pb-2 w-[30%]">Cash Flow</th>
-                <th className="font-normal text-slate-700 pb-2 w-[30%]">Today's $</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Cash Flows */}
-              <tr>
-                <td className="py-1">Initial investment</td>
-                <td className="py-1">{fmtNum(getCF('Initial'))}</td>
-                <td className="py-1">{fmtNum(getPV('Initial'))}</td>
-              </tr>
-              {[1, 2, 3, 5, 10].map(yr => (
-                <tr key={yr}>
-                  <td className="py-1">{yr}yr</td>
-                  <td className="py-1">{fmtNum(getCF(yr))}</td>
-                  <td className="py-1">{fmtNum(getPV(yr))}</td>
+        <div className="p-5 overflow-y-auto">
+          <div className="border border-[#CBD5E1] rounded-[6px] bg-white p-4">
+            <table className="w-full text-right border-collapse text-[13px] text-[#1E293B]">
+              <thead>
+                <tr>
+                  <th className="font-medium text-[#1E293B] pb-2 border-b border-[#E2E8F0] w-[40%] pr-4 text-right">Year</th>
+                  <th className="font-medium text-[#1E293B] pb-2 border-b border-[#E2E8F0] w-[30%] px-2">Cash Flow</th>
+                  <th className="font-medium text-[#1E293B] pb-2 border-b border-[#E2E8F0] w-[30%] px-2">Today's $</th>
                 </tr>
-              ))}
+              </thead>
+              <tbody>
+                {/* Cash Flows */}
+                <tr>
+                  <td className="py-1.5 pr-4 pt-3">Initial investment</td>
+                  <td className="py-1.5 px-2 pt-3">{fmtNum(getCF('Initial'))}</td>
+                  <td className="py-1.5 px-2 pt-3">{fmtNum(getPV('Initial'))}</td>
+                </tr>
+                {[1, 2, 3, 5, 10].map(yr => (
+                  <tr key={yr}>
+                    <td className="py-1.5 pr-4">{yr}yr</td>
+                    <td className="py-1.5 px-2">{fmtNum(getCF(yr))}</td>
+                    <td className="py-1.5 px-2">{fmtNum(getPV(yr))}</td>
+                  </tr>
+                ))}
 
-              {/* Summary Block */}
-              <tr>
-                <td className="py-1 pt-4">Total investment</td>
-                <td className="py-1 pt-4"></td>
-                <td className="py-1 pt-4">{fmtCur(totalInvestmentPV)}</td>
-              </tr>
-              <tr>
-                <td className="py-1">Equity at end</td>
-                <td className="py-1">{fmtCur(equityAtEnd)}</td>
-                <td className="py-1">{fmtCur(equityAtEndPV)}</td>
-              </tr>
-              <tr>
-                <td className="py-1 pb-2">Net present value</td>
-                <td className="py-1 pb-2"></td>
-                <td className="py-1 pb-2 font-bold">{fmtCur(netPresentValue)}</td>
-              </tr>
-              
-              {/* Rates */}
-              <tr>
-                <td className="py-1 font-bold">Internal rate of return</td>
-                <td className="py-1"></td>
-                <td className="py-1 font-bold">{fmtPct(irr)}</td>
-              </tr>
-              <tr>
-                <td className="py-1">Inflation rate</td>
-                <td className="py-1"></td>
-                <td className="py-1">{fmtPct(inflationRate)}</td>
-              </tr>
-              <tr>
-                <td className="py-1">Real return</td>
-                <td className="py-1"></td>
-                <td className="py-1 font-bold">{fmtPct(realReturn)}</td>
-              </tr>
+                {/* Summary Block */}
+                <tr>
+                  <td className="py-1.5 pr-4 pt-4 border-t border-[#E2E8F0]">Total investment</td>
+                  <td className="py-1.5 px-2 pt-4 border-t border-[#E2E8F0]"></td>
+                  <td className="py-1.5 px-2 pt-4 border-t border-[#E2E8F0]">{fmtCur(totalInvestmentPV)}</td>
+                </tr>
+                <tr>
+                  <td className="py-1.5 pr-4">Equity at end</td>
+                  <td className="py-1.5 px-2">{fmtCur(equityAtEnd)}</td>
+                  <td className="py-1.5 px-2">{fmtCur(equityAtEndPV)}</td>
+                </tr>
+                <tr>
+                  <td className="py-1.5 pr-4 pb-3">Net present value</td>
+                  <td className="py-1.5 px-2 pb-3"></td>
+                  <td className="py-1.5 px-2 pb-3 font-bold">{fmtCur(netPresentValue)}</td>
+                </tr>
+                
+                {/* Rates */}
+                <tr>
+                  <td className="py-1.5 pr-4 font-bold border-t border-[#E2E8F0] pt-3">Internal rate of return</td>
+                  <td className="py-1.5 px-2 border-t border-[#E2E8F0] pt-3"></td>
+                  <td className="py-1.5 px-2 font-bold border-t border-[#E2E8F0] pt-3">{fmtPct(irr)}</td>
+                </tr>
+                <tr>
+                  <td className="py-1.5 pr-4">Inflation rate</td>
+                  <td className="py-1.5 px-2"></td>
+                  <td className="py-1.5 px-2">{fmtPct(inflationRate)}</td>
+                </tr>
+                <tr>
+                  <td className="py-1.5 pr-4 pb-3">Real return</td>
+                  <td className="py-1.5 px-2 pb-3"></td>
+                  <td className="py-1.5 px-2 font-bold pb-3">{fmtPct(realReturn)}</td>
+                </tr>
 
-              {/* If Sold Block */}
-              <tr>
-                <td className="py-1 pt-6 font-bold text-left" colSpan="3">If Sold...</td>
-              </tr>
-              <tr>
-                <td className="py-1 pt-2">After-sale equity</td>
-                <td className="py-1 pt-2">{fmtCur(afterSaleEquity)}</td>
-                <td className="py-1 pt-2">{fmtCur(afterSaleEquityPV)}</td>
-              </tr>
-              <tr>
-                <td className="py-1">Internal rate of return</td>
-                <td className="py-1"></td>
-                <td className="py-1">{fmtPct(afterSaleIrr)}</td>
-              </tr>
-            </tbody>
-          </table>
-
-          {/* Bottom Actions */}
-          <div className="flex justify-center items-center gap-4 mt-8 pt-4 border-t border-slate-300">
-            <button className="w-8 h-8 border border-slate-400 bg-white hover:bg-slate-50 shadow-sm text-slate-600 rounded-[2px] flex items-center justify-center transition-colors">
-              ?
-            </button>
-            <button 
-              onClick={onClose} 
-              className="px-10 py-1.5 border border-slate-400 bg-white hover:bg-slate-50 shadow-sm rounded-[2px] transition-colors"
-            >
-              Close
-            </button>
+                {/* If Sold Block */}
+                <tr>
+                  <td className="py-2 pr-4 font-bold text-left border-t border-[#E2E8F0]" colSpan="3">
+                    If Sold...
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-1.5 pr-4">After-sale equity</td>
+                  <td className="py-1.5 px-2">{fmtCur(afterSaleEquity)}</td>
+                  <td className="py-1.5 px-2">{fmtCur(afterSaleEquityPV)}</td>
+                </tr>
+                <tr>
+                  <td className="py-1.5 pr-4">Internal rate of return</td>
+                  <td className="py-1.5 px-2"></td>
+                  <td className="py-1.5 px-2">{fmtPct(afterSaleIrr)}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          
         </div>
+
+        {/* Footer Navigation */}
+        <div className="px-5 py-3 bg-[#F1F5F9] border-t border-[#E2E8F0] flex justify-center items-center gap-4 shrink-0">
+          <button className="w-8 h-8 flex items-center justify-center border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#64748B] font-bold hover:bg-[#E2E8F0] shadow-sm transition-colors">
+            ?
+          </button>
+          <button 
+            onClick={onClose} 
+            className="px-10 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm"
+          >
+            Close
+          </button>
+        </div>
+
       </div>
     </div>,
     document.body

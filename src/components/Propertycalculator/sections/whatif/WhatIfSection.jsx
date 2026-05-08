@@ -13,9 +13,9 @@ export default function WhatIfSection({
 }) {
   return (
     <CollapsibleSection title="4. What If?">
-      
+
       <div className="flex flex-col gap-2">
-        
+
         <div className="flex items-end gap-2 w-full">
           <div className="flex-1 min-w-0">
             <InputField
@@ -128,12 +128,12 @@ export default function WhatIfSection({
             Edit ↗
           </button>
         </div>
-        
+
         {/* Checkbox */}
         <div className="mt-2 flex items-center gap-2">
-          <input 
-            type="checkbox" 
-            id="useNewDefaults" 
+          <input
+            type="checkbox"
+            id="useNewDefaults"
             className="w-3.5 h-3.5 accent-[#0052CC] cursor-pointer"
           />
           <label htmlFor="useNewDefaults" className="text-[12px] text-[#64748B] cursor-pointer">

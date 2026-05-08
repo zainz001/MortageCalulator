@@ -9,7 +9,7 @@ export default function GrowthAndInflationSection({
 }) {
   return (
     <CollapsibleSection title="3. Growth & Inflation">
-      
+
       <div className="flex items-end gap-2 w-full">
         <div className="flex-1 min-w-0">
           <InputField

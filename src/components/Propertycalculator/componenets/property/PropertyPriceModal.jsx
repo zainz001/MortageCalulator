@@ -14,7 +14,8 @@ export default function PropertyValueModal({
   furnitureTimeline, setFurnitureTimeline,
   linkValueFittings, setLinkValueFittings,
   linkConstructionCost, setLinkConstructionCost,
-  projections = []
+  projections = [],
+  onOpenCapitalGrowth
 }) {
   const [startIndex, setStartIndex] = useState(0);
   const currentYear = new Date().getFullYear();
@@ -115,7 +116,10 @@ export default function PropertyValueModal({
         {/* Footer Panel with Arrows */}
         {/* THE FIX: Changed to flex-col lg:flex-row so the three button groups stack cleanly on mobile */}
         <div className="px-5 py-3 bg-[#F1F5F9] border-t border-[#E2E8F0] flex flex-col lg:flex-row justify-between items-center gap-4 rounded-b-[8px] shrink-0">
-          <button className="w-full lg:w-auto px-3 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm font-medium">
+        <button 
+            onClick={onOpenCapitalGrowth} // <--- ADD onClick HERE
+            className="w-full lg:w-auto px-3 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm font-medium"
+          >
             Annual Growth Rates
           </button>
 
