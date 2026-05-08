@@ -1,4 +1,3 @@
-
 import InputField from "../../../inputField";
 import CollapsibleSection from "../../../CollapsibleSection";
 
@@ -12,6 +11,7 @@ export default function PropertyDetailsSection({
   setActiveModal,
   renovationCosts,
   renovationTimeline = [],
+  vacancyRate = 2, // 🔹 Accept from parent calculator
 }) {
 
   const basePrice = parseFloat(propertyValue) || 0;
@@ -30,27 +30,39 @@ export default function PropertyDetailsSection({
     setPropertyValue(newBasePrice.toString());
   };
 
-  // --- FIX: The Default Value Bypass ---
-  const annualRent = (parseFloat(grossRentWeekly) || 0) * 52;
+  // Use shared vacancy rate
+  const vacRateNum = parseFloat(vacancyRate) || 0;
+  const weeklyRent = parseFloat(grossRentWeekly) || 0;
+  const potentialAnnualRent = weeklyRent * 52;
+  const actualAnnualRent = Math.round(potentialAnnualRent * (1 - vacRateNum / 100));
 
+  // Rental expenses logic (uses potential annual rent as base)
   let rentalExpensesTotalDollar = 0;
-  if (annualRent > 0) {
-    // If it's the exact default state, force it to match the modal's $10,835 sum
-    if (parseFloat(rentalExpensesPercent) === 29.77 && annualRent === 36400) {
+  if (potentialAnnualRent > 0) {
+    if (parseFloat(rentalExpensesPercent) === 29.77 && potentialAnnualRent === 36400) {
       rentalExpensesTotalDollar = 10835;
     } else {
-      rentalExpensesTotalDollar = Math.round(annualRent * (parseFloat(rentalExpensesPercent) || 0) / 100);
+      rentalExpensesTotalDollar = Math.round(potentialAnnualRent * (parseFloat(rentalExpensesPercent) || 0) / 100);
     }
   }
 
   const handleRentalExpenseDollarChange = (newDollarValue) => {
     const parsedDollar = parseFloat(String(newDollarValue).replace(/,/g, "")) || 0;
-    if (annualRent > 0) {
-      const newPercent = (parsedDollar / annualRent) * 100;
+    if (potentialAnnualRent > 0) {
+      const newPercent = (parsedDollar / potentialAnnualRent) * 100;
       setRentalExpensesPercent(newPercent.toFixed(6));
     } else {
       setRentalExpensesPercent("0");
     }
+  };
+
+  // Convert actual annual back to weekly gross rent
+  const handleActualAnnualRentChange = (val) => {
+    const clean = String(val).replace(/,/g, "");
+    const actual = parseFloat(clean) || 0;
+    const potential = actual / (1 - vacRateNum / 100);
+    const weekly = potential / 52;
+    setGrossRentWeekly(weekly.toString());
   };
 
   return (
@@ -97,10 +109,10 @@ export default function PropertyDetailsSection({
       <div className="flex items-end gap-2 w-full">
         <div className="flex-1 min-w-0">
           <InputField
-            label="Gross rent per week"
+            label="Actual annual rent"
             prefix="$"
-            value={grossRentWeekly}
-            onChange={setGrossRentWeekly}
+            value={actualAnnualRent ? actualAnnualRent.toLocaleString("en-NZ") : ""}
+            onChange={handleActualAnnualRentChange}
           />
         </div>
         <button

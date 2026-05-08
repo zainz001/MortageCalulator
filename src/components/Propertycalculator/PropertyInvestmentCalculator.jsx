@@ -11,7 +11,7 @@ import WhatIfSection from "./sections/whatif/WhatIfSection";
 export default function PropertyInvestmentCalculator() {
   const calc = useCalculator();
   const modals = useModalManager();
-  
+
   const m = calc.result?.metrics;
   const { inputs, updateInput } = calc;
 
@@ -44,6 +44,7 @@ export default function PropertyInvestmentCalculator() {
                 grossRentWeekly={inputs.grossRentWeekly} setGrossRentWeekly={(v) => updateInput("grossRentWeekly", v)}
                 rentalExpensesPercent={inputs.rentalExpensesPercent} setRentalExpensesPercent={(v) => updateInput("rentalExpensesPercent", v)}
                 setActiveModal={modals.setActiveModal}
+                vacancyRate={inputs.vacancyRate ?? 2}
                 renovationCosts={inputs.renovationCosts}
                 renovationTimeline={inputs.renovationTimeline}
                 buildingDepreciation={inputs.buildingDepreciation} setBuildingDepreciation={(v) => updateInput("buildingDepreciation", v)}
@@ -158,7 +159,7 @@ export default function PropertyInvestmentCalculator() {
       </div>
 
       <CalculatorModals calc={calc} modals={modals} />
-      
+
     </div>
   );
 }

@@ -12,26 +12,29 @@ export default function RentalIncomeModal({
     rentTimeline,
     setRentTimeline,
     propertyValue = 750000,
-    purchaseCosts = 0
+    purchaseCosts = 0,
+    vacancyRate: initialVacancyRate = "2.00", // 🔹 Accept from parent
 }) {
 
     const [frequency, setFrequency] = useState("weekly");
-    const [rentValue, setRentValue] = useState(grossRentWeekly || ""); // Represents rent per week/month/year
-    const [vacancyRate, setVacancyRate] = useState("2.00");
+    const [rentValue, setRentValue] = useState(grossRentWeekly || "");
+    const [vacancyRate, setVacancyRate] = useState(initialVacancyRate);
     const [isAnnualModalOpen, setIsAnnualModalOpen] = useState(false);
     const [rentProjectionSettings, setRentProjectionSettings] = useState({
         inflationStartYear: "1",
         useInflation: true,
         inflationRate: inflationRate ?? "3.00"
     });
+
+    // Sync with parent when modal opens
     useEffect(() => {
         if (isOpen) {
             setRentValue(grossRentWeekly || "");
             setFrequency("weekly");
+            setVacancyRate(initialVacancyRate);
         }
-    }, [isOpen, grossRentWeekly]);
+    }, [isOpen, grossRentWeekly, initialVacancyRate]);
 
-    // 2. The Core Math Logic (Forward Calculation)
     const getMultiplier = (freq) => {
         if (freq === "weekly") return 52;
         if (freq === "monthly") return 12;
@@ -54,7 +57,6 @@ export default function RentalIncomeModal({
 
     const handleActualRentChange = (newVal) => {
         const actual = parseFloat(newVal) || 0;
-        // Avoid divide by zero if vacancy is 100%
         const potential = vac === 100 ? 0 : actual / (1 - (vac / 100));
         const newRentValue = potential / getMultiplier(frequency);
         setRentValue(newRentValue.toString());
@@ -71,7 +73,6 @@ export default function RentalIncomeModal({
     const handleFrequencyChange = (newFreq) => {
         const currentPotential = rv * getMultiplier(frequency);
         const newRentValue = currentPotential / getMultiplier(newFreq);
-
         setRentValue(newRentValue.toString());
         setFrequency(newFreq);
     };
@@ -93,25 +94,19 @@ export default function RentalIncomeModal({
 
     return (
         <>
-            {/* THE FIX: We only wrap the HTML div inside the createPortal call */}
             {ReactDOM.createPortal(
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm p-4">
-
                     <div className="bg-[#F8FAFC] rounded-[8px] shadow-2xl w-full max-w-[520px] max-h-[95vh] flex flex-col border border-[#CBD5E1] overflow-hidden">
-
                         <div className="flex justify-between items-center px-4 py-2.5 bg-white border-b border-[#E2E8F0] shrink-0">
                             <h2 className="text-[14px] font-bold text-[#1E293B]">Rental Income</h2>
                             <button onClick={onClose} className="text-[#64748B] hover:text-[#0F172A] text-[18px]">&times;</button>
                         </div>
 
                         <div className="p-4 overflow-y-auto">
-
                             <div className="flex flex-col sm:flex-row gap-4 mb-2">
-
                                 <div className="flex-1 border border-[#CBD5E1] rounded-[6px] p-4 pt-6 bg-white relative">
                                     <span className="absolute -top-2.5 left-3 bg-white px-1 text-[12px] font-bold text-[#64748B]">Rental Income (1st Year)</span>
                                     <div className="flex flex-col gap-3">
-
                                         <div className="flex items-center justify-between gap-2">
                                             <span className="text-[13px] text-[#64748B] flex-1 text-left sm:text-right pr-1 sm:pr-3 leading-tight">{labelMapping[frequency]}</span>
                                             <div className="w-[100px] sm:w-[110px] shrink-0">
@@ -174,7 +169,6 @@ export default function RentalIncomeModal({
 
                         <div className="px-4 py-3 bg-[#F1F5F9] border-t border-[#E2E8F0] flex flex-col-reverse sm:flex-row justify-between items-center gap-4 sm:gap-2 rounded-b-[8px] shrink-0">
                             <div className="flex flex-wrap justify-center sm:justify-start gap-2 w-full sm:w-auto">
-
                                 <button onClick={() => setIsAnnualModalOpen(true)} className="px-4 py-1.5 border border-[#CBD5E1] bg-white rounded-[4px] text-[13px] text-[#1E293B] hover:bg-[#E2E8F0] transition-colors shadow-sm font-medium flex-1 sm:flex-none whitespace-nowrap">
                                     Annual Rent
                                 </button>
