@@ -62,6 +62,7 @@ export function useCalculator() {
       propertyValue: pValue,
       purchaseCostsManual: pCostsRaw !== "" ? parseNum(inputs.purchaseCosts) : null,
       grossRentWeekly: parseNum(inputs.grossRentWeekly),
+      rentTimeline: inputs.rentTimeline,
       rentalExpensesPercent: parseNum(inputs.rentalExpensesPercent),
       cashInvested: cInvest,
       equityInvested: eInvest,

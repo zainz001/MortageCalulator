@@ -217,7 +217,7 @@ export function calculatePIA({
   const baseAnnualRentYr1Float = fromCents(grossRentWkC) * 52;
   let baseExpenseYr1Float = baseAnnualRentYr1Float * (rentalExpensesPercentP / 100);
   if (rentalExpensesPercentP === 29.77 && baseAnnualRentYr1Float === 36400) {
-      baseExpenseYr1Float = 10835.00;
+    baseExpenseYr1Float = 10835.00;
   }
 
   for (let yr = 1; yr <= maxProjectedYears; yr++) {
@@ -227,9 +227,13 @@ export function calculatePIA({
 
     let baseAnnualRentC;
     let rentalExpensesC;
+    let annualGrossRentC;
 
     if (rentTimeline && rentTimeline[yr - 1]) {
-      baseAnnualRentC = toCents(parseNum(rentTimeline[yr - 1]));
+      // Timeline stores ACTUAL rent (after vacancy) — don't apply vacancy again
+      annualGrossRentC = toCents(parseNum(rentTimeline[yr - 1]));
+      // Reverse-calc potential rent for expense % base
+      baseAnnualRentC = toCents(fromCents(annualGrossRentC) / (1 - (vacancyRateP / 100)));
       rentalExpensesC = toCents(fromCents(baseAnnualRentC) * (rentalExpensesPercentP / 100));
     } else {
       const exactRentForYear = baseAnnualRentYr1Float * Math.pow(1 + inflationRateP / 100, yr - 1);
@@ -237,9 +241,10 @@ export function calculatePIA({
 
       baseAnnualRentC = toCents(exactRentForYear);
       rentalExpensesC = toCents(exactExpenseForYear);
+      annualGrossRentC = toCents(fromCents(baseAnnualRentC) * (1 - (vacancyRateP / 100)));
     }
 
-    const annualGrossRentC = toCents(fromCents(baseAnnualRentC) * (1 - (vacancyRateP / 100)));
+    // const annualGrossRentC = toCents(fromCents(baseAnnualRentC) * (1 - (vacancyRateP / 100)));
 
     // Process states and retrieve debt service chunks
     const resA = processLoanYear(loanStateA, yr);

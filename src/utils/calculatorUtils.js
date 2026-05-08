@@ -42,6 +42,7 @@ export const DEFAULTS = {
   amountOwing: "630,000",
   homeLoanRepayments: "58,338",
   livingExpenses: "45,000",
+  rentTimeline: [],
   portfolioProperties: "0",
   portfolioValue: "0",
   taxableIncomeSingle: "120,000",
@@ -54,7 +55,6 @@ export const DEFAULTS = {
   chattelsDepreciation: "11250",
   linkValueFittings: true,
   linkConstructionCost: true,
-  rentTimeline: [],
   renovationTimeline: [],
   furnitureTimeline: [],
 };
