@@ -1,4 +1,3 @@
-import React from "react";
 import ProjectionsGridModal from "..//ProjectionsGrid";
 import PropertyValueModal from "./componenets/property/PropertyPriceModal";
 import PurchaseCostsModal from "./componenets/property/PurchaseCostsModal";

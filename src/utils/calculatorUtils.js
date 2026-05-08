@@ -58,3 +58,40 @@ export const DEFAULTS = {
   renovationTimeline: [],
   furnitureTimeline: [],
 };
+
+
+export const formatNumber = (raw) => {
+  if (raw === "" || raw === undefined || raw === null) return "";
+
+  const num = parseFloat(raw);
+  if (isNaN(num)) return raw;
+
+  const parts = String(raw).split(".");
+  const intFormatted = Math.abs(Math.trunc(num)).toLocaleString("en-NZ");
+  const sign = num < 0 ? "-" : "";
+
+  return parts.length > 1
+    ? `${sign}${intFormatted}.${parts[1]}`
+    : `${sign}${intFormatted}`;
+};
+
+export const formatVal = (val) => Math.round(val).toLocaleString("en-NZ");
+
+export const formatCurrency = (raw) => {
+  if (raw === "" || raw === undefined || raw === null) return "";
+  const num = parseFloat(raw);
+  if (isNaN(num)) return raw;
+  return Math.abs(Math.trunc(num)).toLocaleString("en-NZ");
+};
+
+export const calculateTotalExpenses = (normal, special, totalYears) => {
+  return Array.from({ length: totalYears }, (_, i) => {
+    const n = parseFloat(normal[i]) || 0;
+    const s = parseFloat(special[i]) || 0;
+    return String(n + s);
+  });
+};
+
+export const sanitizeInput = (val) => val.replace(/,/g, "");
+export const isValidNumberInput = (raw) =>
+  raw === "" || /^-?\d*\.?\d*$/.test(raw);

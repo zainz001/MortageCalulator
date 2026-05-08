@@ -307,7 +307,7 @@ return (
                 type="number"
                 value={extraRepayment}
                 disabled={!hasCalculated}
-                tooltip={!hasCalculated ? "Your Repayment will be determined once the mortgage is calculated." : ""}
+                tooltip={hasCalculated ? "" : "Your Repayment will be determined once the mortgage is calculated."}
                 error={repaymentError}
                 onChange={(num) => {
                   handleExtraRepaymentChange(num);

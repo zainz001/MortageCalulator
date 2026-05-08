@@ -1,10 +1,8 @@
-import React from "react";
+
 import InputField from "../../../inputField";
 import CollapsibleSection from "../../../CollapsibleSection";
 
 export default function PropertyDetailsSection({
-  propertyAddress, setPropertyAddress,
-  propertyDescription, setPropertyDescription,
   propertyValue, setPropertyValue,
   purchaseCosts, setPurchaseCosts,
   grossRentWeekly, setGrossRentWeekly,

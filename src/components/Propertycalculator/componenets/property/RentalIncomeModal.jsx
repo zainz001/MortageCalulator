@@ -19,7 +19,10 @@ export default function RentalIncomeModal({
     const [rentValue, setRentValue] = useState(grossRentWeekly || ""); // Represents rent per week/month/year
     const [vacancyRate, setVacancyRate] = useState("2.00");
     const [isAnnualModalOpen, setIsAnnualModalOpen] = useState(false);
-
+    const [rentProjectionSettings, setRentProjectionSettings] = useState({
+        inflationStartYear: "1",
+        useInflation: true,
+    });
     useEffect(() => {
         if (isOpen) {
             setRentValue(grossRentWeekly || "");
@@ -199,6 +202,9 @@ export default function RentalIncomeModal({
                 inflationRate={inflationRate}
                 rentTimeline={rentTimeline}
                 setRentTimeline={setRentTimeline}
+                savedInflationStartYear={rentProjectionSettings.inflationStartYear}
+                savedUseInflation={rentProjectionSettings.useInflation}
+                onSettingsChange={setRentProjectionSettings}
             />
         </>
     );
