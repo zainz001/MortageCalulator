@@ -8,6 +8,7 @@ export const ProjectionSettings = memo(
     inflationStartYear,
     onChangeStartYear,
     inflationRate,
+    onChangeInflationRate, // 🔹 NEW
   }) => (
     <div className="border border-[#CBD5E1] rounded-[6px] p-4 pt-5 bg-white relative min-w-[450px]">
       <span className="absolute -top-2.5 left-3 bg-white px-1 text-[12px] font-bold text-[#64748B]">
@@ -35,7 +36,12 @@ export const ProjectionSettings = memo(
         <span className="text-[13px] text-[#64748B]">at a rate of:</span>
 
         <div className="w-[80px]">
-          <InputField value={inflationRate} disabled suffix="%" />
+          {/* 🔹 REMOVED disabled, ADDED onChange */}
+          <InputField
+            value={inflationRate}
+            onChange={onChangeInflationRate}
+            suffix="%"
+          />
         </div>
       </div>
     </div>

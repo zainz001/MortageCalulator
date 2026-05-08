@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import InputField from "../../../inputField";
-import AnnualRentalIncomeModal from "./AnnualRentalIncomeModal";
+import AnnualRentalIncomeModal from "./AnnualRentalIncomeModal/index";
 import ReactDOM from "react-dom";
 
 export default function RentalIncomeModal({
@@ -22,6 +22,7 @@ export default function RentalIncomeModal({
     const [rentProjectionSettings, setRentProjectionSettings] = useState({
         inflationStartYear: "1",
         useInflation: true,
+        inflationRate: inflationRate ?? "3.00"
     });
     useEffect(() => {
         if (isOpen) {
@@ -200,6 +201,7 @@ export default function RentalIncomeModal({
                 onClose={() => setIsAnnualModalOpen(false)}
                 actualAnnualRent={actualAnnualRent.toString()}
                 inflationRate={inflationRate}
+                savedInflationRate={rentProjectionSettings.inflationRate}
                 rentTimeline={rentTimeline}
                 setRentTimeline={setRentTimeline}
                 savedInflationStartYear={rentProjectionSettings.inflationStartYear}

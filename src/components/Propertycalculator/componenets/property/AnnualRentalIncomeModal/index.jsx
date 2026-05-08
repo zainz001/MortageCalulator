@@ -12,9 +12,9 @@ export default function AnnualRentalIncomeModal({
   inflationRate,
   rentTimeline,
   setRentTimeline,
-  // 🔹 NEW
   savedInflationStartYear,
   savedUseInflation,
+  savedInflationRate, // 🔹 NEW
   onSettingsChange,
 }) {
   const modal = useRentalModal({
@@ -26,6 +26,7 @@ export default function AnnualRentalIncomeModal({
     setRentTimeline,
     savedInflationStartYear,
     savedUseInflation,
+    savedInflationRate,
     onSettingsChange,
   });
 
@@ -49,7 +50,8 @@ export default function AnnualRentalIncomeModal({
             onToggleInflation={modal.setUseInflation}
             inflationStartYear={modal.inflationStartYear}
             onChangeStartYear={modal.setInflationStartYear}
-            inflationRate={inflationRate}
+            inflationRate={modal.localInflationRate}          // 🔹 local state
+            onChangeInflationRate={modal.setLocalInflationRate} // 🔹 local setter
           />
         </div>
 

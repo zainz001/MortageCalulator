@@ -5,25 +5,26 @@ import { sanitizeInput, isValidNumberInput } from "../../../../../../utils/calcu
 export const useRentalModal = ({
   isOpen,
   actualAnnualRent,
-  inflationRate,
+  inflationRate, // prop fallback
   rentTimeline,
   onClose,
   setRentTimeline,
-  // 🔹 NEW: persisted settings from parent
   savedInflationStartYear,
   savedUseInflation,
+  savedInflationRate, // 🔹 NEW
   onSettingsChange,
 }) => {
   const [startIndex, setStartIndex] = useState(0);
-  // Initialize from saved values, fallback to defaults
   const [useInflation, setUseInflation] = useState(savedUseInflation ?? true);
   const [inflationStartYear, setInflationStartYear] = useState(savedInflationStartYear ?? "1");
+  const [localInflationRate, setLocalInflationRate] = useState(savedInflationRate ?? inflationRate ?? "3.00"); // 🔹 NEW
   const [localProjections, setLocalProjections] = useState([]);
   const [focusedIdx, setFocusedIdx] = useState(null);
 
   const initializedRef = useRef(false);
   const skipSettingsEffect = useRef(true);
 
+  // Initialize once when modal opens
   useEffect(() => {
     if (!isOpen) {
       initializedRef.current = false;
@@ -40,7 +41,7 @@ export const useRentalModal = ({
       setLocalProjections(
         generateProjections({
           baseRent,
-          inflationRate,
+          inflationRate: localInflationRate,
           inflationStartYear,
           useInflation,
         })
@@ -52,6 +53,7 @@ export const useRentalModal = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
+  // Recalculate when projection settings change
   useEffect(() => {
     if (!isOpen || !initializedRef.current) return;
     if (skipSettingsEffect.current) {
@@ -63,12 +65,12 @@ export const useRentalModal = ({
     setLocalProjections(
       generateProjections({
         baseRent,
-        inflationRate,
+        inflationRate: localInflationRate, // 🔹 use local state
         inflationStartYear,
         useInflation,
       })
     );
-  }, [isOpen, useInflation, inflationStartYear, inflationRate, actualAnnualRent]);
+  }, [isOpen, useInflation, inflationStartYear, localInflationRate, actualAnnualRent]); // 🔹 added localInflationRate
 
   const handleInputChange = useCallback((idx, val) => {
     const raw = sanitizeInput(val);
@@ -83,13 +85,13 @@ export const useRentalModal = ({
 
   const handleOk = useCallback(() => {
     setRentTimeline(localProjections);
-    // 🔹 NEW: persist settings back to parent before closing
     onSettingsChange?.({
       inflationStartYear,
       useInflation,
+      inflationRate: localInflationRate, // 🔹 persist rate too
     });
     onClose();
-  }, [localProjections, setRentTimeline, onClose, inflationStartYear, useInflation, onSettingsChange]);
+  }, [localProjections, setRentTimeline, onClose, inflationStartYear, useInflation, localInflationRate, onSettingsChange]);
 
   const pagination = {
     startIndex,
@@ -107,6 +109,8 @@ export const useRentalModal = ({
     setUseInflation,
     inflationStartYear,
     setInflationStartYear,
+    localInflationRate,      // 🔹 expose
+    setLocalInflationRate,   // 🔹 expose
     handleInputChange,
     handleOk,
     pagination,
