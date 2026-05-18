@@ -1,7 +1,7 @@
 import React from "react";
 import EquityAndLeverageCalculator from "../../components/Equitycalculator/EquityAndLeverageCalculator";
 import CapitalGrowthCalculator from "../../components/Equitycalculator/Captialgrowthcalculator"; 
-// import InterestOnlyCalculator from "../../components/Equitycalculator/interestcalculator"; 
+import PropertyInvestmentCalculator from "../../components/Equitycalculator/interestcalculator"; 
 
 export default function EquityCalculatorPage() {
  const currentBrand = "opes"; 
@@ -32,9 +32,9 @@ export default function EquityCalculatorPage() {
       </div>
 
       {/* 3. Interest-Only Mortgage Calculator */}
-      {/* <section>
-        <InterestOnlyCalculator brand={currentBrand} />
-      </section> */}
+      <section>
+        <PropertyInvestmentCalculator brand={currentBrand} />
+      </section>
 
     </div>
   );
