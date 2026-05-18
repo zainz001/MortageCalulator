@@ -199,7 +199,7 @@ export default function Chart({
           <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
             <span style={{
               width: 8, height: 8, borderRadius: "50%",
-              background: p.dataKey === "standard" ? "#AFAFAF" : "#4A72FF",
+              background: p.dataKey === "standard" ? "#94A3B8" : "#127A71",
               display: "inline-block", flexShrink: 0,
             }} />
             <span style={{ color: "#64748B" }}>{p.dataKey === "standard" ? "Standard Loan" : "Offset Loan"}:</span>
@@ -221,7 +221,7 @@ export default function Chart({
         {label}
       </span>
       <div style={{
-        background: "#FFFFFF", color: "#0B2146", padding: "6px 12px", borderRadius: "4px",
+        background: "#FFFFFF", color: "#0B1A26", padding: "6px 12px", borderRadius: "4px",
         fontSize: "14px", fontWeight: "600", textAlign: "right", flex: "1 1 140px",
         maxWidth: "100%", boxSizing: "border-box", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
       }}>
@@ -237,7 +237,7 @@ export default function Chart({
         background: "#F8F8F8", borderRadius: 16, padding: "24px", gap: 24,
       }}>
         <div style={{
-          background: "#0B2146", borderRadius: "12px", padding: "20px",
+          background: "#0B1A26", borderRadius: "12px", padding: "20px",
           display: "flex", flexDirection: "column", width: "100%", boxSizing: "border-box", overflow: "hidden"
         }}>
           <SummaryRow label={`Regular Repayment (per ${freqLabel})`} value={hasData ? fmt(result.repayment) : "—"} />
@@ -262,12 +262,12 @@ export default function Chart({
                 <ComposedChart data={displayData} margin={{ top: 10, right: 0, left: -10, bottom: 10 }}>
                   <defs>
                     <linearGradient id="standardGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#C4C4C4" stopOpacity={0.9} />
-                      <stop offset="100%" stopColor="#C4C4C4" stopOpacity={0.5} />
+                      <stop offset="0%" stopColor="#CBD5E1" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#CBD5E1" stopOpacity={0.5} />
                     </linearGradient>
                     <linearGradient id="offsetGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#4A72FF" stopOpacity={0.9} />
-                      <stop offset="100%" stopColor="#4A72FF" stopOpacity={0.7} />
+                      <stop offset="0%" stopColor="#127A71" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#127A71" stopOpacity={0.7} />
                     </linearGradient>
                   </defs>
 
@@ -300,11 +300,11 @@ export default function Chart({
                   <Area
                     type="monotone"
                     dataKey="standard"
-                    stroke="#AFAFAF"
+                    stroke="#94A3B8"
                     strokeWidth={2}
                     fill="url(#standardGrad)"
                     dot={false}
-                    activeDot={{ r: 4, fill: "#AFAFAF" }}
+                    activeDot={{ r: 4, fill: "#94A3B8" }}
                     isAnimationActive
                     animationDuration={900}
                   />
@@ -312,11 +312,11 @@ export default function Chart({
                   <Area
                     type="monotone"
                     dataKey="offset"
-                    stroke="#4A72FF"
+                    stroke="#127A71"
                     strokeWidth={hasData ? 2 : 0}
                     fill={hasData ? "url(#offsetGrad)" : "none"}
                     dot={false}
-                    activeDot={hasData ? { r: 4, fill: "#4A72FF" } : false}
+                    activeDot={hasData ? { r: 4, fill: "#127A71" } : false}
                     isAnimationActive
                     animationDuration={900}
                     animationBegin={150}
@@ -324,15 +324,15 @@ export default function Chart({
 
                   {hasData && (
                     <>
-                      <ReferenceLine x={todayX} stroke="#EF4444" strokeWidth={1.5} />
+                      <ReferenceLine x={todayX} stroke="#F26A36" strokeWidth={1.5} />
                       <ReferenceDot
                         x={todayX}
                         y={todayY}
                         r={5}
                         fill="#fff"
-                        stroke="#EF4444"
+                        stroke="#F26A36"
                         strokeWidth={2}
-                        label={{ position: "top", value: "Today", fill: "#EF4444", fontSize: 12, fontWeight: 600, offset: 10 }}
+                        label={{ position: "top", value: "Today", fill: "#F26A36", fontSize: 12, fontWeight: 600, offset: 10 }}
                       />
                     </>
                   )}
@@ -343,11 +343,11 @@ export default function Chart({
 
           <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: "16px", marginTop: "16px", flexShrink: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 12, height: 12, background: "#4A72FF", borderRadius: "50%" }} />
+              <div style={{ width: 12, height: 12, background: "#127A71", borderRadius: "50%" }} />
               <span style={{ fontSize: 12, color: "#64748B", fontWeight: 600 }}>Projected with Offset</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 12, height: 12, background: "#C4C4C4", borderRadius: "50%" }} />
+              <div style={{ width: 12, height: 12, background: "#94A3B8", borderRadius: "50%" }} />
               <span style={{ fontSize: 12, color: "#64748B", fontWeight: 600 }}>Projected Standard Loan</span>
             </div>
           </div>

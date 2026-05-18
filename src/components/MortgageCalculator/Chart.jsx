@@ -106,16 +106,16 @@ export default function Chart({
         background: "#fff", border: "1px solid #E2E8F0", borderRadius: 10,
         padding: "10px 14px", boxShadow: "0 4px 16px rgba(0,0,0,0.08)", fontSize: 13,
       }}>
-        <p style={{ fontWeight: 700, color: "#1E293B", marginBottom: 6, marginTop: 0 }}>{displayLabel}</p>
+        <p style={{ fontWeight: 700, color: "#0B1A26", marginBottom: 6, marginTop: 0 }}>{displayLabel}</p>
         {payload.map((p, i) => (
           <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
             <span style={{
               width: 8, height: 8, borderRadius: "50%",
-              background: p.dataKey === "bank" ? "#94A3B8" : "#3B82F6",
+              background: p.dataKey === "bank" ? "#94A3B8" : "#127A71",
               display: "inline-block", flexShrink: 0,
             }} />
             <span style={{ color: "#64748B" }}>{p.dataKey === "bank" ? "Bank" : "Swish"}:</span>
-            <span style={{ fontWeight: 600, color: "#1E293B" }}>${Math.round(p.value).toLocaleString()}</span>
+            <span style={{ fontWeight: 600, color: "#0B1A26" }}>${Math.round(p.value).toLocaleString()}</span>
           </div>
         ))}
       </div>
@@ -131,7 +131,7 @@ export default function Chart({
 
         {/* ── HEADER ── */}
         <div>
-          <h3 style={{ fontSize: 16, fontWeight: 700, color: "#23303B", margin: "0 0 4px" }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0B1A26", margin: "0 0 4px" }}>
             Your mortgage projection
           </h3>
           <p style={{ fontSize: 13, color: "#64748B", margin: 0 }}>
@@ -142,38 +142,38 @@ export default function Chart({
         {/* ── TOP SUMMARY CARDS ── */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <div style={{
-            background: "linear-gradient(135deg, #EEF2FF, #E0E7FF)",
-            border: "1px solid #C7D2FE", borderRadius: 12, padding: "16px",
+            background: "linear-gradient(135deg, #F0F7F6, #E1F0EE)",
+            border: "1px solid #B8E0DB", borderRadius: 12, padding: "16px",
             textAlign: "center", display: "flex", flexDirection: "column",
             alignItems: "center", justifyContent: "center", minHeight: 90,
           }}>
             {!hasData ? (
               <>
-                <p style={{ fontSize: 10, color: "#6366F1", fontWeight: 700, margin: "0 0 8px", letterSpacing: "0.07em", textTransform: "uppercase" }}>
+                <p style={{ fontSize: 10, color: "#0B1A26", fontWeight: 700, margin: "0 0 8px", letterSpacing: "0.07em", textTransform: "uppercase" }}>
                   Repayment amount
                 </p>
-                <p style={{ fontSize: 32, fontWeight: 800, color: "#C7D2FE", margin: 0 }}>—</p>
-                <p style={{ fontSize: 11, color: "#A5B4FC", margin: "4px 0 0" }}>calculate to see</p>
+                <p style={{ fontSize: 32, fontWeight: 800, color: "#B8E0DB", margin: 0 }}>—</p>
+                <p style={{ fontSize: 11, color: "#94A3B8", margin: "4px 0 0" }}>calculate to see</p>
               </>
             ) : hasExtra ? (
               <>
-                <p style={{ fontSize: 10, color: "#6366F1", fontWeight: 700, margin: "0 0 6px", letterSpacing: "0.07em", textTransform: "uppercase" }}>
+                <p style={{ fontSize: 10, color: "#0B1A26", fontWeight: 700, margin: "0 0 6px", letterSpacing: "0.07em", textTransform: "uppercase" }}>
                   Interest saved with Swish
                 </p>
-                <p style={{ fontSize: "clamp(18px, 4vw, 28px)", fontWeight: 800, color: "#3730A3", lineHeight: 1.1, margin: 0, wordBreak: "break-word" }}>
+                <p style={{ fontSize: "clamp(18px, 4vw, 28px)", fontWeight: 800, color: "#127A71", lineHeight: 1.1, margin: 0, wordBreak: "break-word" }}>
                   {fmtShort(savings)}
                 </p>
-                <p style={{ fontSize: 11, color: "#818CF8", margin: "4px 0 0" }}>vs standard bank loan</p>
+                <p style={{ fontSize: 11, color: "#64748B", margin: "4px 0 0" }}>vs standard bank loan</p>
               </>
             ) : (
               <>
-                <p style={{ fontSize: 10, color: "#6366F1", fontWeight: 700, margin: "0 0 6px", letterSpacing: "0.07em", textTransform: "uppercase" }}>
+                <p style={{ fontSize: 10, color: "#0B1A26", fontWeight: 700, margin: "0 0 6px", letterSpacing: "0.07em", textTransform: "uppercase" }}>
                   {`Repayment / ${freqLabel}`}
                 </p>
-                <p style={{ fontSize: 28, fontWeight: 800, color: "#3730A3", lineHeight: 1, margin: 0 }}>
+                <p style={{ fontSize: 28, fontWeight: 800, color: "#127A71", lineHeight: 1, margin: 0 }}>
                   {fmtShort(result.repayment)}
                 </p>
-                <p style={{ fontSize: 11, color: "#818CF8", margin: "4px 0 0" }}>scheduled repayment</p>
+                <p style={{ fontSize: 11, color: "#64748B", margin: "4px 0 0" }}>scheduled repayment</p>
               </>
             )}
           </div>
@@ -186,7 +186,7 @@ export default function Chart({
           }}>
             {!hasData ? (
               <>
-                <p style={{ fontSize: 10, color: "#059669", fontWeight: 700, margin: "0 0 8px", letterSpacing: "0.07em", textTransform: "uppercase" }}>
+                <p style={{ fontSize: 10, color: "#0B1A26", fontWeight: 700, margin: "0 0 8px", letterSpacing: "0.07em", textTransform: "uppercase" }}>
                   Payoff date
                 </p>
                 <p style={{ fontSize: 32, fontWeight: 800, color: "#A7F3D0", margin: 0 }}>—</p>
@@ -194,7 +194,7 @@ export default function Chart({
               </>
             ) : hasExtra ? (
               <>
-                <p style={{ fontSize: 10, color: "#059669", fontWeight: 700, margin: "0 0 6px", letterSpacing: "0.07em", textTransform: "uppercase" }}>
+                <p style={{ fontSize: 10, color: "#0B1A26", fontWeight: 700, margin: "0 0 6px", letterSpacing: "0.07em", textTransform: "uppercase" }}>
                   Mortgage free
                 </p>
                 <p style={{ fontSize: "clamp(18px, 4vw, 28px)", fontWeight: 800, color: "#065F46", lineHeight: 1.1, margin: 0, wordBreak: "break-word" }}>
@@ -204,7 +204,7 @@ export default function Chart({
               </>
             ) : (
               <>
-                <p style={{ fontSize: 10, color: "#059669", fontWeight: 700, margin: "0 0 6px", letterSpacing: "0.07em", textTransform: "uppercase" }}>
+                <p style={{ fontSize: 10, color: "#0B1A26", fontWeight: 700, margin: "0 0 6px", letterSpacing: "0.07em", textTransform: "uppercase" }}>
                   Estimated payoff
                 </p>
                 <p style={{ fontSize: "clamp(14px, 3.5vw, 24px)", fontWeight: 800, color: "#065F46", lineHeight: 1.2, margin: 0, wordBreak: "break-word" }}>
@@ -221,7 +221,7 @@ export default function Chart({
         {/* ── LOAN SUMMARY GRID ── */}
         <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #E8EDF2", overflow: "hidden" }}>
           <div style={{ padding: "10px 16px", background: "#F1F5F9", borderBottom: "1px solid #E8EDF2" }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#1E293B", margin: 0 }}>Loan summary</p>
+            <p style={{ fontSize: 12, fontWeight: 700, color: "#0B1A26", margin: 0 }}>Loan summary</p>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
             {hasData
@@ -235,9 +235,9 @@ export default function Chart({
                   <p style={{
                     fontSize: 13, fontWeight: 700, margin: 0,
                     color:
-                      row.highlight === "blue" ? "#2563EB" :
+                      row.highlight === "blue" ? "#127A71" :
                         row.highlight === "red" ? "#DC2626" :
-                          row.highlight === "green" ? "#16A34A" : "#1E293B",
+                          row.highlight === "green" ? "#16A34A" : "#0B1A26",
                   }}>
                     {row.value}
                   </p>
@@ -265,20 +265,20 @@ export default function Chart({
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
             <div>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "#1E293B", margin: "0 0 2px" }}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: "#0B1A26", margin: "0 0 2px" }}>
                 Remaining balance over time
               </p>
               <p style={{ fontSize: 10, color: "#94A3B8", margin: 0 }}>
                 {hasData
                   ? hasExtra
-                    ? "Gray = bank · Blue = Swish with extra repayments"
+                    ? "Gray = bank · Teal = Swish with extra repayments"
                     : "Add extra repayments to see Swish savings vs bank"
                   : "Your projection will appear here"}
               </p>
             </div>
             <div style={{ display: "flex", gap: 12, flexShrink: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <div style={{ width: 20, height: 3, background: "#3B82F6", borderRadius: 2 }} />
+                <div style={{ width: 20, height: 3, background: "#127A71", borderRadius: 2 }} />
                 <span style={{ fontSize: 10, color: "#64748B", fontWeight: 500 }}>Swish</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
@@ -297,8 +297,8 @@ export default function Chart({
                     <stop offset="100%" stopColor="#CBD5E1" stopOpacity={0.1} />
                   </linearGradient>
                   <linearGradient id="swishGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.75} />
-                    <stop offset="100%" stopColor="#3B82F6" stopOpacity={0.05} />
+                    <stop offset="0%" stopColor="#127A71" stopOpacity={0.75} />
+                    <stop offset="100%" stopColor="#127A71" stopOpacity={0.05} />
                   </linearGradient>
                 </defs>
 
@@ -342,11 +342,11 @@ export default function Chart({
                 <Area
                   type="monotone"
                   dataKey="swish"
-                  stroke="#3B82F6"
+                  stroke="#127A71"
                   strokeWidth={hasExtra ? 2.5 : 0}
                   fill={hasExtra ? "url(#swishGrad)" : "none"}
                   dot={false}
-                  activeDot={hasExtra ? { r: 3, fill: "#3B82F6" } : false}
+                  activeDot={hasExtra ? { r: 3, fill: "#127A71" } : false}
                   isAnimationActive
                   animationDuration={900}
                   animationBegin={150}
@@ -354,15 +354,15 @@ export default function Chart({
 
                 {hasData && (
                   <>
-                    <ReferenceLine x={todayX} stroke="#EF4444" strokeWidth={1.5} strokeDasharray="4 3" />
+                    <ReferenceLine x={todayX} stroke="#F26A36" strokeWidth={1.5} strokeDasharray="4 3" />
                     <ReferenceDot
                       x={todayX}
                       y={todayY}
                       r={4}
                       fill="#fff"
-                      stroke="#EF4444"
+                      stroke="#F26A36"
                       strokeWidth={2}
-                      label={{ position: "top", value: "Today", fill: "#EF4444", fontSize: 10, fontWeight: 600, offset: 7 }}
+                      label={{ position: "top", value: "Today", fill: "#F26A36", fontSize: 10, fontWeight: 600, offset: 7 }}
                     />
                   </>
                 )}

@@ -144,14 +144,14 @@ const mergedChartData = useMemo(() => {
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-2 md:p-4">
       <div className="max-w-[1400px] w-full">
-        {/* <h2 className="text-[20px] md:text-[24px] font-bold text-[#0052CC] mb-4 md:mb-6">
+        {/* <h2 className="text-[20px] md:text-[24px] font-bold text-[#0B1A26] mb-4 md:mb-6">
           Offset Mortgage Calculator
         </h2> */}
 
         <div className="flex flex-col lg:flex-row gap-4 md:gap-5 items-stretch">
 
           <div className="flex-1 bg-[#F8F8F8] rounded-[16px] p-6 md:p-8 flex flex-col">
-            <h3 className="text-[16px] md:text-[18px] font-bold text-[#23303B] mb-[32px] leading-snug">
+            <h3 className="text-[16px] md:text-[18px] font-bold text-[#0B1A26] mb-[32px] leading-snug">
               Calculate how much you could save in time and interest by linking
               an offset account to your home loan.
             </h3>
@@ -254,8 +254,8 @@ const mergedChartData = useMemo(() => {
                         </div>
                         <div className="border-t border-[#E2E8F0] my-1"></div>
                         <div className="flex justify-between items-center">
-                          <span className="text-[13px] font-bold text-[#23303B]">Monthly Offset Contribution</span>
-                          <span className="text-[15px] font-bold text-[#0052CC]">
+                          <span className="text-[13px] font-bold text-[#0B1A26]">Monthly Offset Contribution</span>
+                          <span className="text-[15px] font-bold text-[#127A71]">
                             ${effectiveMonthlyContribution.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                           </span>
                         </div>
@@ -273,7 +273,7 @@ const mergedChartData = useMemo(() => {
 
             <button
               onClick={() => performCalculation(false)}
-              className="mt-[32px] w-full bg-[#39a859] hover:bg-[#32994f] text-white font-bold py-3.5 rounded-[8px] transition-colors"
+              className="mt-[32px] w-full bg-[#94CF37] hover:bg-[#83B831] text-[#0B1A26] font-bold py-3.5 rounded-[8px] transition-colors"
             >
               CALCULATE
             </button>
