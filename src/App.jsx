@@ -4,11 +4,12 @@ import './App.css'
 import MortgageCalculatorPage from './pages/MortgageCalculator/page'
 import Offset from './pages/offset/page'
 import PropertyCalculator from "./pages/Propertycalculator/page";
-
+import EquityCalculatorPage from "./pages/Equitycalculator/page";
 const titles = {
   mortgage: "Mortgage Calculator",
   offset: "Offset Calculator",
-  property: "Property Investment Calculator"
+  property: "Property Investment Calculator",
+  equity: "Equity Calculator"
 };
 
 const calculatorIds = new Set(Object.keys(titles));
@@ -41,6 +42,7 @@ function App({ initialCalculator = "mortgage" }) {
           <option value="mortgage">Mortgage</option>
           <option value="offset">Offset Mortgage</option>
           <option value="property">PIA</option>
+          <option value="equity">Equity Calculator</option>
         </select>
 
       </div>
@@ -49,6 +51,7 @@ function App({ initialCalculator = "mortgage" }) {
         {selectedCalculator === "mortgage" && <MortgageCalculatorPage />}
         {selectedCalculator === "offset" && <Offset />}
         {selectedCalculator === "property" && <PropertyCalculator />}
+        {selectedCalculator === "equity" && <EquityCalculatorPage />}
       </div>
 
     </div>
