@@ -2,34 +2,7 @@ import React, { useState, useMemo } from "react";
 import InputField from "../inputField"; 
 import { calculatePropertyInvestment } from "../../helpers/equityHelpers";
 
-const BRAND_THEMES = {
-  opes: {
-    panelLeftBg: "bg-[#F8F8F8]", 
-    panelRightBg: "bg-[#F1EEF9]",
-    textPrimary: "text-[#23303B]", 
-    textSecondary: "text-[#64748B]", 
-    textHighlight: "text-[#5B3E96]",
-    border: "border-[#E2E8F0]", 
-    buttonBg: "bg-[#5B3E96]", 
-    buttonHover: "hover:bg-[#4a327a]",
-    accent: "accent-[#5B3E96]"
-  },
-  staircase: {
-    panelLeftBg: "bg-slate-50", 
-    panelRightBg: "bg-blue-50",
-    textPrimary: "text-slate-900", 
-    textSecondary: "text-slate-600", 
-    textHighlight: "text-[#0052CC]", 
-    border: "border-slate-200", 
-    buttonBg: "bg-[#0052CC]", 
-    buttonHover: "hover:bg-[#0040A0]",
-    accent: "accent-[#0052CC]"
-  }
-};
-
-export default function PropertyInvestmentCalculator({ brand = "opes" }) {
-  const theme = BRAND_THEMES[brand] || BRAND_THEMES.opes;
-
+export default function PropertyInvestmentCalculator() {
   // --- Inputs ---
   const [propertyValue, setPropertyValue] = useState("600,000");
   const [deposit, setDeposit] = useState("0");
@@ -88,13 +61,13 @@ export default function PropertyInvestmentCalculator({ brand = "opes" }) {
       <div className="max-w-[1400px] w-full flex flex-col lg:flex-row gap-4 md:gap-5">
         
         {/* LEFT PANEL: Inputs */}
-        <div className={`flex-[1.1] ${theme.panelLeftBg} rounded-[16px] p-6 md:p-8 flex flex-col gap-6`}>
+        <div className="flex-[1.1] bg-[var(--theme-left-bg)] rounded-[16px] p-6 md:p-8 flex flex-col gap-6">
           
           <div>
-            <h3 className={`text-[20px] md:text-[24px] font-bold ${theme.textPrimary} mb-2`}>
+            <h3 className="text-[20px] md:text-[24px] font-bold text-[var(--theme-text-primary)] mb-2">
               Property investment calculator
             </h3>
-            <p className={`text-[14px] md:text-[15px] ${theme.textSecondary} leading-relaxed`}>
+            <p className="text-[14px] md:text-[15px] text-[var(--theme-text-secondary)] leading-relaxed">
               This calculator forecasts key factors about investment property over 10 years based on standard assumptions.
             </p>
           </div>
@@ -120,25 +93,25 @@ export default function PropertyInvestmentCalculator({ brand = "opes" }) {
             {/* 3. Growth Rate (Slider + Manual Input merged into new layout) */}
             <div className="flex flex-col gap-2 pt-2">
               <div className="flex justify-between items-center">
-                <label className={`text-[14px] ${theme.textSecondary} font-medium`}>
+                <label className="text-[14px] text-[var(--theme-text-secondary)] font-medium">
                   3. Rate of Capital Growth
                 </label>
                 {/* Embedded Input inside the label area */}
-                <div className={`flex items-center gap-1 bg-white border ${theme.border} rounded-md px-2 py-1 focus-within:ring-2 focus-within:ring-[#4914CC] transition-all`}>
+                <div className="flex items-center gap-1 bg-white border border-[var(--theme-border)] rounded-md px-2 py-1 focus-within:ring-2 focus-within:ring-[var(--theme-highlight)] transition-all">
                   <input 
                     type="text" 
                     value={growthRateString} 
                     onChange={handleRateInput}
-                    className={`w-10 text-right text-[15px] font-bold ${theme.textHighlight} outline-none`}
+                    className="w-10 text-right text-[15px] font-bold text-[var(--theme-highlight)] outline-none"
                   />
-                  <span className={`text-[15px] font-bold ${theme.textHighlight}`}>%</span>
+                  <span className="text-[15px] font-bold text-[var(--theme-highlight)]">%</span>
                 </div>
               </div>
               <input 
                 type="range" min="0" max="15" step="0.5" 
                 value={toNum(growthRateString)} 
                 onChange={(e) => setGrowthRateString(e.target.value)}
-                className={`w-full h-2 rounded-lg appearance-none cursor-pointer ${theme.accent} bg-gray-200`}
+                className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-[var(--theme-highlight)] bg-gray-200"
               />
               <div className="flex justify-between text-xs text-gray-400 mt-1">
                 <span>1%</span>
@@ -148,13 +121,13 @@ export default function PropertyInvestmentCalculator({ brand = "opes" }) {
 
             {/* 4. Condition Dropdown */}
             <div className="flex flex-col gap-2 pt-2">
-              <label className={`text-[14px] ${theme.textSecondary} font-medium`}>
+              <label className="text-[14px] text-[var(--theme-text-secondary)] font-medium">
                 4. What is the Condition of the Property?
               </label>
               <select
                 value={condition}
                 onChange={(e) => setCondition(e.target.value)}
-                className={`w-full bg-white border ${theme.border} rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-[#4914CC] text-[15px] font-semibold ${theme.textPrimary} cursor-pointer`}
+                className="w-full bg-white border border-[var(--theme-border)] rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-[var(--theme-highlight)] text-[15px] font-semibold text-[var(--theme-text-primary)] cursor-pointer"
               >
                 <option value="Brand New">Brand New</option>
                 <option value="New-ish (Built in the last 20 years)">New-ish (Built in the last 20 years)</option>
@@ -165,17 +138,17 @@ export default function PropertyInvestmentCalculator({ brand = "opes" }) {
             {/* 5. Rent Slider */}
             <div className="flex flex-col gap-2 pt-2">
               <div className="flex justify-between items-center">
-                <label className={`text-[14px] ${theme.textSecondary} font-medium`}>
+                <label className="text-[14px] text-[var(--theme-text-secondary)] font-medium">
                   5. What will the Property Rent For?
                 </label>
                 {/* Embedded Input inside the label area */}
-                <div className={`flex items-center gap-1 bg-white border ${theme.border} rounded-md px-2 py-1 focus-within:ring-2 focus-within:ring-[#4914CC] transition-all`}>
-                  <span className={`text-[15px] font-bold ${theme.textHighlight}`}>$</span>
+                <div className="flex items-center gap-1 bg-white border border-[var(--theme-border)] rounded-md px-2 py-1 focus-within:ring-2 focus-within:ring-[var(--theme-highlight)] transition-all">
+                  <span className="text-[15px] font-bold text-[var(--theme-highlight)]">$</span>
                   <input 
                     type="number" 
                     value={rent} 
                     onChange={(e) => setRent(parseFloat(e.target.value) || 0)}
-                    className={`w-14 text-right text-[15px] font-bold ${theme.textHighlight} outline-none`}
+                    className="w-14 text-right text-[15px] font-bold text-[var(--theme-highlight)] outline-none"
                   />
                 </div>
               </div>
@@ -183,7 +156,7 @@ export default function PropertyInvestmentCalculator({ brand = "opes" }) {
                 type="range" min="100" max="2000" step="10" 
                 value={rent} 
                 onChange={(e) => setRent(parseFloat(e.target.value))}
-                className={`w-full h-2 rounded-lg appearance-none cursor-pointer ${theme.accent} bg-gray-200`}
+                className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-[var(--theme-highlight)] bg-gray-200"
               />
               <div className="flex justify-between text-xs text-gray-400 mt-1">
                 <span>$100</span>
@@ -195,48 +168,48 @@ export default function PropertyInvestmentCalculator({ brand = "opes" }) {
         </div>
 
         {/* RIGHT PANEL: Results (White Card Format) */}
-        <div className={`flex-[0.9] ${theme.panelRightBg} rounded-[16px] p-6 md:p-8 flex flex-col justify-center`}>
+        <div className="flex-[0.9] bg-[var(--theme-right-bg)] rounded-[16px] p-6 md:p-8 flex flex-col justify-center">
           <div className="bg-white rounded-[12px] p-6 md:p-8 shadow-sm">
             
-            <h4 className={`text-[16px] ${theme.textSecondary} font-semibold mb-2 text-center`}>
+            <h4 className="text-[16px] text-[var(--theme-text-secondary)] font-semibold mb-2 text-center">
               Equity in 10 Years:
             </h4>
-            <p className={`text-[36px] font-bold ${theme.textHighlight} mb-6 text-center tracking-tight`}>
+            <p className="text-[36px] font-bold text-[var(--theme-highlight)] mb-6 text-center tracking-tight">
               {formatCurrency(results.equityIn10Years)}
             </p>
 
-            <div className={`border-t ${theme.border} pt-6 flex flex-col gap-4`}>
+            <div className="border-t border-[var(--theme-border)] pt-6 flex flex-col gap-4">
               <div className="flex justify-between items-center text-[14px]">
-                <span className={`${theme.textSecondary} font-medium`}>Average rent per week:</span>
-                <span className={`font-bold ${theme.textPrimary}`}>{formatCurrency(results.avgRentPerWeek)}</span>
+                <span className="text-[var(--theme-text-secondary)] font-medium">Average rent per week:</span>
+                <span className="font-bold text-[var(--theme-text-primary)]">{formatCurrency(results.avgRentPerWeek)}</span>
               </div>
               <div className="flex justify-between items-center text-[14px]">
-                <span className={`${theme.textSecondary} font-medium`}>Average expenses per week:</span>
-                <span className={`font-bold ${theme.textPrimary}`}>{formatCurrency(results.avgExpensesPerWeek)}</span>
+                <span className="text-[var(--theme-text-secondary)] font-medium">Average expenses per week:</span>
+                <span className="font-bold text-[var(--theme-text-primary)]">{formatCurrency(results.avgExpensesPerWeek)}</span>
               </div>
               <div className="flex justify-between items-center text-[14px]">
-                <span className={`${theme.textSecondary} font-medium`}>Average cashflow per week:</span>
-                <span className={`font-bold ${theme.textPrimary}`}>{formatCurrency(results.avgCashflowPerWeek)}</span>
+                <span className="text-[var(--theme-text-secondary)] font-medium">Average cashflow per week:</span>
+                <span className="font-bold text-[var(--theme-text-primary)]">{formatCurrency(results.avgCashflowPerWeek)}</span>
               </div>
               
               <div className="flex justify-between items-center text-[14px] py-2 border-y border-dashed border-gray-200 my-1">
-                <span className={`${theme.textSecondary} font-medium leading-snug w-1/2`}>Over 10 Years, This Property is:</span>
-                <span className={`font-bold text-right px-3 py-1.5 rounded text-[12px] uppercase tracking-wider ${results.isCashflowPositive ? 'bg-[#F1EEF9] text-[#5B3E96]' : 'bg-red-50 text-red-600'}`}>
+                <span className="text-[var(--theme-text-secondary)] font-medium leading-snug w-1/2">Over 10 Years, This Property is:</span>
+                <span className={`font-bold text-right px-3 py-1.5 rounded text-[12px] uppercase tracking-wider ${results.isCashflowPositive ? 'bg-[var(--theme-right-bg)] text-[var(--theme-highlight)]' : 'bg-red-50 text-red-600'}`}>
                   {results.isCashflowPositive ? "CASHFLOW POSITIVE" : "CASHFLOW NEGATIVE"}
                 </span>
               </div>
 
               <div className="flex justify-between items-center text-[14px]">
-                <span className={`${theme.textSecondary} font-medium`}>Avg equity gain per week:</span>
-                <span className={`font-bold ${theme.textPrimary}`}>{formatCurrency(results.avgEquityGainPerWeek)}</span>
+                <span className="text-[var(--theme-text-secondary)] font-medium">Avg equity gain per week:</span>
+                <span className="font-bold text-[var(--theme-text-primary)]">{formatCurrency(results.avgEquityGainPerWeek)}</span>
               </div>
               <div className="flex justify-between items-center text-[14px]">
-                <span className={`${theme.textSecondary} font-medium`}>Average net gain per week:</span>
-                <span className={`font-bold ${theme.textPrimary}`}>{formatCurrency(results.avgNetGainPerWeek)}</span>
+                <span className="text-[var(--theme-text-secondary)] font-medium">Average net gain per week:</span>
+                <span className="font-bold text-[var(--theme-text-primary)]">{formatCurrency(results.avgNetGainPerWeek)}</span>
               </div>
             </div>
 
-            <button className={`mt-8 w-full ${theme.buttonBg} ${theme.buttonHover} text-white font-bold py-3.5 rounded-[8px] transition-colors`}>
+            <button className="mt-8 w-full bg-[var(--theme-button)] hover:bg-[var(--theme-button-hover)] text-white font-bold py-3.5 rounded-[8px] transition-colors">
               Talk to an adviser about buying an investment property
             </button>
           </div>

@@ -2,38 +2,7 @@ import React, { useState, useMemo } from "react";
 import InputField from "../inputField"; // Adjust path as needed
 import { calculateEquityAndBorrowing } from "../../helpers/equityHelpers"; 
 
-// --- Brand Theme Configuration ---
-// Easily add new brands here. Ensure you use complete Tailwind class strings 
-// so the JIT compiler picks them up.
-const BRAND_THEMES = {
-  opes: {
-    panelLeftBg: "bg-[#F8F8F8]",
-    panelRightBg: "bg-[#F1EEF9]",
-    textPrimary: "text-[#23303B]",
-    textSecondary: "text-[#64748B]",
-    textHighlight: "text-[#5B3E96]",
-    border: "border-[#E2E8F0]",
-    buttonBg: "bg-[#5B3E96]",
-    buttonHover: "hover:bg-[#4a327a]",
-    inputFocus: "focus:border-[#5B3E96]"
-  },
-  staircase: {
-    panelLeftBg: "bg-slate-50",
-    panelRightBg: "bg-blue-50",
-    textPrimary: "text-slate-900",
-    textSecondary: "text-slate-600",
-    textHighlight: "text-[#0052CC]", 
-    border: "border-slate-200",
-    buttonBg: "bg-[#0052CC]",
-    buttonHover: "hover:bg-[#0040A0]",
-    inputFocus: "focus:border-[#0052CC]"
-  }
-};
-
-export default function EquityAndLeverageCalculator({ brand = "opes" }) {
-  // Select the theme based on the prop, defaulting to 'opes' if not found
-  const theme = BRAND_THEMES[brand] || BRAND_THEMES.opes;
-
+export default function EquityAndLeverageCalculator() {
   // --- Inputs ---
   const [homeValue, setHomeValue] = useState("800000");
   const [mortgage, setMortgage] = useState("500000");
@@ -68,8 +37,8 @@ export default function EquityAndLeverageCalculator({ brand = "opes" }) {
         
         <div className="flex flex-col lg:flex-row gap-4 md:gap-5 items-stretch">
           {/* Left Column: Inputs */}
-          <div className={`flex-1 ${theme.panelLeftBg} rounded-[16px] p-6 md:p-8 flex flex-col`}>
-            <h3 className={`text-[20px] md:text-[24px] font-bold ${theme.textPrimary} mb-[32px] leading-snug`}>
+          <div className="flex-1 bg-[var(--theme-left-bg)] rounded-[16px] p-6 md:p-8 flex flex-col">
+            <h3 className="text-[20px] md:text-[24px] font-bold text-[var(--theme-text-primary)] mb-[32px] leading-snug">
               Equity and leverage calculator
             </h3>
 
@@ -95,13 +64,13 @@ export default function EquityAndLeverageCalculator({ brand = "opes" }) {
               />
 
               <div className="flex flex-col gap-[8px] pt-4">
-                <label className={`text-[13px] md:text-[14px] ${theme.textSecondary} font-medium`}>
+                <label className="text-[13px] md:text-[14px] text-[var(--theme-text-secondary)] font-medium">
                   What sort of property do you want to buy?
                 </label>
                 <select
                   value={propertyType}
                   onChange={(e) => setPropertyType(e.target.value)}
-                  className={`h-[48px] px-4 border ${theme.border} rounded-[8px] bg-white focus:outline-none ${theme.inputFocus}`}
+                  className="h-[48px] px-4 border border-[var(--theme-border)] rounded-[8px] bg-white focus:outline-none focus:border-[var(--theme-highlight)] focus:ring-1 focus:ring-[var(--theme-highlight)] transition-colors"
                 >
                   <option value="new_build">New Build Investment Property</option>
                   <option value="holiday_home">Holiday Home</option>
@@ -112,43 +81,43 @@ export default function EquityAndLeverageCalculator({ brand = "opes" }) {
           </div>
 
           {/* Right Column: Results */}
-          <div className={`flex-1 ${theme.panelRightBg} rounded-[16px] p-6 md:p-8 flex flex-col justify-center`}>
+          <div className="flex-1 bg-[var(--theme-right-bg)] rounded-[16px] p-6 md:p-8 flex flex-col justify-center">
             
             <div className="bg-white rounded-[12px] p-6 shadow-sm flex flex-col gap-6">
               
               {/* Borrowing Ability (Hero Stat) */}
-              <div className={`text-center border-b ${theme.border} pb-6`}>
-                <h4 className={`text-[14px] ${theme.textSecondary} font-semibold mb-2`}>Borrowing Ability:</h4>
-                <p className={`text-[32px] font-bold ${theme.textHighlight}`}>
+              <div className="text-center border-b border-[var(--theme-border)] pb-6">
+                <h4 className="text-[14px] text-[var(--theme-text-secondary)] font-semibold mb-2">Borrowing Ability:</h4>
+                <p className="text-[32px] font-bold text-[var(--theme-highlight)]">
                   {formatCurrency(results.borrowingAbility)}
                 </p>
-                <p className={`text-[12px] ${theme.textSecondary} mt-2 px-4`}>
+                <p className="text-[12px] text-[var(--theme-text-secondary)] mt-2 px-4">
                   Based on a {results.depositRequirementPercentage}% deposit requirement for this property type.
                 </p>
               </div>
 
               {/* Total Equity */}
               <div>
-                <h4 className={`text-[16px] font-bold ${theme.textPrimary} mb-1`}>
+                <h4 className="text-[16px] font-bold text-[var(--theme-text-primary)] mb-1">
                   Your Equity: {formatCurrency(results.totalEquity)}
                 </h4>
-                <p className={`text-[13px] ${theme.textSecondary} leading-relaxed`}>
+                <p className="text-[13px] text-[var(--theme-text-secondary)] leading-relaxed">
                   This is the equity / wealth that you have within your home + any savings.
                 </p>
               </div>
 
               {/* Useable Equity */}
               <div>
-                <h4 className={`text-[16px] font-bold ${theme.textPrimary} mb-1`}>
+                <h4 className="text-[16px] font-bold text-[var(--theme-text-primary)] mb-1">
                   Your 'Useable Equity': {formatCurrency(results.useableEquity)}
                 </h4>
-                <p className={`text-[13px] ${theme.textSecondary} leading-relaxed`}>
+                <p className="text-[13px] text-[var(--theme-text-secondary)] leading-relaxed">
                   This is the equity within your home ( + any savings) which can be used for purchasing investments. Banks require you to keep 20% equity in your own home.
                 </p>
               </div>
 
               {/* Call to Action */}
-              <button className={`mt-4 w-full ${theme.buttonBg} ${theme.buttonHover} text-white font-bold py-3.5 rounded-[8px] transition-colors`}>
+              <button className="mt-4 w-full bg-[var(--theme-button)] hover:bg-[var(--theme-button-hover)] text-white font-bold py-3.5 rounded-[8px] transition-colors shadow-sm hover:shadow-md">
                 Talk to an Adviser About Buying an Investment Property
               </button>
 

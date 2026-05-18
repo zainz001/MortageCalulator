@@ -2,13 +2,14 @@ import React from "react";
 import EquityAndLeverageCalculator from "../../components/Equitycalculator/EquityAndLeverageCalculator";
 import CapitalGrowthCalculator from "../../components/Equitycalculator/Captialgrowthcalculator"; 
 import PropertyInvestmentCalculator from "../../components/Equitycalculator/interestcalculator"; 
-
+import CalculatorThemeWrapper from "../../components/dynamictheme";
 export default function EquityCalculatorPage() {
  const currentBrand = "opes"; 
 
   return (
+    
     <div >
-      
+      <CalculatorThemeWrapper defaultBrand="opes">
     
 
       {/* 1. Equity and Leverage Calculator */}
@@ -35,7 +36,7 @@ export default function EquityCalculatorPage() {
       <section>
         <PropertyInvestmentCalculator brand={currentBrand} />
       </section>
-
+</CalculatorThemeWrapper>
     </div>
   );
 }
