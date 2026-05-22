@@ -12,7 +12,7 @@ export default function EquityCalculatorPage() {
       <CalculatorThemeWrapper defaultBrand="opes">
     
 
-      {/* 1. Equity and Leverage Calculator */}
+  
       <section>
         <EquityAndLeverageCalculator brand={currentBrand} />
       </section>
@@ -22,17 +22,16 @@ export default function EquityCalculatorPage() {
         <hr className="border-[#E2E8F0]" />
       </div>
 
-      {/* 2. Capital Growth Calculator */}
+ 
       <section>
         <CapitalGrowthCalculator brand={currentBrand} />
       </section>
 
-      {/* Divider (Optional) */}
       <div>
         <hr className="border-[#E2E8F0]" />
       </div>
 
-      {/* 3. Interest-Only Mortgage Calculator */}
+      
       <section>
         <PropertyInvestmentCalculator brand={currentBrand} />
       </section>

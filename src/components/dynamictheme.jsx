@@ -27,24 +27,20 @@ export default function CalculatorThemeWrapper({ defaultBrand = "opes", children
   const [themeStyles, setThemeStyles] = useState(BRAND_PRESETS[defaultBrand]);
 
   useEffect(() => {
-    // If embedding via iframe, you can pass parameters like:
-    // yourdomain.com/calculator?brand=staircase 
-    // OR custom colors: yourdomain.com/calculator?btnColor=FF0000
+
     const params = new URLSearchParams(window.location.search);
     
     if (params.get("brand") && BRAND_PRESETS[params.get("brand")]) {
       setThemeStyles(BRAND_PRESETS[params.get("brand")]);
     }
 
-    // Optional: Allow completely custom colors via Iframe URL overrides
+   
     if (params.get("highlight")) {
       setThemeStyles(prev => ({ ...prev, "--theme-highlight": `#${params.get("highlight")}` }));
     }
   }, []);
 
-  return (
-    // We apply the CSS variables to this top-level div. 
-    // All children will inherit these colors.
+  return (  
     <div style={themeStyles} className="w-full h-full">
       {children}
     </div>
