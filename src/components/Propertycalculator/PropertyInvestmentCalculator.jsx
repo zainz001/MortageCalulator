@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 import { fmt, fmtPct } from "../../utils/calculatorUtils";
 import { useCalculator } from "../../hooks/useCalculator";
 import { useModalManager } from "../../hooks/useModalManager";
@@ -12,25 +12,64 @@ export default function PropertyInvestmentCalculator() {
   const calc = useCalculator();
   const modals = useModalManager();
 
+  // State to track whether mobile view should show results instead of inputs
+  const [showMobileResults, setShowMobileResults] = useState(false);
+  const containerRef = useRef(null);
+
   const m = calc.result?.metrics;
   const { inputs, updateInput } = calc;
 
+  const scrollToTop = () => {
+    if (window.innerWidth < 1024 && containerRef.current) {
+      const y = containerRef.current.getBoundingClientRect().top + window.scrollY - 20;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  };
+
+  const handleCalculateClick = () => {
+    calc.performCalculation();
+    // Smoothly slide in results and scroll up
+    if (calc.result) {
+      setShowMobileResults(true);
+      setTimeout(scrollToTop, 50); // slight delay to allow rendering
+    }
+  };
+
+  const handleBackToInputs = () => {
+    setShowMobileResults(false);
+    setTimeout(scrollToTop, 50);
+  };
+
   return (
     <div className="min-h-screen bg-white flex justify-center p-4 md:p-8 font-sans">
-      <div className="max-w-[1400px] w-full">
+      <div className="max-w-[1400px] w-full" ref={containerRef}>
 
         <div className="mb-6 flex justify-between items-end">
           <h2 className="text-[24px] font-bold text-[#0052CC]"></h2>
           <button
-            onClick={calc.handleReset}
+            onClick={() => {
+              calc.handleReset();
+              setShowMobileResults(false);
+            }}
             className="text-[#64748B] text-[13px] font-bold hover:text-[#0052CC] transition-colors underline"
           >
             Reset to Defaults
           </button>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-5 items-stretch">
-          <div className="w-full lg:w-[420px] flex-shrink-0 bg-[#F8F8F8] rounded-[16px] p-6 md:p-8 flex flex-col border border-[#E2E8F0]">
+        {/* ANIMATED SLIDING CONTAINER 
+          On mobile: Acts as a relative viewport that hides overflow for the sliding elements.
+          On desktop: Flex row without overflow hiding so tooltips can escape if needed.
+        */}
+        <div className="relative flex flex-col lg:flex-row lg:gap-5 items-stretch overflow-hidden lg:overflow-visible pb-4">
+          
+          {/* INPUTS SIDEBAR PANEL */}
+          <div 
+            className={`w-full lg:w-[420px] shrink-0 bg-[#F8F8F8] rounded-[16px] p-6 md:p-8 flex flex-col border border-[#E2E8F0] transition-all duration-500 ease-out
+              ${showMobileResults 
+                ? "absolute lg:relative -translate-x-[110%] lg:translate-x-0 opacity-0 lg:opacity-100 pointer-events-none lg:pointer-events-auto" 
+                : "relative translate-x-0 opacity-100 pointer-events-auto"}`}
+          >
             <h3 className="text-[15px] font-bold text-[#23303B] mb-6 leading-snug">
               Model investment property performance over 10 years.
             </h3>
@@ -81,69 +120,89 @@ export default function PropertyInvestmentCalculator() {
             </div>
 
             <button
-              onClick={calc.performCalculation}
+              onClick={handleCalculateClick}
               className="mt-[32px] w-full bg-[#94CF37] hover:bg-[#83B831] text-[#0B1A26] font-bold py-3.5 rounded-[8px] transition-colors"
-             >
+            >
               CALCULATE
             </button>
           </div>
 
-        <div className="flex-1 flex flex-col gap-5 w-full min-w-0">
-  <div className="bg-[#F8F8F8] rounded-[16px] p-6 border border-[#E2E8F0]">
-    <h3 className="text-[#0B1A26] font-bold text-[15px] mb-4">Property Details</h3>
-    <div className="grid grid-cols-2 gap-x-8 gap-y-2">
-      {[
-        ["Property cost", fmt((parseFloat(inputs.propertyValue) || 0) + (parseFloat(inputs.renovationCosts) || 0))],
-        ["Total cost", fmt(calc.result?.totalCost)],
-        ["Gross rent (yr 1)", fmt(calc.result?.projections?.[0]?.annualGrossRent)],
-        ["Gross yield (yr 1)", fmtPct(m?.grossYieldYr1)],
-        ["Net rent (yr 1)", fmt(m?.netRentYr1)],
-        ["Net yield (yr 1)", fmtPct(m?.netYieldYr1)],
-        ["Cash neutral investment", fmt(m?.cashNeutralInvestment)],
-        ["Cash positive by", m?.cashPositiveYear ? m.cashPositiveYear : "—"],
-      ].map(([label, val]) => (
-        <React.Fragment key={label}>
-          <span className="text-[13px] text-[#64748B]">{label}</span>
-          <span className="text-[13px] font-medium text-[#0B1A26] text-right">{val}</span>
-        </React.Fragment>
-      ))}
-    </div>
-  </div>
+          {/* RESULTS PANEL */}
+          <div 
+            className={`w-full lg:flex-1 flex flex-col gap-5 min-w-0 shrink-0 transition-all duration-500 ease-out
+              ${showMobileResults 
+                ? "relative translate-x-0 opacity-100 pointer-events-auto" 
+                : "absolute lg:relative translate-x-[110%] lg:translate-x-0 opacity-0 lg:opacity-100 pointer-events-none lg:pointer-events-auto"}`}
+          >
+            
+            {/* Mobile View Navigation Toggle */}
+            <div className="lg:hidden w-full mb-1">
+              <button
+                onClick={handleBackToInputs}
+                className="text-[#0052CC] text-[15px] font-bold flex items-center gap-2 hover:underline py-2"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Back to Edit Inputs
+              </button>
+            </div>
 
-  <div className="bg-[#F8F8F8] rounded-[16px] p-6 border border-[#E2E8F0]">
-    <h3 className="text-[#0B1A26] font-bold text-[15px] mb-4">10-Year Summary</h3>
-    <div className="bg-[#127A71] rounded-[8px] py-4 px-5 flex justify-between items-center mb-5">
-      <span className="text-white font-medium text-[14px]">Total equity in 10 years</span>
-      <span className="text-white font-bold text-[18px]">
-        {calc.result ? fmt(m.totalEquityIn10Years) : "—"}
-      </span>
-    </div>
-    {[
-      ["Average rent per week", fmt(m?.avgWeeklyRent)],
-      ["Average expenses per week", fmt(m?.avgWeeklyExpenses)],
-      ["Average cashflow per week", fmt(m?.avgWeeklyCashflow)],
-      ["10-year IRR", m?.irr != null ? m.irr.toFixed(2) + "%" : "N/A"],
-      ["Pre-tax equivalent IRR", m?.preTaxEquivalentIRR != null ? m.preTaxEquivalentIRR.toFixed(2) + "%" : "N/A"],
-      ["Over 10 years, property is", m?.isCashflowPositive ? "Cashflow positive ✓" : "Cashflow negative"],
-      ["Average equity gain / week", fmt(m?.avgEquityGainWeekly)],
-      ["Average net gain / week", fmt(m?.avgNetGainWeekly)],
-    ].map(([label, val]) => (
-      <div key={label} className="flex justify-between items-center py-[6px] border-b border-[#F1F5F9] last:border-0">
-        <span className="text-[13px] text-[#64748B]">{label}</span>
-        <span className="text-[13px] font-medium text-[#0B1A26]">{val}</span>
-      </div>
-    ))}
-    <div className="flex gap-3 mt-5">
-      <button className="flex-1 bg-[#94CF37] hover:bg-[#83B831] text-[#0B1A26] font-bold py-3 rounded-[8px] transition-colors text-[13px]">
-        Talk to an advisor
-      </button>
-    </div>
-    <div className="flex gap-3 mt-3">
-      <button className="flex-1 bg-white border border-[#E2E8F0] text-[#0B1A26] font-bold py-3 rounded-[8px] hover:bg-[#F1F5F9] transition-colors text-[13px]">Save scenario</button>
-      <button className="flex-1 bg-white border border-[#E2E8F0] text-[#0B1A26] font-bold py-3 rounded-[8px] hover:bg-[#F1F5F9] transition-colors text-[13px]">Share report (PDF)</button>
-    </div>
-  </div>
-</div>
+            <div className="bg-[#F8F8F8] rounded-[16px] p-6 border border-[#E2E8F0]">
+              <h3 className="text-[#0B1A26] font-bold text-[15px] mb-4">Property Details</h3>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+                {[
+                  ["Property cost", fmt((parseFloat(inputs.propertyValue) || 0) + (parseFloat(inputs.renovationCosts) || 0))],
+                  ["Total cost", fmt(calc.result?.totalCost)],
+                  ["Gross rent (yr 1)", fmt(calc.result?.projections?.[0]?.annualGrossRent)],
+                  ["Gross yield (yr 1)", fmtPct(m?.grossYieldYr1)],
+                  ["Net rent (yr 1)", fmt(m?.netRentYr1)],
+                  ["Net yield (yr 1)", fmtPct(m?.netYieldYr1)],
+                  ["Cash neutral investment", fmt(m?.cashNeutralInvestment)],
+                  ["Cash positive by", m?.cashPositiveYear ? m.cashPositiveYear : "—"],
+                ].map(([label, val]) => (
+                  <React.Fragment key={label}>
+                    <span className="text-[13px] text-[#64748B]">{label}</span>
+                    <span className="text-[13px] font-medium text-[#0B1A26] text-right">{val}</span>
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-[#F8F8F8] rounded-[16px] p-6 border border-[#E2E8F0]">
+              <h3 className="text-[#0B1A26] font-bold text-[15px] mb-4">10-Year Summary</h3>
+              <div className="bg-[#127A71] rounded-[8px] py-4 px-5 flex justify-between items-center mb-5">
+                <span className="text-white font-medium text-[14px]">Total equity in 10 years</span>
+                <span className="text-white font-bold text-[18px]">
+                  {calc.result ? fmt(m?.totalEquityIn10Years) : "—"}
+                </span>
+              </div>
+              {[
+                ["Average rent per week", fmt(m?.avgWeeklyRent)],
+                ["Average expenses per week", fmt(m?.avgWeeklyExpenses)],
+                ["Average cashflow per week", fmt(m?.avgWeeklyCashflow)],
+                ["10-year IRR", m?.irr != null ? m?.irr.toFixed(2) + "%" : "N/A"],
+                ["Pre-tax equivalent IRR", m?.preTaxEquivalentIRR != null ? m?.preTaxEquivalentIRR.toFixed(2) + "%" : "N/A"],
+                ["Over 10 years, property is", m?.isCashflowPositive ? "Cashflow positive ✓" : "Cashflow negative"],
+                ["Average equity gain / week", fmt(m?.avgEquityGainWeekly)],
+                ["Average net gain / week", fmt(m?.avgNetGainWeekly)],
+              ].map(([label, val]) => (
+                <div key={label} className="flex justify-between items-center py-[6px] border-b border-[#F1F5F9] last:border-0">
+                  <span className="text-[13px] text-[#64748B]">{label}</span>
+                  <span className="text-[13px] font-medium text-[#0B1A26]">{val}</span>
+                </div>
+              ))}
+              <div className="flex gap-3 mt-5">
+                <button className="flex-1 bg-[#94CF37] hover:bg-[#83B831] text-[#0B1A26] font-bold py-3 rounded-[8px] transition-colors text-[13px]">
+                  Talk to an advisor
+                </button>
+              </div>
+              <div className="flex gap-3 mt-3">
+                <button className="flex-1 bg-white border border-[#E2E8F0] text-[#0B1A26] font-bold py-3 rounded-[8px] hover:bg-[#F1F5F9] transition-colors text-[13px]">Save scenario</button>
+                <button className="flex-1 bg-white border border-[#E2E8F0] text-[#0B1A26] font-bold py-3 rounded-[8px] hover:bg-[#F1F5F9] transition-colors text-[13px]">Share report (PDF)</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         {calc.result && (
